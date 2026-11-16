@@ -8,7 +8,7 @@
     const seed = (q.get('seed') || '').replace(/[^A-Za-z0-9_-]/g, '').slice(0, 32) || 'SAV-' + Math.floor(Math.random() * 1e4).toString().padStart(4, '0');
     const crowdN = parseInt(q.get('crowd'), 10);
     return {
-      seed, scene: pick(q.get('scene'), ['forsyth'], 'forsyth'),
+      seed, scene: pick(q.get('scene'), ['savannah', 'forsyth'], 'savannah'),
       difficulty: pick(q.get('difficulty'), ['easy', 'normal', 'hard'], 'normal'),
       density: pick(q.get('density'), ['low', 'standard', 'dense'], 'standard'),
       crowd: Number.isFinite(crowdN) ? Math.max(20, Math.min(10000, crowdN)) : null,

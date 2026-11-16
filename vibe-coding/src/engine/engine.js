@@ -62,9 +62,9 @@
         else if (e.motion === 'rise') e.oy = -((s * 6 + e.phase * 4) % 14);
       }
     }
-    function drawFountain(s) {
-      const f = world.fountain;
-      if (!f) return;
+    // Sparkle over a fountain basin; the basin ellipse is relative to the fountain sprite's anchor.
+    function drawFountain(e, s) {
+      const f = { x: e.x, y: e.y - 112 * e.k, rx: 270 * e.k, ry: 100 * e.k };
       ctx.save();
       ctx.fillStyle = 'rgba(255,255,255,0.85)';
       for (let i = 0; i < 26; i++) {
@@ -199,7 +199,7 @@
         if (x > x1 || y > y1 || x + w < x0 || y + h < y0) continue;
         drawEntity(e, need, now);
         if (e.leash) drawLeash(e);
-        if (e.asset === 'environments/forsyth/fountain' && motionOn) drawFountain(performance.now() / 1000);
+        if (e.asset === 'environments/forsyth/fountain' && motionOn) drawFountain(e, performance.now() / 1000);
         drawn++;
       }
       for (const fx of effects) fx(ctx, z);
