@@ -4,7 +4,7 @@ Date: 2026-11-15. Status: **revised after the project lead chose "fix the gaps f
 
 ## Revision 2 (after review)
 
-- **Motion.** Walkers bounce in step, joggers run, standers breathe, kites sway, bubbles rise and the fountain basin sparkles. This is procedural motion (offsets and rotation), not drawn animation frames; ADR-002's 2–6 frames per archetype is still open. `prefers-reduced-motion` freezes everything (tested). Picking follows the moving sprites.
+- **Motion.** Walkers bounce in step, joggers run, standers breathe, kites sway, bubbles rise and the fountain basin sparkles. This is procedural motion (offsets and rotation). Update, checkpoint 4 revision 3: the five walking bodies and the target now have a second drawn frame (passing pose) that alternates with the stride; other archetypes still use procedural motion only. `prefers-reduced-motion` freezes everything (tested). Picking follows the moving sprites.
 - **Seated pose.** New `bodies/seated` with a cup; 10 café customers at the six tables.
 - **Hard mode.** Besides 50–86% visibility, hard now needs at least 6 people within reach and 2 decoys within view; normal needs 2 people nearby. Six hard seeds sampled: 54–69% visible, crowds of 6–9, 4–11 decoys nearby.
 - **Bug fixed.** Story people had `undefined` ids (masked until motion hashed them).

@@ -78,7 +78,7 @@
   const defaultKit = (assetId, n) => parseKit(A().meta[assetId][n === 2 ? 'kit2' : 'kit']);
 
   // colours: { skin, hair, top, top2, bottom, hat, hat2, acc, shoe } plus skin2, hair2, top3, top4, bottom2, shoe2, hat3 for a second person
-  function compose(assetId, colours, kit, kit2) {
+  function compose(assetId, colours, kit, kit2, frame = 1) {
     const a = A();
     let svg = a.svg[assetId];
     if (!svg) throw new Error('unknown asset ' + assetId);
@@ -86,6 +86,7 @@
     const head = (pos, k) => '<g transform="translate(' + pos[0] + ' ' + pos[1] + ') scale(' + pos[2] + ')">' + headAssembly(k) + '</g>';
     if (svg.includes('<!--HEAD-->')) svg = svg.replace('<!--HEAD-->', head(m.head || [0, 0, 1], Object.assign(defaultKit(assetId, 1), kit || {})));
     if (svg.includes('<!--HEAD2-->')) svg = svg.replace('<!--HEAD2-->', head(m.head2 || [0, 0, 1], Object.assign(defaultKit(assetId, 2), kit2 || {})));
+    if (frame === 2) svg = svg.replace('<g data-frame="1">', '<g data-frame="1" display="none">').replace('<g data-frame="2" display="none">', '<g data-frame="2">');
     if (colours) {
       const style = Object.entries(colours).filter(([, v]) => v).map(([k, v]) => '--' + k + ':' + v).join(';');
       svg = svg.replace('<svg ', '<svg style="' + style + '" ');
@@ -202,6 +203,100 @@
   }
 
   WS.characters = Object.assign(WS.characters || {}, { make, traitsOf, PAL, TARGET_BLUE });
+})();
+
+/* ---- src/scenes/build.js ---- */
+/* Generic scene builder (Agent 2). Assembles districts (geography, stories, crowd zones, hiding spots)
+   into one world. The replay identity decides looks, the filler crowd and target candidate order. */
+(function () {
+  const WS = (window.WS = window.WS || {});
+  const P = 0.8, C = 'characters/archetypes/', B = 'characters/bodies/';
+  const DECOY_RATE = { easy: 0.06, normal: 0.16, hard: 0.32 };
+
+  function buildScene(identity, scene) {
+    const districts = scene.districts, BUDGET = scene.budget;
+    const blocked = (x, y) => { const d = districtAt(x, y); return !d || d.blocked(x, y); };
+    const districtAt = (x, y) => districts.find((d) => y >= d.y0 && y < d.y0 + d.h);
+    const rng = WS.rng.make(WS.rng.identityKey(identity));
+    const make = WS.characters.make;
+    const entities = [];
+    let n = 0;
+    const isPerson = (asset) => asset.startsWith('characters/');
+    const push = (o) => { const e = Object.assign({ k: o.k || (isPerson(o.asset) ? P : 1), flip: o.flip ? 1 : 0, layer: o.layer || (window.WS_ASSETS.meta[o.asset].layer === 'world' ? 'world' : window.WS_ASSETS.meta[o.asset].layer) }, o); if (!e.id) e.id = 'e' + n++; entities.push(e); return e; };
+    const people = [];
+    const grid = new Map(), CELL = 64;                       // spatial hash for spacing checks
+    const cellKey = (cx, cy) => cx + ',' + cy;
+    const decoyRate = DECOY_RATE[identity.difficulty] || DECOY_RATE.normal;
+    const total = identity.crowd ? Math.max(20, Math.min(10000, identity.crowd)) : BUDGET[identity.density] || BUDGET.standard;
+    // Stress crowds reuse a fixed set of looks so thousands of people do not mean thousands of sprite decodes.
+    const templates = total > 2000 ? new Map() : null;
+    const person = (asset, x, y, flip, extra = {}) => {
+      let c;
+      if (templates) {
+        const list = templates.get(asset) || templates.set(asset, []).get(asset);
+        if (list.length < 24) { c = make(rng, asset, { decoys: rng.chance(decoyRate) ? 1 : 0 }); list.push(c); } else c = rng.pick(list);
+      } else c = make(rng, asset, { decoys: rng.chance(decoyRate) ? (rng.chance(0.45) ? 2 : 1) : 0 });
+      const e = push(Object.assign({ asset, x, y, flip, kind: 'person', colours: c.colours, kit: c.kit, kit2: c.kit2, traits: c.traits }, extra));
+      people.push(e);
+      const k = cellKey(Math.floor(x / CELL), Math.floor(y / CELL));
+      (grid.get(k) || grid.set(k, []).get(k)).push(e);
+      return e;
+    };
+
+    for (const g of districts.flatMap((d) => d.geography())) push(Object.assign({ kind: 'prop', colours: g.tint || null }, g, { tint: undefined }));
+    const allStories = districts.flatMap((d) => d.stories());
+    for (const s of allStories) {
+      if (isPerson(s.asset)) person(s.asset, s.x, s.y, s.flip, { story: s.story, id: s.id });
+      else push({ asset: s.asset, x: s.x, y: s.y, k: s.k, flip: s.flip, kind: s.asset.includes('animals') ? 'animal' : 'prop', story: s.story, leash: s.leash, colours: s.tint || null });
+    }
+
+    // spacing grid: people keep apart; the y distance counts double because the ground is foreshortened
+    const near = (x, y, d) => {
+      const cx = Math.floor(x / CELL), cy = Math.floor(y / CELL);
+      for (let i = cx - 1; i <= cx + 1; i++) for (let j = cy - 1; j <= cy + 1; j++) {
+        const cell = grid.get(cellKey(i, j));
+        if (cell && cell.some((p) => Math.hypot(p.x - x, (p.y - y) * 2.2) < d)) return true;
+      }
+      return false;
+    };
+    const fill = Math.max(0, total - people.length);
+    const spacing = total > 3000 ? 8 : total > 1600 ? 18 : 30;
+    const POOL_PATH = [[B + 'walk', 20], [B + 'dress', 13], [B + 'tote', 10], [B + 'phone', 7], [B + 'cane', 5], [B + 'child', 6], [C + 'jogger', 7], [C + 'tourist-photographer', 5], [C + 'scad-student-portfolio', 4], [C + 'dog-walker', 3], [C + 'parent-stroller', 3], [C + 'cyclist', 2]];
+    const POOL_STAND = [[B + 'coffee', 14], [B + 'phone', 12], [B + 'walk', 10], [B + 'dress', 10], [B + 'tote', 8], [B + 'child', 7], [B + 'cane', 4], [C + 'tourist-photographer', 5], [C + 'scad-student-portfolio', 3]];
+    const zonePairs = districts.flatMap((d) => d.zones.map((z) => [z, z.w]));
+    for (let placed = 0, tries = 0; placed < fill && tries < fill * 60; tries++) {
+      const z = rng.weighted(zonePairs);
+      const [x, y] = z.pt(rng);
+      if (blocked(x, y) || near(x, y, spacing)) continue;
+      const asset = rng.weighted(z.path ? POOL_PATH : POOL_STAND);
+      if (asset === C + 'cyclist' && z.id === 'promenade' && rng.chance(0.5)) continue;
+      const e = person(asset, Math.round(x), Math.round(y), rng.chance(0.5) ? 1 : 0, { zone: z.id });
+      if (asset === C + 'dog-walker') push({ asset: 'props/animals/dog-dachshund', x: e.x + (e.flip ? -84 : 84), y: e.y + 6, k: 0.9, flip: e.flip, kind: 'animal', leash: e.id });
+      placed++;
+    }
+
+    // Target candidates in seeded order: spots for this difficulty first, then any spot.
+    const diff = identity.difficulty || 'normal';
+    const SPOTS = districts.flatMap((d) => d.spots.map((s) => Object.assign({ district: d.id }, s)));
+    const mine = SPOTS.filter((s) => s.d.includes(diff)), rest = SPOTS.filter((s) => !s.d.includes(diff));
+    const candidates = [];
+    for (const pool of [mine, mine, mine, rest]) {
+      for (let i = 0, guard = 0; i < 12 + 4 * districts.length && guard < 800; guard++) {
+        const s = rng.pick(pool);
+        const a = rng() * Math.PI * 2, t = Math.sqrt(rng());
+        const x = Math.round(s.x + Math.cos(a) * s.r * t), y = Math.round(s.y + Math.sin(a) * s.r * t * 0.5);
+        if (blocked(x, y) || near(x, y, 18)) continue;
+        candidates.push({ spot: s.id, x, y, flip: rng.chance(0.5) ? 1 : 0 });
+        i++;
+      }
+    }
+    const target = push({ id: 'target', asset: C + 'target-walker', x: candidates[0].x, y: candidates[0].y, flip: candidates[0].flip, kind: 'person', isTarget: true, colours: null, traits: ['stripes', 'bobble', 'glasses', 'blue', 'stick'], spot: candidates[0].spot });
+
+    const area = (x, y) => { for (const d of districts) { const a = d.area(x, y); if (a) return a; } return 'somewhere in Savannah'; };
+    return { blocked, id: scene.id, name: scene.name, w: scene.w, h: scene.h, ground: scene.ground, background: '#F6E7C8', fountains: districts.flatMap((d) => d.fountains || (d.fountain ? [d.fountain] : [])), districts: districts.map((d) => ({ id: d.id, name: d.name, y0: d.y0, h: d.h })), area, entities, target, candidates, identity, people: people.length + 1, stories: new Set(allStories.map((s) => s.story)).size };
+  }
+
+  WS.buildScene = buildScene;
 })();
 
 /* ---- src/scenes/forsyth.js ---- */
@@ -363,87 +458,236 @@
     { id: 'hedge-line', x: 1600, y: 2370, r: 1300, d: ['hard'] },
     { id: 'plaza-crowd', x: 1600, y: 520, r: 260, d: ['hard', 'normal'] },
   ];
-  const BUDGET = { low: 180, standard: 360, dense: 600 };
-  const DECOY_RATE = { easy: 0.06, normal: 0.16, hard: 0.32 };
-
-  function build(identity) {
-    const rng = WS.rng.make(WS.rng.identityKey(identity));
-    const make = WS.characters.make;
-    const entities = [];
-    let n = 0;
-    const isPerson = (asset) => asset.startsWith('characters/');
-    const push = (o) => { const e = Object.assign({ k: o.k || (isPerson(o.asset) ? P : 1), flip: o.flip ? 1 : 0, layer: o.layer || (window.WS_ASSETS.meta[o.asset].layer === 'world' ? 'world' : window.WS_ASSETS.meta[o.asset].layer) }, o); if (!e.id) e.id = 'e' + n++; entities.push(e); return e; };
-    const people = [];
-    const grid = new Map(), CELL = 64;                       // spatial hash for spacing checks
-    const cellKey = (cx, cy) => cx + ',' + cy;
-    const decoyRate = DECOY_RATE[identity.difficulty] || DECOY_RATE.normal;
-    const total = identity.crowd ? Math.max(20, Math.min(10000, identity.crowd)) : BUDGET[identity.density] || BUDGET.standard;
-    // Stress crowds reuse a fixed set of looks so thousands of people do not mean thousands of sprite decodes.
-    const templates = total > 800 ? new Map() : null;
-    const person = (asset, x, y, flip, extra = {}) => {
-      let c;
-      if (templates) {
-        const list = templates.get(asset) || templates.set(asset, []).get(asset);
-        if (list.length < 24) { c = make(rng, asset, { decoys: rng.chance(decoyRate) ? 1 : 0 }); list.push(c); } else c = rng.pick(list);
-      } else c = make(rng, asset, { decoys: rng.chance(decoyRate) ? (rng.chance(0.45) ? 2 : 1) : 0 });
-      const e = push(Object.assign({ asset, x, y, flip, kind: 'person', colours: c.colours, kit: c.kit, kit2: c.kit2, traits: c.traits }, extra));
-      people.push(e);
-      const k = cellKey(Math.floor(x / CELL), Math.floor(y / CELL));
-      (grid.get(k) || grid.set(k, []).get(k)).push(e);
-      return e;
+  // Forsyth as a district placed with its north edge at world y = OY.
+  function district(OY = 0) {
+    const sh = (o) => Object.assign({}, o, { y: o.y + OY });
+    return {
+      id: 'forsyth', name: 'Forsyth Park', y0: OY, h: H,
+      geography: () => geography().map(sh),
+      stories: () => stories().map(sh),
+      zones: ZONES.map((z) => Object.assign({}, z, { pt: (r) => { const [x, y] = z.pt(r); return [x, y + OY]; } })),
+      blocked: (x, y) => blocked(x, y - OY),
+      spots: SPOTS.map(sh),
+      fountain: { x: 1600, y: 630 + OY, rx: 270, ry: 100 },
+      area(x, y) {
+        y -= OY;
+        if (y < 0 || y >= H) return null;
+        if (((x - 1600) / 430) ** 2 + ((y - 640) / 172) ** 2 < 1) return 'around the Forsyth Park fountain';
+        if (y < 470) return 'along Gaston Street at the top of Forsyth Park';
+        if (x > 1850 && x < 3000 && y > 1100 && y < 1480) return 'in the Forsyth farmers market';
+        if (x > 380 && x < 1120 && y > 1140 && y < 1430) return 'on the Forsyth café patio';
+        if (((x - 820) / 260) ** 2 + ((y - 1900) / 120) ** 2 < 1) return 'by the Forsyth playground';
+        if (x > 1440 && x < 1760 && y > 1000) return 'under the oak alley in Forsyth Park';
+        if (y > 2280) return 'along the south edge of Forsyth Park';
+        return 'on the ' + (x < 1600 ? 'west' : 'east') + ' side of Forsyth Park';
+      },
     };
-
-    for (const g of geography()) push(Object.assign({ kind: 'prop', colours: g.tint || null }, g, { tint: undefined }));
-    for (const s of stories()) {
-      if (isPerson(s.asset)) person(s.asset, s.x, s.y, s.flip, { story: s.story, id: s.id });
-      else push({ asset: s.asset, x: s.x, y: s.y, k: s.k, flip: s.flip, kind: s.asset.includes('animals') ? 'animal' : 'prop', story: s.story, leash: s.leash, colours: s.tint || null });
-    }
-
-    // spacing grid: people keep apart; the y distance counts double because the ground is foreshortened
-    const near = (x, y, d) => {
-      const cx = Math.floor(x / CELL), cy = Math.floor(y / CELL);
-      for (let i = cx - 1; i <= cx + 1; i++) for (let j = cy - 1; j <= cy + 1; j++) {
-        const cell = grid.get(cellKey(i, j));
-        if (cell && cell.some((p) => Math.hypot(p.x - x, (p.y - y) * 2.2) < d)) return true;
-      }
-      return false;
-    };
-    const fill = Math.max(0, total - people.length);
-    const spacing = total > 1200 ? 8 : total > 700 ? 18 : 30;
-    const POOL_PATH = [[B + 'walk', 20], [B + 'dress', 13], [B + 'tote', 10], [B + 'phone', 7], [B + 'cane', 5], [B + 'child', 6], [C + 'jogger', 7], [C + 'tourist-photographer', 5], [C + 'scad-student-portfolio', 4], [C + 'dog-walker', 3], [C + 'parent-stroller', 3], [C + 'cyclist', 2]];
-    const POOL_STAND = [[B + 'coffee', 14], [B + 'phone', 12], [B + 'walk', 10], [B + 'dress', 10], [B + 'tote', 8], [B + 'child', 7], [B + 'cane', 4], [C + 'tourist-photographer', 5], [C + 'scad-student-portfolio', 3]];
-    const zonePairs = ZONES.map((z) => [z, z.w]);
-    for (let placed = 0, tries = 0; placed < fill && tries < fill * 60; tries++) {
-      const z = rng.weighted(zonePairs);
-      const [x, y] = z.pt(rng);
-      if (blocked(x, y) || near(x, y, spacing)) continue;
-      const asset = rng.weighted(z.path ? POOL_PATH : POOL_STAND);
-      if (asset === C + 'cyclist' && z.id === 'promenade' && rng.chance(0.5)) continue;
-      const e = person(asset, Math.round(x), Math.round(y), rng.chance(0.5) ? 1 : 0, { zone: z.id });
-      if (asset === C + 'dog-walker') push({ asset: 'props/animals/dog-dachshund', x: e.x + (e.flip ? -84 : 84), y: e.y + 6, k: 0.9, flip: e.flip, kind: 'animal', leash: e.id });
-      placed++;
-    }
-
-    // Target candidates in seeded order: spots for this difficulty first, then any spot.
-    const diff = identity.difficulty || 'normal';
-    const mine = SPOTS.filter((s) => s.d.includes(diff)), rest = SPOTS.filter((s) => !s.d.includes(diff));
-    const candidates = [];
-    for (const pool of [mine, mine, mine, rest]) {
-      for (let i = 0, guard = 0; i < 12 && guard < 400; guard++) {
-        const s = rng.pick(pool);
-        const a = rng() * Math.PI * 2, t = Math.sqrt(rng());
-        const x = Math.round(s.x + Math.cos(a) * s.r * t), y = Math.round(s.y + Math.sin(a) * s.r * t * 0.5);
-        if (blocked(x, y) || near(x, y, 18)) continue;
-        candidates.push({ spot: s.id, x, y, flip: rng.chance(0.5) ? 1 : 0 });
-        i++;
-      }
-    }
-    const target = push({ id: 'target', asset: C + 'target-walker', x: candidates[0].x, y: candidates[0].y, flip: candidates[0].flip, kind: 'person', isTarget: true, colours: null, traits: ['stripes', 'bobble', 'glasses', 'blue', 'stick'], spot: candidates[0].spot });
-
-    return { id: 'forsyth', name: 'Forsyth Park', w: W, h: H, ground: 'environments/forsyth/ground', background: '#F6E7C8', fountain: { x: 1600, y: 630, rx: 270, ry: 100 }, entities, target, candidates, identity, people: people.length + 1, stories: new Set(stories().map((s) => s.story)).size };
   }
+  WS.districts = Object.assign(WS.districts || {}, { forsyth: district });
+  WS.scenes = Object.assign(WS.scenes || {}, { forsyth: { build: (identity) => WS.buildScene(identity, { id: 'forsyth', name: 'Forsyth Park', w: W, h: H, ground: 'environments/forsyth/ground', districts: [district(0)], budget: { low: 180, standard: 360, dense: 600 } }) } });
+})();
 
-  WS.scenes = Object.assign(WS.scenes || {}, { forsyth: { build, SPOTS, BUDGET } });
+/* ---- src/scenes/riverfront.js ---- */
+/* River Street and Festival Pier (Agent 2): world y 0-1500. River, riverwalk, plank pier with festival
+   tents, cobbled River Street, the cotton warehouse row and Bay Street. Mirrors tools/author/savannah-ground.mjs. */
+(function () {
+  const WS = (window.WS = window.WS || {});
+  const C = 'characters/archetypes/', B = 'characters/bodies/';
+  const inRect = (x, y, r) => x >= r[0] && x <= r[2] && y >= r[1] && y <= r[3];
+  const TENTS = [];
+  for (const y of [380, 430]) for (let x = 2120; x < 3120; x += 150) TENTS.push([x + (y === 430 ? 75 : 0), y]);
+  function geography() {
+    const g = [], add = (asset, x, y, k = 1, flip = 0, extra = {}) => g.push(Object.assign({ asset, x, y, k, flip }, extra));
+    add('environments/riverfront/warehouse-row', 0, 1350, 1, 0, { layer: 'far' });
+    add('props/river/riverboat', 900, 424, 1);
+    add('props/river/tugboat', 1820, 300, 0.9, 1);
+    add('props/landmarks/waving-girl', 420, 560, 0.9);
+    const awn = ['#2F7FA8', '#C73E3A', '#3E8E7E', '#E07A3F', '#7D5BA6', '#2F5D50', '#E8457A'];
+    TENTS.forEach(([x, y], i) => add('props/festival/tent', x, y, 1, i % 2, { tint: { tent: awn[i % awn.length], tent2: '#F5F0E6', cloth: ['#F2D55C', '#F5F0E6', '#F4A3B5', '#9EC3B5'][i % 4] } }));
+    for (let x = 120; x < 3200; x += 260) add('props/furniture/lamp-post', x, 452, 0.95);
+    for (const x of [260, 760, 1300, 1760]) add('props/furniture/park-bench', x, 470, 0.9);
+    for (let x = 80; x < 3200; x += 380) add('props/furniture/lamp-post', x, 1046, 0.9);
+    add('props/vehicles/trolley', 1200, 1470, 0.95);
+    add('props/vehicles/carriage', 2500, 1460, 0.95, 1);
+    add('props/vehicles/carriage', 700, 1030, 0.95);
+    return g;
+  }
+  function stories() {
+    const st = [], s = (story, asset, x, y, flip = 0, extra = {}) => st.push(Object.assign({ story, asset, x, y, flip }, extra));
+    // deckhands coiling rope by the riverboat gangway; a captain waving from the dock
+    s('deckhands', C + 'riverboat-worker', 1150, 470); s('deckhands', C + 'riverboat-worker', 1210, 478, 1); s('deckhands', B + 'tote', 1080, 488, 0);
+    // tourists photographing the Waving Girl statue
+    s('waving-girl', C + 'tourist-photographer', 520, 640, 1); s('waving-girl', B + 'phone', 340, 630); s('waving-girl', C + 'historian', 470, 660, 1);
+    // festival on the pier: cotton candy, a juggler, a queue at a tent
+    s('festival', C + 'juggler', 2560, 520); for (const [x, y, f] of [[2500, 556, 0], [2620, 560, 1], [2470, 520, 0], [2650, 524, 1]]) s('festival', C + 'festival-goer', x, y, f);
+    for (const [x, f] of [[2190, 0], [2230, 1], [2270, 0]]) s('festival', B + 'coffee', x, 470, f);
+    s('festival', C + 'saxophonist', 2900, 560, 1); s('festival', 'props/furniture/tip-hat', 2860, 566, 0, { k: 0.9 });
+    // pralines on River Street and a dropped ice cream
+    s('river-street', C + 'praline-vendor', 1500, 1000); s('river-street', B + 'child', 1580, 1012, 1); s('river-street', C + 'kid-balloon', 1640, 1020, 1);
+    // ghost-tour historian with a group on Factors Walk
+    s('ghost-tour', C + 'historian', 2200, 1380); for (const [x, f] of [[2260, 1], [2300, 1], [2340, 1]]) s('ghost-tour', B + 'walk', x, 1385, f);
+    // pigeons on the riverwalk
+    s('river-pigeons', C + 'elder-pigeon-feeder', 1900, 760); for (const [x, y, f] of [[1960, 770, 0], [1980, 784, 1], [1940, 790, 1], [2000, 764, 0]]) s('river-pigeons', 'props/animals/pigeon', x, y, f, { k: 0.9 });
+    return st;
+  }
+  const ZONES = [
+    { id: 'riverwalk', w: 26, path: true, pt: (r) => [40 + r() * 3120, 470 + r() * 420] },
+    { id: 'pier', w: 12, path: false, pt: (r) => [2040 + r() * 1080, 450 + r() * 30 - 0] },
+    { id: 'river-street', w: 12, path: true, pt: (r) => [40 + r() * 3120, 906 + r() * 128] },
+    { id: 'factors-walk', w: 7, path: true, pt: (r) => [40 + r() * 3120, 1356 + r() * 40] },
+  ];
+  const blocked = (x, y) => y < 456 && !(x > 2000 && y > 440) || (y > 1040 && y < 1350) || (y > 1400 && y < 1480) || TENTS.some(([tx, ty]) => inRect(x, y, [tx - 66, ty - 10, tx + 66, ty + 2])) || inRect(x, y, [370, 520, 470, 566]);
+  const SPOTS = [
+    { id: 'riverwalk-open', x: 1400, y: 700, r: 400, d: ['easy'] },
+    { id: 'festival-crowd', x: 2560, y: 540, r: 150, d: ['normal', 'hard'] },
+    { id: 'among-tents', x: 2600, y: 470, r: 400, d: ['hard'] },
+    { id: 'river-street-cobbles', x: 1600, y: 960, r: 900, d: ['easy', 'normal'] },
+    { id: 'gangway', x: 1160, y: 490, r: 80, d: ['normal'] },
+    { id: 'ghost-tour', x: 2280, y: 1386, r: 90, d: ['hard', 'normal'] },
+  ];
+  function area(x, y) {
+    if (y < 0 || y >= 1500) return null;
+    if (x > 2000 && y < 640) return 'on the Festival Pier';
+    if (y < 900) return x < 900 ? 'on the riverwalk by the Waving Girl' : 'on the riverwalk along the Savannah River';
+    if (y < 1100) return 'on cobbled River Street';
+    return 'on Bay Street by the Factors Walk bridges';
+  }
+  WS.districts = Object.assign(WS.districts || {}, { riverfront: () => ({ id: 'riverfront', name: 'River Street', y0: 0, h: 1500, geography, stories, zones: ZONES, blocked, spots: SPOTS, area }) });
+})();
+
+/* ---- src/scenes/market.js ---- */
+/* Bay Street to City Market (Agent 2): world y 1500-2950. Shopfront row with the City Market gate,
+   a brick plaza with stalls, café tables, planters and street performers, then Congress Street. */
+(function () {
+  const WS = (window.WS = window.WS || {});
+  const C = 'characters/archetypes/', B = 'characters/bodies/';
+  const inRect = (x, y, r) => x >= r[0] && x <= r[2] && y >= r[1] && y <= r[3];
+  const STALLS = [[500, 2060], [700, 2060], [900, 2060], [2300, 2060], [2500, 2060], [2700, 2060], [1100, 2520], [2100, 2520], [400, 2560], [2800, 2560]];
+  const TENTS = [[700, 2250], [900, 2250], [2300, 2250], [2500, 2250]];
+  const TABLES = [[1350, 2160], [1520, 2180], [1700, 2160], [1860, 2180], [1440, 2320], [1780, 2330]];
+  function geography() {
+    const g = [], add = (asset, x, y, k = 1, flip = 0, extra = {}) => g.push(Object.assign({ asset, x, y, k, flip }, extra));
+    add('environments/market/market-row', 0, 1830, 1, 0, { layer: 'far' });
+    const kinds = ['peaches', 'flowers', 'honey'], awn = ['#E07A3F', '#2F7FA8', '#3E8E7E', '#7D5BA6', '#E8457A', '#2F5D50'];
+    STALLS.forEach(([x, y], i) => add('props/market/stall-' + kinds[i % 3], x, y, 1.05, 0, { tint: { awn: awn[i % 6], awn2: '#F5F0E6', cloth: ['#F2D55C', '#F5F0E6', '#F4A3B5'][i % 3] } }));
+    const tc = ['#C73E3A', '#2F7FA8', '#3E8E7E', '#E07A3F'];
+    TENTS.forEach(([x, y], i) => add('props/festival/tent', x, y, 1, i % 2, { tint: { tent: tc[i], tent2: '#F5F0E6', cloth: ['#F4A3B5', '#F2D55C', '#9EC3B5', '#F5F0E6'][i] } }));
+    for (const x of [1300, 1900]) add('props/vegetation/azalea-bush', x, 2600, 0.9, x > 1600 ? 1 : 0);
+    TABLES.forEach(([x, y], i) => add('props/furniture/cafe-table', x, y, 0.9, i % 2, { tint: { umb: ['#2F5D50', '#C73E3A', '#2F7FA8', '#E8C872', '#7D5BA6', '#E07A3F'][i], umb2: '#F5F0E6' } }));
+    for (const x of [500, 1100, 2100, 2700]) { add('props/vegetation/azalea-bush', x - 40, 2386, 0.85); add('props/vegetation/azalea-bush', x + 40, 2392, 0.85, 1); add('props/vegetation/palmetto', x, 2372, 0.7); }
+    for (let x = 200; x < 3200; x += 400) add('props/furniture/lamp-post', x, 1850, 0.95);
+    add('props/vehicles/carriage', 900, 2770, 0.95); add('props/vehicles/trolley', 2300, 2776, 0.95);
+    add('props/vegetation/live-oak-tall', 150, 2920, 0.8); add('props/vegetation/live-oak', 3060, 2930, 0.8, 1);
+    return g;
+  }
+  function stories() {
+    const st = [], s = (story, asset, x, y, flip = 0, extra = {}) => st.push(Object.assign({ story, asset, x, y, flip }, extra));
+    s('market-painter', C + 'painter', 1200, 1960); s('market-painter', 'props/furniture/easel-fountain-painting', 1258, 1962, 0, { k: 0.85 });
+    s('market-busker', C + 'saxophonist', 2000, 1960, 1); s('market-busker', 'props/furniture/tip-hat', 1950, 1968, 0, { k: 0.9 });
+    for (const [x, f] of [[1900, 0], [1940, 1], [2060, 1]]) s('market-busker', B + 'coffee', x, 1990, f);
+    s('market-dance', C + 'dancer', 1600, 2470); s('market-dance', B + 'phone', 1660, 2480, 1); s('market-dance', B + 'child', 1550, 2490);
+    for (const [x, y, both] of TABLES.map(([x, y], i) => [x, y, i % 2])) { s('market-cafe', B + 'seated', x - 24, y + 3); if (both) s('market-cafe', B + 'seated', x + 26, y + 4, 1); }
+    s('market-chess', C + 'chess-players', 2700, 2300); s('market-chess', B + 'cane', 2760, 2270, 1);
+    s('carriage-ride', C + 'bride', 960, 2800); s('carriage-ride', C + 'groom', 1010, 2802, 1);
+    for (const [i, [x, y]] of STALLS.entries()) s('market-vendors', [B + 'coffee', B + 'dress', B + 'walk'][i % 3], x + 20, y - 14, i % 2);
+    // shoppers at the tents, a flower buyer with a toddler, a juggler drawing kids, students sketching
+    for (const [i, [x, y]] of TENTS.entries()) for (const [dx, a, f] of [[-40, B + 'tote', 0], [10, B + 'dress', 1], [50, [B + 'coffee', B + 'phone', B + 'cane', B + 'walk'][i], 1]]) s('market-tents', a, x + dx, y + 30, f);
+    s('market-juggler', C + 'juggler', 1600, 2620); for (const [x, y, f] of [[1550, 2650, 0], [1650, 2655, 1], [1600, 2668, 0], [1520, 2620, 0]]) s('market-juggler', B + 'child', x, y, f);
+    s('market-sketch', C + 'scad-student-portfolio', 1250, 2440); s('market-sketch', C + 'scad-student-portfolio', 1300, 2450, 1); s('market-sketch', C + 'painter', 1960, 2440, 1);
+    s('market-balloon', C + 'kid-balloon', 2380, 2400); s('market-balloon', C + 'parent-stroller', 2300, 2410);
+    s('market-pigeons', C + 'elder-pigeon-feeder', 820, 2440); for (const [x, y, f] of [[880, 2448, 0], [900, 2462, 1], [860, 2470, 1]]) s('market-pigeons', 'props/animals/pigeon', x, y, f, { k: 0.9 });
+    return st;
+  }
+  const ZONES = [
+    { id: 'market-plaza', w: 46, path: false, pt: (r) => [80 + r() * 3040, 1880 + r() * 780] },
+    { id: 'market-front', w: 10, path: true, pt: (r) => [40 + r() * 3120, 1840 + r() * 34] },
+    { id: 'congress-walk', w: 8, path: true, pt: (r) => [40 + r() * 3120, 2790 + r() * 150] },
+  ];
+  const blocked = (x, y) => y < 1836 || (y > 2696 && y < 2786) || STALLS.some(([sx, sy]) => inRect(x, y, [sx - 62, sy - 26, sx + 62, sy + 4])) || TENTS.some(([tx, ty]) => inRect(x, y, [tx - 66, ty - 10, tx + 66, ty + 2])) || TABLES.some(([tx, ty]) => inRect(x, y, [tx - 40, ty - 12, tx + 40, ty + 6])) || [500, 1100, 2100, 2700].some((px) => ((x - px) / 92) ** 2 + ((y - 2380) / 38) ** 2 < 1);
+  const SPOTS = [
+    { id: 'market-gate', x: 1600, y: 1900, r: 160, d: ['easy', 'normal'] },
+    { id: 'market-stalls', x: 800, y: 2090, r: 200, d: ['normal', 'hard'] },
+    { id: 'market-tents', x: 1600, y: 2280, r: 900, d: ['hard', 'normal'] },
+    { id: 'market-cafe-tables', x: 1600, y: 2260, r: 260, d: ['hard'] },
+    { id: 'busker-ring', x: 1980, y: 1990, r: 80, d: ['normal'] },
+    { id: 'congress-street', x: 1600, y: 2860, r: 1200, d: ['easy'] },
+  ];
+  function area(x, y) {
+    if (y < 1500 || y >= 2950) return null;
+    if (y < 1880) return 'along the City Market shopfronts';
+    if (y > 2690) return 'on Congress Street below the market';
+    return 'in the City Market plaza';
+  }
+  WS.districts = Object.assign(WS.districts || {}, { market: () => ({ id: 'market', name: 'City Market', y0: 1500, h: 1450, geography, stories, zones: ZONES, blocked, spots: SPOTS, area }) });
+})();
+
+/* ---- src/scenes/squares.js ---- */
+/* Two Oglethorpe squares (Agent 2): world y 2950-4300. Townhouse rows, an obelisk square and a fountain
+   square, with oaks, benches and tour traffic. Mirrors tools/author/savannah-ground.mjs. */
+(function () {
+  const WS = (window.WS = window.WS || {});
+  const C = 'characters/archetypes/', B = 'characters/bodies/';
+  const SQ = [[900, 3655], [2300, 3655]];
+  function geography() {
+    const g = [], add = (asset, x, y, k = 1, flip = 0, extra = {}) => g.push(Object.assign({ asset, x, y, k, flip }, extra));
+    add('environments/squares/row-houses', 0, 3220, 1, 0, { layer: 'far' });
+    add('props/landmarks/obelisk', 900, 3690, 0.95);
+    add('environments/forsyth/fountain', 2300, 3700, 0.5);
+    const OAK = ['props/vegetation/live-oak', 'props/vegetation/live-oak-tall', 'props/vegetation/live-oak-lean'];
+    SQ.forEach(([cx, cy], q) => {
+      [[-400, -200], [400, -200], [-400, 260], [400, 260]].forEach(([dx, dy], i) => add(OAK[(i + q) % 3], cx + dx, cy + dy, 0.62, (i + q) % 2));
+      for (const [dx, dy] of [[-150, -100], [150, -100], [-150, 110], [150, 110]]) add('props/furniture/park-bench', cx + dx, cy + dy, 0.85);
+      for (const [dx, dy] of [[-260, -10], [260, -10]]) add('props/vegetation/azalea-bush', cx + dx, cy + dy, 0.9, dx > 0 ? 1 : 0);
+      for (const dx of [-220, 220]) add('props/furniture/lamp-post', cx + dx, cy - 60, 0.9);
+    });
+    add('props/vehicles/trolley', 1600, 3276, 0.95); add('props/vehicles/carriage', 400, 4096, 0.95, 1);
+    return g;
+  }
+  function stories() {
+    const st = [], s = (story, asset, x, y, flip = 0, extra = {}) => st.push(Object.assign({ story, asset, x, y, flip }, extra));
+    s('square-tour', C + 'historian', 760, 3700); for (const [x, y, f] of [[700, 3740, 0], [820, 3750, 1], [660, 3700, 0], [860, 3720, 1]]) s('square-tour', [B + 'walk', B + 'dress', C + 'tourist-photographer', B + 'tote'][x % 4], x, y, f);
+    s('square-reader', C + 'reader-seated', 2150, 3555); s('square-reader', C + 'reader-seated', 2450, 3765, 1);
+    s('square-painter', C + 'sculptor', 2560, 3500); s('square-wedding', C + 'bride', 2240, 3770); s('square-wedding', C + 'groom', 2290, 3772, 1); s('square-wedding', C + 'tourist-photographer', 2380, 3830, 1);
+    s('square-dog', C + 'dog-walker', 1100, 3900, 0, { id: 'sqwalker' }); s('square-dog', 'props/animals/dog-dachshund', 1184, 3906, 0, { k: 0.9, leash: 'sqwalker' });
+    s('square-gardener', C + 'gardener', 640, 3610); s('square-rake', C + 'maintenance-worker', 2000, 3900);
+    return st;
+  }
+  const ZONES = [
+    { id: 'square-paths', w: 20, path: true, pt: (r) => { const [cx, cy] = SQ[r() < 0.5 ? 0 : 1]; return r() < 0.5 ? [cx - 500 + r() * 1000, cy - 20 + r() * 40] : [cx - 20 + r() * 40, cy - 310 + r() * 620]; } },
+    { id: 'square-lawns', w: 14, path: false, pt: (r) => { const [cx, cy] = SQ[r() < 0.5 ? 0 : 1]; return [cx - 500 + r() * 1000, cy - 300 + r() * 600]; } },
+    { id: 'square-sidewalks', w: 10, path: true, pt: (r) => [40 + r() * 3120, r() < 0.5 ? 3300 + r() * 26 : 4120 + r() * 160] },
+    { id: 'between-squares', w: 6, path: true, pt: (r) => [1440 + r() * 320, 3320 + r() * 700] },
+  ];
+  const blocked = (x, y) => y < 3296 || (y > 4036 && y < 4116) || ((x - 900) / 40) ** 2 + ((y - 3680) / 26) ** 2 < 1 || ((x - 2300) / 150) ** 2 + ((y - 3650) / 60) ** 2 < 1;
+  const SPOTS = [
+    { id: 'square-west-paths', x: 900, y: 3655, r: 420, d: ['easy', 'normal'] },
+    { id: 'square-east-oaks', x: 2300, y: 3655, r: 480, d: ['hard', 'normal'] },
+    { id: 'square-tour-group', x: 760, y: 3720, r: 90, d: ['hard'] },
+    { id: 'square-sidewalk', x: 1600, y: 4200, r: 1300, d: ['easy'] },
+  ];
+  function area(x, y) {
+    if (y < 2950 || y >= 4300) return null;
+    if (y < 3300) return 'on the street below the squares\' townhouses';
+    if (y > 4030) return 'on the street between the squares and Forsyth Park';
+    return x < 1600 ? 'in the obelisk square' : 'in the fountain square';
+  }
+  WS.districts = Object.assign(WS.districts || {}, { squares: () => ({ id: 'squares', name: 'The squares', y0: 2950, h: 1350, geography, stories, zones: ZONES, blocked, spots: SPOTS, area }) });
+})();
+
+/* ---- src/scenes/savannah.js ---- */
+/* The whole city in one world (Agent 2): River Street, City Market, two squares and Forsyth Park from north
+   to south. The target can be in any district. */
+(function () {
+  const WS = (window.WS = window.WS || {});
+  function build(identity) {
+    const D = WS.districts;
+    return WS.buildScene(identity, {
+      id: 'savannah', name: 'Savannah', w: 3200, h: 6700, ground: 'environments/savannah/ground',
+      districts: [D.riverfront(), D.market(), D.squares(), D.forsyth(4300)],
+      budget: { low: 450, standard: 900, dense: 1500 },
+    });
+  }
+  WS.scenes = Object.assign(WS.scenes || {}, { savannah: { build } });
 })();
 
 /* ---- src/engine/sprites.js ---- */
@@ -453,7 +697,8 @@
 (function () {
   const WS = (window.WS = window.WS || {});
   const TIERS = [0.25, 0.5, 1, 2, 4, 8];
-  const MAX_SIDE = 2048;          // largest raster side for one sprite tier
+  const MAX_SIDE = 8192;          // largest raster side for one sprite tier
+  const MAX_AREA = 4.2e6;         // largest raster area for one sprite tier (about 17 MB)
   const BUDGET_PX = 48e6;         // about 190 MB of RGBA across all tiers
   const byKey = new Map();
   const lru = new Map();          // 'key@tier' -> pixels, in recency order
@@ -463,14 +708,15 @@
   function variantKey(e) {
     return e.asset + (e.colours ? '|' + JSON.stringify(e.colours) : '') + (e.kit ? '|' + JSON.stringify(e.kit) : '') + (e.kit2 ? '|' + JSON.stringify(e.kit2) : '');
   }
-  function forEntity(e) {
-    const key = variantKey(e);
+  function forEntity(e, frame = 1) {
+    const key = variantKey(e) + (frame === 2 ? '|f2' : '');
     let s = byKey.get(key);
     if (!s) {
       const m = window.WS_ASSETS.meta[e.asset];
-      const svg = m.head || m.head2 || e.colours ? WS.characters.compose(e.asset, e.colours, e.kit, e.kit2) : window.WS_ASSETS.svg[e.asset];
+      const svg = m.head || m.head2 || e.colours || frame === 2 ? WS.characters.compose(e.asset, e.colours, e.kit, e.kit2, frame) : window.WS_ASSETS.svg[e.asset];
       s = { key, svg, vb: m.viewBox, anchor: m.anchor, img: null, tiers: new Map(), mask: null };
-      s.maxTier = MAX_SIDE / Math.max(s.vb[2], s.vb[3]);
+      // cap a tier by side length and by area, so long building rows can still render sharp up close
+      s.maxTier = Math.min(MAX_SIDE / Math.max(s.vb[2], s.vb[3]), Math.sqrt(MAX_AREA / (s.vb[2] * s.vb[3])));
       byKey.set(key, s);
     }
     return s;
@@ -613,23 +859,95 @@
         e.motion = e.kind === 'person' ? (WALKERS.test(e.asset) ? (e.asset.endsWith('jogger') ? 'jog' : 'walk') : 'idle')
           : e.asset === 'effects/kite' ? 'kite' : e.asset === 'effects/bubbles' ? 'rise' : e.asset.includes('animals') ? 'idle' : null;
         e.speed = 0.85 + h * 0.35;
+        assignTravel(e, h);
       }
     }
+
+    // ---------- locomotion ----------
+    // Crowd people travel: along walks and streets (lanes), up and down the long paths, or wandering with
+    // pauses on lawns and plazas. Story characters stay at their story; the target paces a few steps
+    // around his validated hiding spot. Dogs on leads follow their walkers.
+    const H_LANES = new Set(['north-walk', 'cross-walk', 'south-walk', 'riverwalk', 'river-street', 'factors-walk', 'market-front', 'congress-walk', 'square-sidewalks']);
+    const V_LANES = new Set(['promenade', 'side-walks', 'between-squares']);
+    const SPEED = (a) => /cyclist/.test(a) ? 85 : /jogger/.test(a) ? 55 : /child|cane/.test(a) ? 14 : /stroller/.test(a) ? 16 : 22;
+    function assignTravel(e, h) {
+      e.travel = null;
+      if (e.kind !== 'person' || e.motion !== 'walk' && e.motion !== 'jog') return;
+      const r = WS.rng.mulberry32(WS.rng.fnv1a(e.id + '#walk'));
+      const v = SPEED(e.asset) * (0.85 + r() * 0.3);
+      e.hx = e.x; e.hy = e.y;
+      if (e.isTarget) e.travel = { kind: 'wander', v: 9, r: 22, r_: r };
+      else if (!e.zone) e.travel = null;
+      else if (H_LANES.has(e.zone)) e.travel = { kind: 'h', v };
+      else if (V_LANES.has(e.zone)) e.travel = { kind: 'v', v, y0: e.y - 380, y1: e.y + 380 };
+      else if (!/cyclist|jogger/.test(e.asset)) e.travel = { kind: 'wander', v: v * 0.7, r: 80, r_: r };
+      if (e.travel && e.travel.kind === 'wander') { e.travel.tx = e.x; e.travel.ty = e.y; e.travel.wait = r() * 3; }
+    }
+    let lastMove = 0, lastSort = 0;
+    const blockedAt = (x, y) => (world.blocked ? world.blocked(x, y) : false);
+    function travel(t) {
+      const dt = lastMove ? Math.min(0.1, (t - lastMove) / 1000) : 0;
+      lastMove = t;
+      if (!dt) return;
+      let movedY = false;
+      for (const e of world.entities) {
+        const T = e.travel;
+        if (!T) continue;
+        e.moving = true;
+        if (T.kind === 'h') {
+          const dir = e.flip ? -1 : 1, nx = e.x + dir * T.v * dt;
+          if (nx < 70 || nx > world.w - 70 || blockedAt(nx, e.y)) e.flip = e.flip ? 0 : 1; else e.x = nx;
+        } else if (T.kind === 'v') {
+          T.dir = T.dir || (e.flip ? -1 : 1);
+          const ny = e.y + T.dir * T.v * dt;
+          if (ny < T.y0 || ny > T.y1 || blockedAt(e.x, ny)) T.dir = -T.dir; else { e.y = ny; movedY = true; }
+        } else {
+          if (T.wait > 0) { T.wait -= dt; e.moving = false; continue; }
+          const dx = T.tx - e.x, dy = T.ty - e.y, d = Math.hypot(dx, dy);
+          if (d < 2) {
+            const a = T.r_() * Math.PI * 2, rr = T.r * Math.sqrt(T.r_());
+            const nx = e.hx + Math.cos(a) * rr, ny = e.hy + Math.sin(a) * rr * 0.5;
+            if (!blockedAt(nx, ny)) { T.tx = nx; T.ty = ny; }
+            T.wait = 0.5 + T.r_() * 3.5;
+            e.moving = false;
+            continue;
+          }
+          const step = Math.min(d, T.v * dt);
+          e.x += (dx / d) * step; e.y += (dy / d) * step;
+          if (Math.abs(dx) > 1) e.flip = dx < 0 ? 1 : 0;
+          movedY = movedY || Math.abs(dy) > 0.01;
+        }
+        e.rect = rectOf(e);
+      }
+      // dogs keep to their walkers
+      for (const e of world.entities) {
+        if (!e.leash || !e.leashTo) continue;
+        const w = e.leashTo;
+        e.flip = w.flip; e.x = w.x + (w.flip ? -84 : 84); e.y = w.y + 6; e.rect = rectOf(e);
+      }
+      if (movedY && t - lastSort > 200) { sortList(); lastSort = t; }
+    }
     function animate(t) {
+      travel(t);
       const s = t / 1000;
       for (const e of list) {
         if (!e.motion) continue;
         const p = s * e.speed * Math.PI * 2 + e.phase;
-        if (e.motion === 'walk') e.oy = -Math.abs(Math.sin(p * 0.9)) * 1.8;
+        if ((e.motion === 'walk' || e.motion === 'jog') && e.travel && !e.moving) { e.oy = Math.sin(p * 0.25) * 0.5; if (e.sprite0) e.sprite = e.sprite0; continue; }
+        if (e.motion === 'walk') {
+          e.oy = -Math.abs(Math.sin(p * 0.9)) * 1.8;
+          // stride at the bottom of the bounce, passing pose at the top: two drawn frames per step
+          if (e.sprite1) e.sprite = Math.abs(Math.sin(p * 0.9)) > 0.5 ? e.sprite1 : e.sprite0;
+        }
         else if (e.motion === 'jog') e.oy = -Math.abs(Math.sin(p * 1.4)) * 3.2;
         else if (e.motion === 'idle') e.oy = Math.sin(p * 0.25) * 0.5;
         else if (e.motion === 'kite') { e.oy = Math.sin(p * 0.35) * 6; e.rot = Math.sin(p * 0.27) * 0.08; }
         else if (e.motion === 'rise') e.oy = -((s * 6 + e.phase * 4) % 14);
       }
     }
-    function drawFountain(s) {
-      const f = world.fountain;
-      if (!f) return;
+    // Sparkle over a fountain basin; the basin ellipse is relative to the fountain sprite's anchor.
+    function drawFountain(e, s) {
+      const f = { x: e.x, y: e.y - 112 * e.k, rx: 270 * e.k, ry: 100 * e.k };
       ctx.save();
       ctx.fillStyle = 'rgba(255,255,255,0.85)';
       for (let i = 0; i < 26; i++) {
@@ -646,8 +964,12 @@
     // ---------- loading ----------
     const ground = { img: null, base: null, tiles: new Map() };
     async function load(progress) {
-      for (const e of world.entities) e.sprite = S().forEntity(e);
-      const sprites = [...new Set(world.entities.map((e) => e.sprite))];
+      for (const e of world.entities) {
+        e.sprite = e.sprite0 = S().forEntity(e);
+        // walking figures with a drawn second frame get it as a separate sprite (not in stress crowds)
+        if (window.WS_ASSETS.meta[e.asset].frames === 2 && world.people <= 2001) e.sprite1 = S().forEntity(e, 2);
+      }
+      const sprites = [...new Set(world.entities.flatMap((e) => (e.sprite1 ? [e.sprite0, e.sprite1] : [e.sprite0])))];
       let done = 0;
       const gsvg = window.WS_ASSETS.svg[world.ground];
       ground.img = new Image();
@@ -659,6 +981,7 @@
       ground.base.getContext('2d').drawImage(ground.img, 0, 0, ground.base.width, ground.base.height);
       for (const e of world.entities) { e.rect = rectOf(e); e.pickable = e.layer === 'world' || e.layer === 'ground'; }
       assignMotion();
+      for (const e of world.entities) if (e.leash) e.leashTo = world.entities.find((p) => p.id === e.leash);
       sortList();
       return { sprites: sprites.length };
     }
@@ -764,7 +1087,7 @@
         if (x > x1 || y > y1 || x + w < x0 || y + h < y0) continue;
         drawEntity(e, need, now);
         if (e.leash) drawLeash(e);
-        if (e.asset === 'environments/forsyth/fountain' && motionOn) drawFountain(performance.now() / 1000);
+        if (e.asset === 'environments/forsyth/fountain' && motionOn) drawFountain(e, performance.now() / 1000);
         drawn++;
       }
       for (const fx of effects) fx(ctx, z);
@@ -889,7 +1212,7 @@
       addEffect(fn) { effects.push(fn); dirty = true; },
       removeEffect(fn) { effects = effects.filter((f) => f !== fn); dirty = true; },
       setBeacon(on) { beacon = on; dirty = true; },
-      setMotion(on) { motionOn = on && !reduced; for (const e of world.entities) { e.oy = 0; e.rot = 0; } dirty = true; },
+      setMotion(on) { motionOn = on && !reduced; lastMove = 0; for (const e of world.entities) { e.oy = 0; e.rot = 0; if (e.sprite0) e.sprite = e.sprite0; } dirty = true; },
       get motion() { return motionOn; },
       invalidate() { dirty = true; },
       start() { requestAnimationFrame(loop); },
@@ -985,7 +1308,7 @@
     const seed = (q.get('seed') || '').replace(/[^A-Za-z0-9_-]/g, '').slice(0, 32) || 'SAV-' + Math.floor(Math.random() * 1e4).toString().padStart(4, '0');
     const crowdN = parseInt(q.get('crowd'), 10);
     return {
-      seed, scene: pick(q.get('scene'), ['forsyth'], 'forsyth'),
+      seed, scene: pick(q.get('scene'), ['savannah', 'forsyth'], 'savannah'),
       difficulty: pick(q.get('difficulty'), ['easy', 'normal', 'hard'], 'normal'),
       density: pick(q.get('density'), ['low', 'standard', 'dense'], 'standard'),
       crowd: Number.isFinite(crowdN) ? Math.max(20, Math.min(10000, crowdN)) : null,
@@ -1013,20 +1336,29 @@
   const WS = (window.WS = window.WS || {});
   const KEY = 'waldos_savannah_leaderboard_v1', MAX = 10;
   const valid = (r) => r && typeof r.username === 'string' && Number.isFinite(r.elapsedMs) && Number.isFinite(r.wrongGuesses) && typeof r.seed === 'string';
-  const sort = (a) => a.sort((x, y) => x.elapsedMs - y.elapsedMs || x.wrongGuesses - y.wrongGuesses);
+  // Points reward speed and accuracy, and harder difficulty multiplies them. Records saved before points
+  // existed are scored from their own fields (difficulty defaults to normal).
+  const MULT = { easy: 1, normal: 1.5, hard: 2.5 };
+  function points(r) {
+    const base = 10000 - 10 * (r.elapsedMs / 1000) - 300 * r.wrongGuesses - 1500 * (r.hints || 0);
+    return Math.round(Math.max(100, base) * (MULT[r.difficulty] || MULT.normal));
+  }
+  const withPoints = (r) => (Number.isFinite(r.points) ? r : Object.assign({}, r, { points: points(r) }));
+  const sort = (a) => a.sort((x, y) => y.points - x.points || x.elapsedMs - y.elapsedMs || x.wrongGuesses - y.wrongGuesses);
   function load() {
-    try { const a = JSON.parse(localStorage.getItem(KEY) || '[]'); return Array.isArray(a) ? sort(a.filter(valid)).slice(0, MAX) : []; }
+    try { const a = JSON.parse(localStorage.getItem(KEY) || '[]'); return Array.isArray(a) ? sort(a.filter(valid).map(withPoints)).slice(0, MAX) : []; }
     catch (e) { return []; }
   }
   function save(rec) {
     const r = Object.assign({}, rec, { username: String(rec.username).trim().slice(0, 18) });
+    r.points = points(r);
     if (!r.username || !valid(r)) return { ok: false, list: load() };
     const list = sort(load().concat([r])).slice(0, MAX);
     try { localStorage.setItem(KEY, JSON.stringify(list)); return { ok: true, list, rank: list.indexOf(list.find((x) => x === r || (x.username === r.username && x.elapsedMs === r.elapsedMs && x.seed === r.seed))) + 1 }; }
     catch (e) { return { ok: false, list }; }
   }
   function clear() { try { localStorage.removeItem(KEY); } catch (e) { /* storage blocked */ } }
-  WS.leaderboard = { load, save, clear, KEY, MAX };
+  WS.leaderboard = { load, save, clear, points, MULT, KEY, MAX };
 })();
 
 /* ---- src/main.js ---- */
@@ -1070,24 +1402,11 @@
       if (highlight && i + 1 === highlight) li.className = 'mine';
       const name = document.createElement('span'); name.className = 'name'; name.textContent = r.username;
       const meta = document.createElement('span'); meta.className = 'meta';
-      meta.textContent = fmt(r.elapsedMs) + ' · ' + r.wrongGuesses + ' wrong' + (r.hints ? ' · ' + r.hints + ' hint' + (r.hints > 1 ? 's' : '') : '') + (r.difficulty ? ' · ' + r.difficulty : '');
+      meta.textContent = r.points.toLocaleString() + ' pts · ' + fmt(r.elapsedMs) + ' · ' + r.wrongGuesses + ' wrong' + (r.hints ? ' · ' + r.hints + ' hint' + (r.hints > 1 ? 's' : '') : '') + (r.difficulty ? ' · ' + r.difficulty : '');
       const seed = document.createElement('span'); seed.className = 'seed'; seed.textContent = r.seed;
       li.append(name, meta, seed);
       ol.appendChild(li);
     });
-  }
-
-  // Plain-language area names for hints.
-  function areaName(x, y) {
-    if (((x - 1600) / 430) ** 2 + ((y - 640) / 172) ** 2 < 1) return 'around the fountain plaza';
-    if (y < 470) return 'along Gaston Street and the north gate';
-    if (x > 1850 && x < 3000 && y > 1100 && y < 1480) return 'in the farmers market';
-    if (x > 380 && x < 1120 && y > 1140 && y < 1430) return 'on the café patio';
-    if (((x - 820) / 260) ** 2 + ((y - 1900) / 120) ** 2 < 1) return 'by the playground';
-    if (x > 1440 && x < 1760 && y > 1000) return 'under the oak alley on the promenade';
-    if (y > 2280) return 'along the south walk by the hedges';
-    if (y > 1600) return 'on the south lawn';
-    return 'on the ' + (x < 1600 ? 'west' : 'east') + ' lawn';
   }
 
   async function main() {
@@ -1121,7 +1440,8 @@
     engine.renderNow();
     WS.game.timings.firstFrameMs = performance.now() - t0;
     engine.start();
-    document.title = 'Forsyth Park · Waldo\'s Savannah';
+    document.title = world.name + ' · Waldo\'s Savannah';
+    $('sceneName').textContent = world.name;
     round.state = 'INTRO';
     show('intro');
     $('startBtn').focus();
@@ -1129,6 +1449,8 @@
     engine.onFrame(() => {
       if (round.state === 'PLAYING') $('timer').textContent = fmt(round.elapsed());
       $('zoomLabel').textContent = engine.camera.zoom.toFixed(1) + 'x';
+      const here = world.districts.find((d) => engine.camera.y >= d.y0 && engine.camera.y < d.y0 + d.h);
+      if (here && $('hereLabel').textContent !== here.name) $('hereLabel').textContent = here.name;
       return false;
     });
 
@@ -1149,7 +1471,7 @@
       const t = world.target, rng = WS.rng.make(WS.rng.identityKey(identity) + '#hint');
       if (round.hints === 0) {
         round.hints = 1;
-        toast('Hint: he is ' + areaName(t.x, t.y) + '.');
+        toast('Hint: he is ' + world.area(t.x, t.y) + '.');
       } else if (round.hints === 1) {
         round.hints = 2;
         const a = rng() * Math.PI * 2, d = 80 + rng() * 120, cx = t.x + Math.cos(a) * d, cy = t.y - 40 + Math.sin(a) * d * 0.6, r = 300;
@@ -1210,8 +1532,10 @@
         round.state = 'WON'; round.endedAt = performance.now();
         marker(wx, wy, true);
         if (hintFx) engine.removeEffect(hintFx);
+        const pts = WS.leaderboard.points({ elapsedMs: round.elapsed(), wrongGuesses: round.wrong, hints: round.hints, difficulty: identity.difficulty });
+        $('winPoints').textContent = pts.toLocaleString() + ' points' + (identity.difficulty !== 'easy' ? ' (×' + WS.leaderboard.MULT[identity.difficulty] + ' for ' + identity.difficulty + ')' : '');
         $('winText').textContent = 'You found him in ' + fmt(round.elapsed()) + ' with ' + round.wrong + ' wrong guess' + (round.wrong === 1 ? '' : 'es') + (round.hints ? ' and ' + round.hints + ' hint' + (round.hints > 1 ? 's' : '') : '') + '.';
-        $('winSpot').textContent = 'He was ' + areaName(world.target.x, world.target.y) + '.';
+        $('winSpot').textContent = 'He was ' + world.area(world.target.x, world.target.y) + '.';
         $('shareBox').value = WS.gameplay.shareUrl(identity, location.href);
         $('saveBtn').disabled = false; $('nameInput').disabled = false;
         engine.setBeacon(true);

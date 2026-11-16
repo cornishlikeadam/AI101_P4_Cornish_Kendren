@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 140 340" width="140" height="340" data-anchor="70 334" data-asset="props/landmarks/obelisk"  data-author="original, hand-authored SVG, Waldo's Savannah 2026-11-15">
+<ellipse cx="74" cy="334" rx="66" ry="6" fill="#2B1D16" opacity=".16"/>
+<path d="M10,300 L130,300 L130,334 L10,334 Z" fill="#B9B3A5" stroke="#2B1D16" stroke-width="1.6" stroke-linejoin="round"/><path d="M24,280 L116,280 L116,302 L24,302 Z" fill="#C9C2B2" stroke="#2B1D16" stroke-width="1.6" stroke-linejoin="round"/>
+<path d="M40,262 L100,262 L100,282 L40,282 Z" fill="#D8D2C4" stroke="#2B1D16" stroke-width="1.6" stroke-linejoin="round"/>
+<path d="M50,262 L58,40 L82,40 L90,262 Z" fill="#E4DED0" stroke="#2B1D16" stroke-width="1.6" stroke-linejoin="round"/><path d="M72,40 L82,40 L90,262 L76,262 Z" fill="#C9C2B2"/>
+<path d="M58,40 L70,14 L82,40 Z" fill="#E4DED0" stroke="#2B1D16" stroke-width="1.6" stroke-linejoin="round"/><path d="M70,14 L82,40 L74,40 Z" fill="#C9C2B2"/>
+<path d="M60,120 H82 M58,180 H84" stroke="#2B1D16" stroke-opacity=".3" stroke-width="1"/>
+<g stroke="#2B1D16" stroke-width="2.4"><path d="M4,330 V306 M28,334 V310 M52,334 V312 M88,334 V312 M112,334 V310 M136,330 V306"/></g>
+<path d="M4,308 Q70,296 136,308" fill="none" stroke="#2B1D16" stroke-width="2"/>
+</svg>

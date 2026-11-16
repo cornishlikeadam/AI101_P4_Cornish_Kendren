@@ -44,7 +44,7 @@
   const defaultKit = (assetId, n) => parseKit(A().meta[assetId][n === 2 ? 'kit2' : 'kit']);
 
   // colours: { skin, hair, top, top2, bottom, hat, hat2, acc, shoe } plus skin2, hair2, top3, top4, bottom2, shoe2, hat3 for a second person
-  function compose(assetId, colours, kit, kit2) {
+  function compose(assetId, colours, kit, kit2, frame = 1) {
     const a = A();
     let svg = a.svg[assetId];
     if (!svg) throw new Error('unknown asset ' + assetId);
@@ -52,6 +52,7 @@
     const head = (pos, k) => '<g transform="translate(' + pos[0] + ' ' + pos[1] + ') scale(' + pos[2] + ')">' + headAssembly(k) + '</g>';
     if (svg.includes('<!--HEAD-->')) svg = svg.replace('<!--HEAD-->', head(m.head || [0, 0, 1], Object.assign(defaultKit(assetId, 1), kit || {})));
     if (svg.includes('<!--HEAD2-->')) svg = svg.replace('<!--HEAD2-->', head(m.head2 || [0, 0, 1], Object.assign(defaultKit(assetId, 2), kit2 || {})));
+    if (frame === 2) svg = svg.replace('<g data-frame="1">', '<g data-frame="1" display="none">').replace('<g data-frame="2" display="none">', '<g data-frame="2">');
     if (colours) {
       const style = Object.entries(colours).filter(([, v]) => v).map(([k, v]) => '--' + k + ':' + v).join(';');
       svg = svg.replace('<svg ', '<svg style="' + style + '" ');

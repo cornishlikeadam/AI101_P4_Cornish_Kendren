@@ -2,7 +2,7 @@
 
 Every runtime asset, its origin and its permission. All entries are original work made for this project; nothing is traced, extracted or adapted from existing books, games or asset packs. Agents drew the SVG by hand in code. Where a helper script in `tools/author/` is named, the composition was placed by hand and the script only did repetitive drafting (fence posts, scalloped leaf edges, moss strands, grass and paving texture, palm leaflet edges, hedge scallops). Python files in `tools/author/` that write character parts, bodies and archetypes only wrap hand-written path coordinates into files. No image-generation service was used.
 
-Packed for runtime into `build/js/assets.bundle.js` by `tools/pack-assets.mjs` (art version 1). Count: 84 SVG files.
+Packed for runtime into `build/js/assets.bundle.js` by `tools/pack-assets.mjs` (art version 1). Count: 100 SVG files.
 
 | File | Origin | Author and date | Permission |
 |---|---|---|---|
@@ -90,5 +90,21 @@ Packed for runtime into `build/js/assets.bundle.js` by `tools/pack-assets.mjs` (
 | `assets/props/vegetation/live-oak-tall.svg` | Original SVG, hand-composed; author helper `tools/author/live-oak.mjs` (tall variant: reshaped crown, own seed) | Waldo's Savannah project, 2026-11-15 | Project-owned, no third-party material |
 | `assets/props/vegetation/live-oak.svg` | Original SVG, hand-composed; author helper `tools/author/live-oak.mjs` | Waldo's Savannah project, 2026-11-15 | Project-owned, no third-party material |
 | `assets/props/vegetation/palmetto.svg` | Original SVG, hand-composed; author helper `tools/author/props-2.py` (frond angles and lengths hand-set; script draws the leaflet edges) | Waldo's Savannah project, 2026-11-15 | Project-owned, no third-party material |
+| `assets/environments/savannah/ground.svg` | Original SVG, hand-composed; author helper `tools/author/savannah-ground.mjs` (layout hand-placed; script repeats facade modules or scatters texture) | Waldo's Savannah project, 2026-11-15 | Project-owned, no third-party material |
+| `assets/environments/riverfront/warehouse-row.svg` | Original SVG, hand-composed; author helper `tools/author/savannah-districts.py` (layout hand-placed; script repeats facade modules or scatters texture) | Waldo's Savannah project, 2026-11-15 | Project-owned, no third-party material |
+| `assets/environments/market/market-row.svg` | Original SVG, hand-composed; author helper `tools/author/savannah-districts.py` (layout hand-placed; script repeats facade modules or scatters texture) | Waldo's Savannah project, 2026-11-15 | Project-owned, no third-party material |
+| `assets/props/river/riverboat.svg` | Original SVG, hand-authored; coordinates written by hand, file written by `tools/author/savannah-districts.py` | Waldo's Savannah project, 2026-11-15 | Project-owned, no third-party material |
+| `assets/props/river/tugboat.svg` | Original SVG, hand-authored; coordinates written by hand, file written by `tools/author/savannah-districts.py` | Waldo's Savannah project, 2026-11-15 | Project-owned, no third-party material |
+| `assets/props/landmarks/obelisk.svg` | Original SVG, hand-authored; coordinates written by hand, file written by `tools/author/savannah-districts.py` | Waldo's Savannah project, 2026-11-15 | Project-owned, no third-party material |
+| `assets/props/landmarks/waving-girl.svg` | Original SVG, hand-authored; coordinates written by hand, file written by `tools/author/savannah-districts.py` | Waldo's Savannah project, 2026-11-15 | Project-owned, no third-party material |
+| `assets/props/vehicles/carriage.svg` | Original SVG, hand-authored; coordinates written by hand, file written by `tools/author/savannah-districts.py` | Waldo's Savannah project, 2026-11-15 | Project-owned, no third-party material |
+| `assets/props/vehicles/trolley.svg` | Original SVG, hand-authored; coordinates written by hand, file written by `tools/author/savannah-districts.py` | Waldo's Savannah project, 2026-11-15 | Project-owned, no third-party material |
+| `assets/props/festival/tent.svg` | Original SVG, hand-authored; coordinates written by hand, file written by `tools/author/savannah-districts.py` | Waldo's Savannah project, 2026-11-15 | Project-owned, no third-party material |
+| `assets/characters/bodies/seated.svg` | Original SVG, hand-authored; coordinates written by hand, file written by `tools/author/district-characters.py` | Waldo's Savannah project, 2026-11-15 | Project-owned, no third-party material |
+| `assets/characters/archetypes/festival-goer.svg` | Original SVG, hand-authored; coordinates written by hand, file written by `tools/author/district-characters.py` | Waldo's Savannah project, 2026-11-15 | Project-owned, no third-party material |
+| `assets/characters/archetypes/historian.svg` | Original SVG, hand-authored; coordinates written by hand, file written by `tools/author/district-characters.py` | Waldo's Savannah project, 2026-11-15 | Project-owned, no third-party material |
+| `assets/characters/archetypes/riverboat-worker.svg` | Original SVG, hand-authored; coordinates written by hand, file written by `tools/author/district-characters.py` | Waldo's Savannah project, 2026-11-15 | Project-owned, no third-party material |
+| `assets/characters/parts/hats/tricorn.svg` | Original SVG, hand-authored; coordinates written by hand, file written by `tools/author/district-characters.py` | Waldo's Savannah project, 2026-11-15 | Project-owned, no third-party material |
+| `assets/environments/squares/row-houses.svg` | Original SVG, hand-composed; author helper `tools/author/savannah-districts.py` (row-house and church modules drawn by hand; script repeats and varies them) | Waldo's Savannah project, 2026-11-15 | Project-owned, no third-party material |
 
 Fonts: none bundled. The interface uses system font stacks (`build/illustrated.html`); no web font is requested.

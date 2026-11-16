@@ -198,3 +198,38 @@ body('seated', '0 30 64 72', '32 99', '''
 <circle class="skin o" cx="44.6" cy="64.4" r="2.8"/>
 <!--HEAD-->''', 'data-head="-4 16 1"')
 print('bodies written')
+
+# ---- walk cycle: a second drawn frame ("passing" pose, legs together) for walking bodies ----
+# Frame 1 is the stride already drawn above; frame 2 replaces only the legs. The composer swaps the
+# two <g data-frame> groups; the engine alternates them in step with the walking bounce.
+PASS = '''<path class="bottom o" d="M26.4,64 C26.6,74 26.8,84 27,94.4 L32.6,94.6 C32.4,85 32.4,75 32.6,65 Z"/>
+<path class="sh" d="M26.4,64 C26.6,74 26.8,84 27,94.4 L32.6,94.6 C32.4,85 32.4,75 32.6,65 Z"/>
+<path class="shoe o" d="M25.4,94 L33,94.2 C35.6,94.6 36.4,96.8 35.6,98.6 L24.6,98.6 C24,96.8 24.2,94.8 25.4,94 Z"/>
+<path class="bottom o" d="M31.6,64 C33.4,72 35.2,80 35.6,88 C35.8,90.4 36.6,92.6 37.6,94 L42.6,92.6 C41,90 40.6,87.6 40.4,85 C40.2,77 40,70 39.6,63.6 Z"/>
+<path class="shoe o" d="M37,92.6 L43.6,91.6 C46.6,91.4 47.8,93.8 47.2,96.2 L37.6,97.4 C36.6,96 36.4,94 37,92.6 Z"/>'''
+PASS_DRESS = '''<path class="skin o" d="M27.6,80 L27.6,94.4 L31.6,94.6 L31.8,80 Z"/>
+<path class="shoe o" d="M25.8,93.6 L32.2,94 C34,94.4 34.6,96.6 33.8,98.4 L25,98.4 C24.4,96.6 24.6,94.6 25.8,93.6 Z"/>
+<path class="skin o" d="M33.4,80 C34.4,85 35.6,89 37,92.6 L41,91.6 C39.6,88 38.6,84 37.8,79.6 Z"/>
+<path class="shoe o" d="M36.4,92 L42,91 C44.8,90.8 45.8,93 45.2,95.2 L37,96.4 C36,95 35.8,93.2 36.4,92 Z"/>'''
+PASS_CHILD = '''<path class="bottom o" d="M17.6,52 C17.8,58 18,64 18.2,70.6 L22.6,70.8 C22.4,65 22.4,59 22.6,52.6 Z"/>
+<path class="shoe o" d="M16.6,70 L23,70.2 C25,70.6 25.4,72.6 24.6,74.4 L15.8,74.4 C15.4,72.8 15.4,71 16.6,70 Z"/>
+<path class="bottom o" d="M21.6,52 C23,57 24.4,62 25,66.6 C25.4,68 26,69 26.8,69.8 L30.6,68.8 C29.6,67 29.2,65 29,63 C28.6,59 28.4,55.6 28,51.6 Z"/>
+<path class="shoe o" d="M26.2,69.2 L31.2,68.2 C33.8,68 35,70.2 34.4,72.2 L27,73.4 C26,72.2 25.8,70.6 26.2,69.2 Z"/>'''
+def add_frame(name, alt):
+    p = f'bodies/{name}.svg'
+    lines = open(p).read().split('\n')
+    if any('data-frame' in l for l in lines): return
+    legs = [i for i, l in enumerate(lines) if ('class="bottom o"' in l or 'class="shoe o"' in l or (name == 'dress' and 'class="skin o" d="M' in l and ('M26.4,80' in l or 'M34.4,80' in l))) and i < len(lines) - 1]
+    # the leg block is the contiguous run that ends at the last shoe before the torso
+    torso = next(i for i, l in enumerate(lines) if ('class="top o" d="M21' in l or 'class="top o" d="M22' in l or 'class="top o" d="M23,41' in l or 'class="top o" d="M15,38' in l))
+    legs = [i for i in legs if i < torso]
+    a, b = legs[0], max(i for i in legs if 'shoe' in lines[i])
+    block = [l for l in lines[a:b + 1] if 'class="top' not in l and 'class="skin o" cx' not in l]
+    keep = [l for l in lines[a:b + 1] if l not in block]
+    new = keep + ['<g data-frame="1">'] + block + ['</g>', '<g data-frame="2" display="none">', alt, '</g>']
+    lines[a:b + 1] = new
+    open(p, 'w').write('\n'.join(lines))
+for n in ('walk', 'tote', 'cane'): add_frame(n, PASS)
+add_frame('dress', PASS_DRESS)
+add_frame('child', PASS_CHILD)
+print('walk frames added')

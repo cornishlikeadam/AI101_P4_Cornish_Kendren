@@ -167,6 +167,16 @@
 
 ---
 
+## Session 10: The whole city in one world (checkpoint 4)
+
+**Date**: 2026-11-15
+**Agents/Tools Used**: Claude Code (Claude Opus 5.5), `playwright-core` driving the installed Chrome.
+**Task**: project lead asked for every location in one game (the target can be anywhere; scroll to search) and for difficulty to weight leaderboard points.
+**Work done**: 14 new SVG assets (warehouse row, City Market row, riverboat, tug, Waving Girl, obelisk, festival tent, carriage, trolley, riverboat worker, festival-goer, historian, tricorn hat, citywide ground). Scene builder split into `src/scenes/build.js` plus districts (riverfront, market, squares, forsyth); default scene `savannah`. Points system and points-ordered leaderboard; "Here" district readout. Tests 22 of 22; city performance in `performance.md`. PR #1 opened for checkpoints 1–3.
+**Human Review & Modification Applied**: checkpoint 3 approved; checkpoint 4 pending.
+
+---
+
 ## AI Tools & Skills Used Summary
 
 | Tool/Skill | Purpose | Sessions | Human Oversight |

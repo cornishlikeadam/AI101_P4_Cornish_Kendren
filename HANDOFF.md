@@ -78,11 +78,12 @@ Written by `tools/pack-assets.mjs` from the `data-*` attributes on each root `<s
 | 1 | `engine.camera.{panBy, zoomAt, centerOn, reset, fit, toWorld, toScreen}` | World coordinates are never changed by the camera. Zoom 1.0x = 0.4 CSS px per world unit; range 0.6x to 3.5x |
 | 1 | `engine.onFrame(fn)` | Called once per frame with `{ t, dt }`; return true to request a redraw |
 | 1 | `engine.tryTarget(x, y, flip)` | Test hook: moves the target and returns the validator result |
-| 2 | `WS.scenes.forsyth.build(identity) → world` | Deterministic for a given identity. `world = { w, h, ground, entities, target, candidates, identity, people, stories }` |
+| 2 | `WS.scenes.{savannah,forsyth}.build(identity) → world` | Deterministic for a given identity. Built by `WS.buildScene` from districts (`WS.districts.*`, each `{ id, name, y0, h, geography, stories, zones, blocked, spots, area }`). `world = { w, h, ground, districts, area(x, y), entities, target, candidates, identity, people, stories }` |
 | 2 | `WS.characters.make(rng, asset, { decoys }) → { colours, kit, kit2, traits }` | Applies the decoy cap; throws rather than yield more than two traits |
 | 2 | `WS.characters.compose(asset, colours, kit, kit2) → svg string` | Assembles head parts at the head markers and sets colour slots |
 | 3 | `ui.show(state)`, `ui.toast(text)`, `ui.hud(update)` | DOM only, never draws on the canvas |
-| 3 | `leaderboard.{load, save, clear}` | Key `waldos_savannah_leaderboard_v1`, records `{ username, elapsedMs, wrongGuesses, seed }` plus optional `scene`, `difficulty`, `hints`, `artVersion`; max 10; sort `elapsedMs` then `wrongGuesses`; tolerate missing optional fields |
+| 3 | `leaderboard.{load, save, clear}` | Key `waldos_savannah_leaderboard_v1`, records `{ username, elapsedMs, wrongGuesses, seed }` plus optional `scene`, `difficulty`, `hints`, `artVersion`; plus `points`; max 10; sort by `points` (high first), then `elapsedMs`, then `wrongGuesses`; tolerate missing optional fields and score old records from their own fields |
+| 3 | `leaderboard.points(record)` | `round(max(100, 10000 − 10·seconds − 300·wrong − 1500·hints) × {easy 1, normal 1.5, hard 2.5})` |
 
 ## Input
 
@@ -97,7 +98,7 @@ Sources in `vibe-coding/src/` are classic scripts that attach to `window.WS`. `n
 | Param | Meaning |
 |---|---|
 | `seed` | Replay seed; random `SAV-XXXX` if absent |
-| `scene` | `forsyth` (others once approved) |
+| `scene` | `savannah` (default: River Street, City Market, two squares and Forsyth Park in one 3200 × 6700 world) or `forsyth` (Forsyth alone, used by older tests) |
 | `difficulty` | `easy`, `normal` (default), `hard` |
 | `density` | `low`, `standard` (default), `dense` |
 | `crowd` | Stress override, 20 to 10,000; marks the round as a stress test |

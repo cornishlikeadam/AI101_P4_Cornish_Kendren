@@ -4,7 +4,8 @@
 (function () {
   const WS = (window.WS = window.WS || {});
   const TIERS = [0.25, 0.5, 1, 2, 4, 8];
-  const MAX_SIDE = 2048;          // largest raster side for one sprite tier
+  const MAX_SIDE = 8192;          // largest raster side for one sprite tier
+  const MAX_AREA = 4.2e6;         // largest raster area for one sprite tier (about 17 MB)
   const BUDGET_PX = 48e6;         // about 190 MB of RGBA across all tiers
   const byKey = new Map();
   const lru = new Map();          // 'key@tier' -> pixels, in recency order
@@ -14,14 +15,15 @@
   function variantKey(e) {
     return e.asset + (e.colours ? '|' + JSON.stringify(e.colours) : '') + (e.kit ? '|' + JSON.stringify(e.kit) : '') + (e.kit2 ? '|' + JSON.stringify(e.kit2) : '');
   }
-  function forEntity(e) {
-    const key = variantKey(e);
+  function forEntity(e, frame = 1) {
+    const key = variantKey(e) + (frame === 2 ? '|f2' : '');
     let s = byKey.get(key);
     if (!s) {
       const m = window.WS_ASSETS.meta[e.asset];
-      const svg = m.head || m.head2 || e.colours ? WS.characters.compose(e.asset, e.colours, e.kit, e.kit2) : window.WS_ASSETS.svg[e.asset];
+      const svg = m.head || m.head2 || e.colours || frame === 2 ? WS.characters.compose(e.asset, e.colours, e.kit, e.kit2, frame) : window.WS_ASSETS.svg[e.asset];
       s = { key, svg, vb: m.viewBox, anchor: m.anchor, img: null, tiers: new Map(), mask: null };
-      s.maxTier = MAX_SIDE / Math.max(s.vb[2], s.vb[3]);
+      // cap a tier by side length and by area, so long building rows can still render sharp up close
+      s.maxTier = Math.min(MAX_SIDE / Math.max(s.vb[2], s.vb[3]), Math.sqrt(MAX_AREA / (s.vb[2] * s.vb[3])));
       byKey.set(key, s);
     }
     return s;
