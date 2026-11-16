@@ -293,7 +293,7 @@
     const target = push({ id: 'target', asset: C + 'target-walker', x: candidates[0].x, y: candidates[0].y, flip: candidates[0].flip, kind: 'person', isTarget: true, colours: null, traits: ['stripes', 'bobble', 'glasses', 'blue', 'stick'], spot: candidates[0].spot });
 
     const area = (x, y) => { for (const d of districts) { const a = d.area(x, y); if (a) return a; } return 'somewhere in Savannah'; };
-    return { id: scene.id, name: scene.name, w: scene.w, h: scene.h, ground: scene.ground, background: '#F6E7C8', fountains: districts.flatMap((d) => d.fountains || (d.fountain ? [d.fountain] : [])), districts: districts.map((d) => ({ id: d.id, name: d.name, y0: d.y0, h: d.h })), area, entities, target, candidates, identity, people: people.length + 1, stories: new Set(allStories.map((s) => s.story)).size };
+    return { blocked, id: scene.id, name: scene.name, w: scene.w, h: scene.h, ground: scene.ground, background: '#F6E7C8', fountains: districts.flatMap((d) => d.fountains || (d.fountain ? [d.fountain] : [])), districts: districts.map((d) => ({ id: d.id, name: d.name, y0: d.y0, h: d.h })), area, entities, target, candidates, identity, people: people.length + 1, stories: new Set(allStories.map((s) => s.story)).size };
   }
 
   WS.buildScene = buildScene;
@@ -859,13 +859,81 @@
         e.motion = e.kind === 'person' ? (WALKERS.test(e.asset) ? (e.asset.endsWith('jogger') ? 'jog' : 'walk') : 'idle')
           : e.asset === 'effects/kite' ? 'kite' : e.asset === 'effects/bubbles' ? 'rise' : e.asset.includes('animals') ? 'idle' : null;
         e.speed = 0.85 + h * 0.35;
+        assignTravel(e, h);
       }
     }
+
+    // ---------- locomotion ----------
+    // Crowd people travel: along walks and streets (lanes), up and down the long paths, or wandering with
+    // pauses on lawns and plazas. Story characters stay at their story; the target paces a few steps
+    // around his validated hiding spot. Dogs on leads follow their walkers.
+    const H_LANES = new Set(['north-walk', 'cross-walk', 'south-walk', 'riverwalk', 'river-street', 'factors-walk', 'market-front', 'congress-walk', 'square-sidewalks']);
+    const V_LANES = new Set(['promenade', 'side-walks', 'between-squares']);
+    const SPEED = (a) => /cyclist/.test(a) ? 85 : /jogger/.test(a) ? 55 : /child|cane/.test(a) ? 14 : /stroller/.test(a) ? 16 : 22;
+    function assignTravel(e, h) {
+      e.travel = null;
+      if (e.kind !== 'person' || e.motion !== 'walk' && e.motion !== 'jog') return;
+      const r = WS.rng.mulberry32(WS.rng.fnv1a(e.id + '#walk'));
+      const v = SPEED(e.asset) * (0.85 + r() * 0.3);
+      e.hx = e.x; e.hy = e.y;
+      if (e.isTarget) e.travel = { kind: 'wander', v: 9, r: 22, r_: r };
+      else if (!e.zone) e.travel = null;
+      else if (H_LANES.has(e.zone)) e.travel = { kind: 'h', v };
+      else if (V_LANES.has(e.zone)) e.travel = { kind: 'v', v, y0: e.y - 380, y1: e.y + 380 };
+      else if (!/cyclist|jogger/.test(e.asset)) e.travel = { kind: 'wander', v: v * 0.7, r: 80, r_: r };
+      if (e.travel && e.travel.kind === 'wander') { e.travel.tx = e.x; e.travel.ty = e.y; e.travel.wait = r() * 3; }
+    }
+    let lastMove = 0, lastSort = 0;
+    const blockedAt = (x, y) => (world.blocked ? world.blocked(x, y) : false);
+    function travel(t) {
+      const dt = lastMove ? Math.min(0.1, (t - lastMove) / 1000) : 0;
+      lastMove = t;
+      if (!dt) return;
+      let movedY = false;
+      for (const e of world.entities) {
+        const T = e.travel;
+        if (!T) continue;
+        e.moving = true;
+        if (T.kind === 'h') {
+          const dir = e.flip ? -1 : 1, nx = e.x + dir * T.v * dt;
+          if (nx < 70 || nx > world.w - 70 || blockedAt(nx, e.y)) e.flip = e.flip ? 0 : 1; else e.x = nx;
+        } else if (T.kind === 'v') {
+          T.dir = T.dir || (e.flip ? -1 : 1);
+          const ny = e.y + T.dir * T.v * dt;
+          if (ny < T.y0 || ny > T.y1 || blockedAt(e.x, ny)) T.dir = -T.dir; else { e.y = ny; movedY = true; }
+        } else {
+          if (T.wait > 0) { T.wait -= dt; e.moving = false; continue; }
+          const dx = T.tx - e.x, dy = T.ty - e.y, d = Math.hypot(dx, dy);
+          if (d < 2) {
+            const a = T.r_() * Math.PI * 2, rr = T.r * Math.sqrt(T.r_());
+            const nx = e.hx + Math.cos(a) * rr, ny = e.hy + Math.sin(a) * rr * 0.5;
+            if (!blockedAt(nx, ny)) { T.tx = nx; T.ty = ny; }
+            T.wait = 0.5 + T.r_() * 3.5;
+            e.moving = false;
+            continue;
+          }
+          const step = Math.min(d, T.v * dt);
+          e.x += (dx / d) * step; e.y += (dy / d) * step;
+          if (Math.abs(dx) > 1) e.flip = dx < 0 ? 1 : 0;
+          movedY = movedY || Math.abs(dy) > 0.01;
+        }
+        e.rect = rectOf(e);
+      }
+      // dogs keep to their walkers
+      for (const e of world.entities) {
+        if (!e.leash || !e.leashTo) continue;
+        const w = e.leashTo;
+        e.flip = w.flip; e.x = w.x + (w.flip ? -84 : 84); e.y = w.y + 6; e.rect = rectOf(e);
+      }
+      if (movedY && t - lastSort > 200) { sortList(); lastSort = t; }
+    }
     function animate(t) {
+      travel(t);
       const s = t / 1000;
       for (const e of list) {
         if (!e.motion) continue;
         const p = s * e.speed * Math.PI * 2 + e.phase;
+        if ((e.motion === 'walk' || e.motion === 'jog') && e.travel && !e.moving) { e.oy = Math.sin(p * 0.25) * 0.5; if (e.sprite0) e.sprite = e.sprite0; continue; }
         if (e.motion === 'walk') {
           e.oy = -Math.abs(Math.sin(p * 0.9)) * 1.8;
           // stride at the bottom of the bounce, passing pose at the top: two drawn frames per step
@@ -913,6 +981,7 @@
       ground.base.getContext('2d').drawImage(ground.img, 0, 0, ground.base.width, ground.base.height);
       for (const e of world.entities) { e.rect = rectOf(e); e.pickable = e.layer === 'world' || e.layer === 'ground'; }
       assignMotion();
+      for (const e of world.entities) if (e.leash) e.leashTo = world.entities.find((p) => p.id === e.leash);
       sortList();
       return { sprites: sprites.length };
     }
@@ -1143,7 +1212,7 @@
       addEffect(fn) { effects.push(fn); dirty = true; },
       removeEffect(fn) { effects = effects.filter((f) => f !== fn); dirty = true; },
       setBeacon(on) { beacon = on; dirty = true; },
-      setMotion(on) { motionOn = on && !reduced; for (const e of world.entities) { e.oy = 0; e.rot = 0; if (e.sprite0) e.sprite = e.sprite0; } dirty = true; },
+      setMotion(on) { motionOn = on && !reduced; lastMove = 0; for (const e of world.entities) { e.oy = 0; e.rot = 0; if (e.sprite0) e.sprite = e.sprite0; } dirty = true; },
       get motion() { return motionOn; },
       invalidate() { dirty = true; },
       start() { requestAnimationFrame(loop); },
