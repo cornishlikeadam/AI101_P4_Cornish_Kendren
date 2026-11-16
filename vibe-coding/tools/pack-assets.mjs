@@ -41,6 +41,7 @@ for (const file of walk(assetsDir)) {
     head2: nums(attr('data-head2')),
     kit: attr('data-kit') || null,
     kit2: attr('data-kit2') || null,
+    frames: text.includes('data-frame="2"') ? 2 : 1,
     author: attr('data-author') || null,
   };
 }

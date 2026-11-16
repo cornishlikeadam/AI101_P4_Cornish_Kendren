@@ -60,7 +60,7 @@
     if (x > 2000 && y < 640) return 'on the Festival Pier';
     if (y < 900) return x < 900 ? 'on the riverwalk by the Waving Girl' : 'on the riverwalk along the Savannah River';
     if (y < 1100) return 'on cobbled River Street';
-    return 'on Factors Walk and Bay Street';
+    return 'on Bay Street by the Factors Walk bridges';
   }
   WS.districts = Object.assign(WS.districts || {}, { riverfront: () => ({ id: 'riverfront', name: 'River Street', y0: 0, h: 1500, geography, stories, zones: ZONES, blocked, spots: SPOTS, area }) });
 })();

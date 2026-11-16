@@ -64,6 +64,18 @@ Default scene `savannah`: 3200 × 6700 world, four districts. Same tour keyframe
 
 Load time now scales with distinct sprites (every person has a unique look up to 2,000 people; stress crowds share looks). The asset bundle is 1.2 MB because the city ground embeds Forsyth's.
 
+### After drawn walk frames (revision 2)
+
+Walking bodies and the target now have a second drawn frame, so about 470 walkers load two sprites each. Large building rows rasterize up to 4.2 MPx per tier instead of 2,048 px wide, so they stay sharp at 3.5x.
+
+| Density | DPR | Load ms | Avg FPS | p95 ms | Worst ms | Raster MPx | Sprites |
+|---|---:|---:|---:|---:|---:|---:|---:|
+| standard (901) | 1 | 1,410 | 59.6 | 16.7 | 83.3 | 23.4 | 1,443 |
+| dense (1,501) | 1 | 2,601 | 59.8 | 16.8 | 50.1 | 30.6 | 2,399 |
+| standard (901) | 2 | 1,388 | 59.8 | 16.8 | 50.1 | 48.0 | 1,443 |
+
+Load time is the cost of the second frame; frame rate is unchanged.
+
 ## What changed during measurement
 
 - First headless run without the GPU flags: 35 FPS at standard density, frame times in 16.7 ms steps. The page reported no WebGL renderer, which points to software compositing. Timing the draw call itself showed 26 ms per frame at 1.0x zoom.
