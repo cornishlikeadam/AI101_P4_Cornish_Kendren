@@ -65,7 +65,8 @@
   const sqWalk = (id, cx, cy, hw, hh, w = 12) => ({ id, w, path: true, pt: (r) => (r() < 0.5 ? [cx - hw + 30 + r() * (hw * 2 - 60), cy - 16 + r() * 32] : [cx - 16 + r() * 32, cy - hh + 30 + r() * (hh * 2 - 60)]) });
   const sqLawn = (id, cx, cy, hw, hh, w = 6) => ({ id, w, path: false, pt: (r) => [cx - hw + 30 + r() * (hw * 2 - 60), cy - hh + 30 + r() * (hh * 2 - 60)] });
   const walkH = (side, y0, y1, w = 8) => ({ id: 'wing-walk', w, path: true, pt: (r) => [x0(side) + 40 + r() * 2880, y0 + r() * (y1 - y0)] });
-  const walkNS = (side, y0, y1, w = 4) => ({ id: 'wing-ns', w, path: true, pt: (r) => { const xs = nsOf(side, y0), c = xs[Math.floor(r() * xs.length)]; return [c + (r() < 0.5 ? -78 : 62) + r() * 16, y0 + 40 + r() * (y1 - y0 - 80)]; } });
+  const walkNS = (side, y0, y1, w = 4) => ({ id: 'wing-ns', w, path: true, pt: (r) => { const xs = NS[side], c = xs[Math.floor(r() * xs.length)], y = y0 + 40 + r() * (y1 - y0 - 80); return [c + (y >= 7200 || r() >= 0.5 ? 62 : -76) + r() * 14, y]; } });
+  const inNSGap = (side, x, y) => (y >= 7240 ? NS[side].some((c) => x >= c + 58 && x <= c + 78) : nsOf(side, y).some((c) => Math.abs(x - c) < (c === 2905 || c === E + 75 ? 52 : 80)));
   const onRoad = (side, x, y) => ROADS.some(([ry, h]) => y > ry - 4 && y < ry + h + 4) || (y > 1476 && nsOf(side, y).some((c) => Math.abs(x - c) < 60));
   const part = (side, o) => Object.assign({ side, geography: () => [], stories: () => [], zones: [], spots: [], blocked: () => false, area: () => null }, o);
 
@@ -99,10 +100,10 @@
       },
       zones: [
         { id: 'riverwalk', w: 16, path: true, pt: (r) => [40 + r() * 2880, 470 + r() * 420] },
-        { id: 'river-street', w: 8, path: true, pt: (r) => [40 + r() * 2880, 906 + r() * 128] },
+        { id: 'river-street', w: 8, path: true, pt: (r) => [40 + r() * 2880, 906 + r() * 110] },
         { id: 'factors-walk', w: 4, path: true, pt: (r) => [40 + r() * 2880, 1356 + r() * 40] },
       ],
-      blocked: (x, y) => y < 456 || (y > 1040 && y < 1350) || (y > 1400 && y < 1480),
+      blocked: (x, y) => y < 456 || (y > 1018 && y < 1350) || (y > 1400 && y < 1480),
       spots: [
         { id: 'plant-terrace', x: 500, y: 540, r: 300, d: ['easy', 'normal'] },
         { id: 'plant-busker', x: 280, y: 580, r: 70, d: ['hard'] },
@@ -137,11 +138,11 @@
       },
       zones: [
         { id: 'riverwalk', w: 16, path: true, pt: (r) => [E + 40 + r() * 2880, 470 + r() * 420] },
-        { id: 'river-street', w: 8, path: true, pt: (r) => [E + 40 + r() * 2880, 906 + r() * 128] },
+        { id: 'river-street', w: 8, path: true, pt: (r) => [E + 40 + r() * 2880, 906 + r() * 110] },
         { id: 'factors-walk', w: 4, path: true, pt: (r) => [E + 40 + r() * 2880, 1356 + r() * 40] },
         { id: 'emmet-park', w: 6, path: false, pt: (r) => [E + 1520 + r() * 1160, 450 + r() * 100] },
       ],
-      blocked: (x, y) => y < 456 || (y > 1040 && y < 1350) || (y > 1400 && y < 1480) || inRect(x, y, [E + 1730, 490, E + 1770, 506]),
+      blocked: (x, y) => y < 456 || (y > 1018 && y < 1350) || (y > 1400 && y < 1480) || inRect(x, y, [E + 940, 968, E + 1030, 1025]) || inRect(x, y, [E + 1730, 490, E + 1770, 506]),
       spots: [
         { id: 'emmet-park', x: E + 2000, y: 510, r: 450, d: ['normal', 'hard'] },
         { id: 'harbor-light', x: E + 1750, y: 520, r: 90, d: ['easy'] },
@@ -183,9 +184,9 @@
       zones: [
         sqWalk('franklin-paths', FRANKLIN[0], FRANKLIN[1] + 60, FRANKLIN[2], FRANKLIN[3] - 60), sqLawn('franklin-lawn', FRANKLIN[0], FRANKLIN[1] + 60, FRANKLIN[2], FRANKLIN[3] - 60),
         { id: 'west-market', w: 16, path: false, pt: (r) => [2200 + r() * 740, 1880 + r() * 780] },
-        walkH('west', 1840, 1874), walkH('west', 2790, 2940), walkNS('west', 1480, 2700),
+        walkH('west', 1840, 1874), walkH('west', 2788, 2890), walkNS('west', 1480, 2700),
       ],
-      blocked: (x, y) => y < 1836 || onRoad('west', x, y) || inRect(x, y, [FRANKLIN[0] - 170, 1960, FRANKLIN[0] + 170, 2045]) || WSTALLS.some(([sx, sy]) => inRect(x, y, [sx - 62, sy - 26, sx + 62, sy + 4])),
+      blocked: (x, y) => y < 1836 || (y > 2910 && !inNSGap('west', x, y)) || onRoad('west', x, y) || inRect(x, y, [FRANKLIN[0] - 170, 1960, FRANKLIN[0] + 170, 2045]) || WSTALLS.some(([sx, sy]) => inRect(x, y, [sx - 62, sy - 26, sx + 62, sy + 4])),
       spots: [
         { id: 'franklin-square', x: FRANKLIN[0], y: 2330, r: 420, d: ['easy', 'normal'] },
         { id: 'church-tour', x: 1170, y: 2150, r: 70, d: ['hard'] },
@@ -218,10 +219,10 @@
       },
       zones: [
         sqWalk('reynolds-paths', REYNOLDS[0], REYNOLDS[1] + 60, REYNOLDS[2], REYNOLDS[3] - 60), sqLawn('reynolds-lawn', REYNOLDS[0], REYNOLDS[1] + 60, REYNOLDS[2], REYNOLDS[3] - 60),
-        sqWalk('warren-paths', ...WARREN), walkH('east', 1840, 1874), walkH('east', 2790, 2940), walkNS('east', 1480, 2700),
+        sqWalk('warren-paths', ...WARREN), walkH('east', 1840, 1874), walkH('east', 2788, 2890), walkNS('east', 1480, 2700),
         { id: 'east-sidewalks', w: 6, path: false, pt: (r) => [E + 40 + r() * 600, 1900 + r() * 760] },
       ],
-      blocked: (x, y) => y < 1836 || onRoad('east', x, y) || inRect(x, y, [REYNOLDS[0] - 200, 1960, REYNOLDS[0] + 200, 2045]) || ((x - REYNOLDS[0]) / 30) ** 2 + ((y - 2330) / 14) ** 2 < 1,
+      blocked: (x, y) => y < 1836 || (y > 2910 && !inNSGap('east', x, y)) || onRoad('east', x, y) || inRect(x, y, [REYNOLDS[0] - 200, 1960, REYNOLDS[0] + 200, 2045]) || ((x - REYNOLDS[0]) / 30) ** 2 + ((y - 2330) / 14) ** 2 < 1,
       spots: [
         { id: 'reynolds-square', x: REYNOLDS[0], y: 2330, r: 420, d: ['easy', 'normal'] },
         { id: 'pink-wedding', x: REYNOLDS[0], y: 2100, r: 90, d: ['normal', 'hard'] },
@@ -254,8 +255,8 @@
         s('garden-work', C + 'gardener', 300, 3700); s('garden-work', C + 'maintenance-worker', 2600, 3760, 1);
         return st;
       },
-      zones: [sqWalk('chatham-paths', ...CHATHAM), sqLawn('chatham-lawn', ...CHATHAM), walkH('west', 3300, 3330, 6), walkH('west', 4120, 4290, 8), walkNS('west', 2780, 4560), gardenZone(60, 560, 3340, 3980), gardenZone(2240, 2900, 3340, 3980)],
-      blocked: (x, y) => y < 3296 || onRoad('west', x, y) || ((x - CHATHAM[0]) / 110) ** 2 + ((y - CHATHAM[1]) / 50) ** 2 < 1 || inGardenFence(x, y, 60, 560, 3980) || inGardenFence(x, y, 2240, 2900, 3980),
+      zones: [sqWalk('chatham-paths', ...CHATHAM), sqLawn('chatham-lawn', ...CHATHAM), walkH('west', 3300, 3330, 6), walkH('west', 4120, 4248, 8), walkNS('west', 2780, 4560), gardenZone(60, 560, 3340, 3980), gardenZone(2240, 2900, 3340, 3980)],
+      blocked: (x, y) => y < 3296 || (y > 4270 && !inNSGap('west', x, y)) || onRoad('west', x, y) || ((x - CHATHAM[0]) / 110) ** 2 + ((y - CHATHAM[1]) / 50) ** 2 < 1 || inGardenFence(x, y, 60, 560, 3980) || inGardenFence(x, y, 2240, 2900, 3980),
       spots: [
         { id: 'chatham-square', x: CHATHAM[0], y: CHATHAM[1], r: 420, d: ['easy', 'normal'] },
         { id: 'chatham-chess', x: CHATHAM[0] + 200, y: 3750, r: 60, d: ['hard'] },
@@ -289,9 +290,9 @@
       },
       zones: [
         { id: 'cemetery-paths', w: 10, path: true, pt: (r) => (r() < 0.5 ? [E + 1520 + r() * 40, 3340 + r() * 650] : [CEM[0] + 20 + r() * 1120, 3646 + r() * 28]) },
-        sqWalk('troup-paths', ...TROUP), walkH('east', 3300, 3330, 6), walkH('east', 4120, 4290, 8), walkNS('east', 2780, 4560), gardenZone(E + 60, E + 690, 3340, 3980),
+        sqWalk('troup-paths', ...TROUP), walkH('east', 3300, 3330, 6), walkH('east', 4120, 4248, 8), walkNS('east', 2780, 4560), gardenZone(E + 60, E + 690, 3340, 3980),
       ],
-      blocked: (x, y) => y < 3296 || onRoad('east', x, y) || inGardenFence(x, y, E + 60, E + 690, 3980) || inRect(x, y, [E + 1380, 3960, E + 1700, 4004]) || TOMBS.some(([tx, ty]) => inRect(x, y, [tx - 50, ty - 16, tx + 50, ty + 4])) || ((x - TROUP[0]) / 40) ** 2 + ((y - TROUP[1] - 20) / 18) ** 2 < 1,
+      blocked: (x, y) => y < 3296 || (y > 4270 && !inNSGap('east', x, y)) || onRoad('east', x, y) || inGardenFence(x, y, E + 60, E + 690, 3980) || inRect(x, y, [E + 1380, 3960, E + 1700, 4004]) || TOMBS.some(([tx, ty]) => inRect(x, y, [tx - 50, ty - 16, tx + 50, ty + 4])) || ((x - TROUP[0]) / 40) ** 2 + ((y - TROUP[1] - 20) / 18) ** 2 < 1,
       spots: [
         { id: 'colonial-park', x: E + 1540, y: 3660, r: 520, d: ['normal', 'hard'] },
         { id: 'ghost-tour', x: E + 1380, y: 4070, r: 80, d: ['hard'] },
@@ -320,16 +321,16 @@
         s('lemonade', 'props/street/lemonade-stand', 1700, 5110); s('lemonade', B + 'child', 1680, 5120, 1); s('lemonade', B + 'child', 1730, 5124, 0);
         for (const [dx, a] of [[100, B + 'walk'], [140, B + 'coffee'], [180, C + 'jogger']]) s('lemonade', a, 1700 + dx, 5132, 1);
         // kids playing in the playground sand
-        for (const [x, y, f] of [[1260, 5090, 0], [1330, 5120, 1], [1420, 5100, 0], [1500, 5140, 1]]) s('playground', B + 'child', x, y, f);
-        s('playground', C + 'child-bubbles', 1380, 5160);
+        for (const [x, y, f] of [[1260, 5090, 0], [1330, 5120, 1], [1420, 5100, 0], [1500, 5136, 1]]) s('playground', B + 'child', x, y, f);
+        s('playground', C + 'child-bubbles', 1380, 5148);
         return st;
       },
-      zones: [walkH('west', 4646, 4676, 10), walkH('west', 5000, 5190, 8), walkNS('west', 4640, 5200), { id: 'pocket-playground', w: 4, path: false, pt: (r) => [1190 + r() * 400, 5050 + r() * 120] }, gardenZone(60, 610, 4690, 4990), gardenZone(790, 2010, 4690, 4990), gardenZone(2190, 2900, 4690, 4990)],
-      blocked: (x, y) => y < 4644 || onRoad('west', x, y) || [[60, 610], [790, 2010], [2190, 2900]].some(([a, b]) => inGardenFence(x, y, a, b, 4990)),
+      zones: [walkH('west', 4646, 4676, 10), walkH('west', 5000, 5168, 8), walkNS('west', 4640, 5200), { id: 'pocket-playground', w: 4, path: false, pt: (r) => [1190 + r() * 400, 5046 + r() * 100] }, gardenZone(60, 610, 4690, 4990), gardenZone(790, 2010, 4690, 4990), gardenZone(2190, 2900, 4690, 4990)],
+      blocked: (x, y) => y < 4644 || (y > 5180 && !inNSGap('west', x, y)) || onRoad('west', x, y) || [[60, 610], [790, 2010], [2190, 2900]].some(([a, b]) => inGardenFence(x, y, a, b, 4990)),
       spots: [
         { id: 'lemonade', x: 1760, y: 5120, r: 120, d: ['normal', 'hard'] },
         { id: 'jones-west', x: 1500, y: 4660, r: 1300, d: ['easy', 'normal'] },
-        { id: 'playground', x: 1380, y: 5110, r: 150, d: ['easy'] },
+        { id: 'playground', x: 1380, y: 5100, r: 140, d: ['easy'] },
       ],
       area: (x, y) => (y < 4700 ? 'on Jones Street, west side' : x > 1150 && x < 1850 && y > 5030 ? 'by the lemonade stand and the playground' : 'by the front gardens on Jones Street'),
     }),
@@ -355,8 +356,8 @@
         s('calhoun-reader', C + 'reader-seated', CALHOUN[0] - 200, 4855);
         return st;
       },
-      zones: [walkH('east', 4646, 4676, 10), walkH('east', 5000, 5190, 8), walkNS('east', 4640, 5200), sqWalk('calhoun-paths', ...CALHOUN), sqWalk('whitefield-paths', ...WHITEFIELD, 6)],
-      blocked: (x, y) => y < 4644 || onRoad('east', x, y) || inRect(x, y, [E + 60, 4690, E + 700, 4990]) || inRect(x, y, [WHITEFIELD[0] - 110, 4900, WHITEFIELD[0] + 110, 4950]),
+      zones: [walkH('east', 4646, 4676, 10), walkH('east', 5000, 5168, 8), walkNS('east', 4640, 5200), sqWalk('calhoun-paths', ...CALHOUN), sqWalk('whitefield-paths', ...WHITEFIELD, 6)],
+      blocked: (x, y) => y < 4644 || (y > 5180 && !inNSGap('east', x, y)) || onRoad('east', x, y) || inRect(x, y, [E + 60, 4690, E + 700, 4990]) || inRect(x, y, [WHITEFIELD[0] - 110, 4900, WHITEFIELD[0] + 110, 4950]),
       spots: [
         { id: 'calhoun-square', x: CALHOUN[0], y: CALHOUN[1], r: 380, d: ['easy', 'normal'] },
         { id: 'gazebo-wedding', x: WHITEFIELD[0], y: 4980, r: 120, d: ['normal', 'hard'] },
@@ -368,6 +369,7 @@
 
   // ---------- Forsyth band: the Victorian District ----------
   const VSTREETS = [[5470, 72, 0], [6200, 70, 1], [6900, 70, 2], [7520, 70, 3]];
+  const VBLOCKS = [[5542, 6200], [6270, 6900], [6970, 7520]];
   function victorian(side) {
     const a = x0(side), segs = side === 'west' ? [[40, 600], [800, 2000], [2200, 2830]] : [[150, 760], [940, 2150], [2340, 2920]];
     return part(side, {
@@ -378,7 +380,7 @@
           add(row, i < 3 ? a : a + 2960, y, 1, i < 3 ? 0 : 1, { layer: 'far' });
           streetLife(add, side, y, h, ['gaston', 'hall', 'parkave', null][i]);
         }
-        for (const y0 of [5542, 6270, 6970]) for (const [s0, s1] of segs) garden(add, a + s0, a + s1, y0 + 20, y0 + 300);
+        for (const [y0, y1] of VBLOCKS) for (const [s0, s1] of segs) garden(add, a + s0, a + s1, y0 + 20, Math.min(y1 - 280, y0 + 300));
         for (const c of nsOf(side, 5300)) { avenue(add, c, 5542, 6200); avenue(add, c, 6270, 6900); avenue(add, c, 6970, 7520); }
         return g;
       },
@@ -386,26 +388,28 @@
         const st = [], s = (story, asset, x, y, flip = 0, extra = {}) => st.push(Object.assign({ story, asset, x, y, flip }, extra));
         if (side === 'west') {
           // a painter painting a pink Victorian; kids on bikes; a gardener at the azaleas
-          s('house-painter', C + 'painter', 1100, 5900, 1); s('house-painter', 'props/furniture/easel-fountain-painting', 1040, 5902, 1, { k: 0.85 });
-          s('bike-kids', C + 'cyclist', 1500, 6250, 0); s('bike-kids', C + 'cyclist', 1600, 6240, 0); s('bike-kids', B + 'wave', 1760, 6300, 1);
-          s('azalea-garden', C + 'gardener', 2400, 6620); s('porch-wave', B + 'wave', 400, 7030, 0);
+          s('house-painter', C + 'painter', 1100, 5884, 1); s('house-painter', 'props/furniture/easel-fountain-painting', 1040, 5886, 1, { k: 0.85 });
+          s('bike-kids', C + 'cyclist', 1500, 6250, 0); s('bike-kids', C + 'cyclist', 1600, 6240, 0); s('bike-kids', B + 'wave', 1760, 6288, 1);
+          s('azalea-garden', C + 'gardener', 2400, 6530); s('porch-wave', B + 'wave', 400, 6984, 0);
         } else {
           // a second lemonade stand with a dog in the queue; a jogger and a stroller; a mail-day chat
-          s('lemonade-east', 'props/street/lemonade-stand', E + 1200, 6620); s('lemonade-east', B + 'child', E + 1180, 6632, 1); s('lemonade-east', 'props/animals/dog-dachshund', E + 1300, 6640, 1, { k: 0.9 });
-          s('neighbours', B + 'coffee', E + 2500, 5950, 0); s('neighbours', B + 'books', E + 2550, 5952, 1); s('neighbours', B + 'umbrella', E + 2600, 5960, 1);
-          s('stroll', C + 'parent-stroller', E + 600, 7300, 0);
+          s('lemonade-east', 'props/street/lemonade-stand', E + 1200, 6594); s('lemonade-east', B + 'child', E + 1180, 6604, 1); s('lemonade-east', 'props/animals/dog-dachshund', E + 1300, 6610, 1, { k: 0.9 });
+          s('neighbours', B + 'coffee', E + 2500, 5884, 0); s('neighbours', B + 'books', E + 2550, 5886, 1); s('neighbours', B + 'umbrella', E + 2600, 5892, 1);
+          s('stroll', C + 'parent-stroller', E + 600, 6984, 0);
         }
         return st;
       },
       zones: [
-        walkH(side, 5548, 5580, 10), walkH(side, 6276, 6300, 8), walkH(side, 6976, 7000, 8), walkH(side, 7596, 7598, 2),
-        walkH(side, 5880, 6190, 6), walkH(side, 6610, 6890, 6), walkH(side, 7310, 7510, 6), walkNS(side, 5542, 7520),
-        ...[5542, 6270, 6970].flatMap((y0) => segs.map(([s0, s1]) => gardenZone(a + s0, a + s1, y0 + 20, y0 + 300))),
+        walkH(side, 5548, 5564, 10), walkH(side, 6276, 6292, 8), walkH(side, 6976, 6992, 8), walkH(side, 7594, 7598, 2),
+        walkH(side, 5852, 5912, 6), walkH(side, 6580, 6612, 6), walkNS(side, 5542, 7520),
+        ...VBLOCKS.flatMap(([y0, y1]) => segs.map(([s0, s1]) => gardenZone(a + s0, a + s1, y0 + 20, Math.min(y1 - 280, y0 + 300)))),
       ],
-      blocked: (x, y) => y < 5546 || onRoad(side, x, y) || [5542, 6270, 6970].some((y0) => segs.some(([s0, s1]) => inGardenFence(x, y, a + s0, a + s1, y0 + 300))),
+      blocked: (x, y) => y < 5546 || onRoad(side, x, y)
+        || (!inNSGap(side, x, y) && ((y > 5920 && y < 6202) || (y > 6620 && y < 6902) || (y > 7240 && y < 7522)))
+        || VBLOCKS.some(([y0, y1]) => segs.some(([s0, s1]) => inGardenFence(x, y, a + s0, a + s1, Math.min(y1 - 280, y0 + 300)))),
       spots: side === 'west'
         ? [{ id: 'victorian-west', x: 1500, y: 6600, r: 1300, d: ['easy', 'normal'] }, { id: 'bike-kids', x: 1600, y: 6260, r: 120, d: ['hard', 'normal'] }, { id: 'whitaker-street', x: 2905, y: 6400, r: 400, d: ['easy'] }]
-        : [{ id: 'victorian-east', x: E + 1500, y: 6600, r: 1300, d: ['easy', 'normal'] }, { id: 'lemonade-east', x: E + 1260, y: 6630, r: 100, d: ['hard', 'normal'] }, { id: 'drayton-street', x: E + 75, y: 6400, r: 400, d: ['easy'] }],
+        : [{ id: 'victorian-east', x: E + 1500, y: 6600, r: 1300, d: ['easy', 'normal'] }, { id: 'lemonade-east', x: E + 1260, y: 6600, r: 100, d: ['hard', 'normal'] }, { id: 'drayton-street', x: E + 75, y: 6400, r: 400, d: ['easy'] }],
       area: (x, y) => (y < 5546 ? 'on Gaston Street, ' + (side === 'west' ? 'west' : 'east') + ' of Forsyth Park' : (side === 'west' && x > 2780) || (side === 'east' && x < E + 200) ? 'on ' + (side === 'west' ? 'Whitaker' : 'Drayton') + ' Street, beside Forsyth Park' : 'in the Victorian District, ' + (side === 'west' ? 'west' : 'east') + ' of Forsyth Park'),
     });
   }

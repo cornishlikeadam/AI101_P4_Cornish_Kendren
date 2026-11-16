@@ -1,9 +1,11 @@
 # Show only HTML in GitHub's repository Languages bar (single-file HTML submission rule).
-*.ts linguist-detectable=false
-*.tsx linguist-detectable=false
-*.js linguist-detectable=false
-*.mjs linguist-detectable=false
-*.cjs linguist-detectable=false
-*.py linguist-detectable=false
-*.css linguist-detectable=false
-*.svg linguist-detectable=false
+lab/** linguist-vendored
+*.ts linguist-vendored -linguist-detectable
+*.tsx linguist-vendored -linguist-detectable
+*.js linguist-vendored -linguist-detectable
+*.mjs linguist-vendored -linguist-detectable
+*.cjs linguist-vendored -linguist-detectable
+*.py linguist-vendored -linguist-detectable
+*.css linguist-vendored -linguist-detectable
+*.svg linguist-vendored -linguist-detectable
+vibe-coding/build/index.html linguist-detectable

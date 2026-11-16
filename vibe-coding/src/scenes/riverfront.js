@@ -35,7 +35,7 @@
     for (const [x, f] of [[2190, 0], [2230, 1], [2270, 0]]) s('festival', B + 'coffee', x, 470, f);
     s('festival', C + 'saxophonist', 2900, 560, 1); s('festival', 'props/furniture/tip-hat', 2860, 566, 0, { k: 0.9 });
     // pralines on River Street and a dropped ice cream
-    s('river-street', C + 'praline-vendor', 1500, 1000); s('river-street', B + 'child', 1580, 1012, 1); s('river-street', C + 'kid-balloon', 1640, 1020, 1);
+    s('river-street', C + 'praline-vendor', 1500, 1000); s('river-street', B + 'child', 1580, 1012, 1); s('river-street', C + 'kid-balloon', 1640, 1012, 1);
     // ghost-tour historian with a group on Factors Walk
     s('ghost-tour', C + 'historian', 2200, 1380); for (const [x, f] of [[2260, 1], [2300, 1], [2340, 1]]) s('ghost-tour', B + 'walk', x, 1385, f);
     // pigeons on the riverwalk
@@ -45,10 +45,10 @@
   const ZONES = [
     { id: 'riverwalk', w: 26, path: true, pt: (r) => [40 + r() * 3120, 470 + r() * 420] },
     { id: 'pier', w: 12, path: false, pt: (r) => [2040 + r() * 1080, 450 + r() * 30 - 0] },
-    { id: 'river-street', w: 12, path: true, pt: (r) => [40 + r() * 3120, 906 + r() * 128] },
+    { id: 'river-street', w: 12, path: true, pt: (r) => [40 + r() * 3120, 906 + r() * 110] },
     { id: 'factors-walk', w: 7, path: true, pt: (r) => [40 + r() * 3120, 1356 + r() * 40] },
   ];
-  const blocked = (x, y) => y < 456 && !(x > 2000 && y > 440) || (y > 1040 && y < 1350) || (y > 1400 && y < 1480) || TENTS.some(([tx, ty]) => inRect(x, y, [tx - 66, ty - 10, tx + 66, ty + 2])) || inRect(x, y, [370, 520, 470, 566]);
+  const blocked = (x, y) => y < 456 && !(x > 2000 && y > 440) || (y > 1018 && y < 1350) || (y > 1400 && y < 1480) || TENTS.some(([tx, ty]) => inRect(x, y, [tx - 66, ty - 10, tx + 66, ty + 2])) || inRect(x, y, [370, 520, 470, 566]);
   const SPOTS = [
     { id: 'riverwalk-open', x: 1400, y: 700, r: 400, d: ['easy'] },
     { id: 'festival-crowd', x: 2560, y: 540, r: 150, d: ['normal', 'hard'] },

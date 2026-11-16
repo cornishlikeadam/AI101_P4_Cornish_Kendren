@@ -36,6 +36,6 @@
   }
   // Pedestrians keep off the asphalt of Bull Street.
   const onBullRoad = (x, y, y0, y1) => x > BULL.x0 - 4 && x < BULL.x1 + 4 && y > y0 && y < y1;
-  const bullWalk = (y0, y1) => ({ id: 'bull-walk', w: 4, path: true, pt: (r) => [r() < 0.5 ? BULL.s0 + 4 + r() * 22 : BULL.x1 + 4 + r() * 22, y0 + 40 + r() * (y1 - y0 - 80)] });
+  const bullWalk = (y0, y1) => ({ id: 'bull-walk', w: 4, path: true, pt: (r) => [r() < 0.5 ? BULL.s0 + 8 + r() * 18 : BULL.x1 + 4 + r() * 20, y0 + 40 + r() * (y1 - y0 - 80)] });
   WS.streets = { BULL, street, bull, corner, onBullRoad, bullWalk };
 })();

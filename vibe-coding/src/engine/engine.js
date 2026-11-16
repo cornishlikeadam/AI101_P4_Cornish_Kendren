@@ -141,11 +141,14 @@
         }
         updateRect(e);
       }
-      // dogs keep to their walkers
+      // dogs keep to their walkers, staying out of blocked buildings or walls
       for (const e of world.entities) {
         if (!e.leash || !e.leashTo) continue;
-        const w = e.leashTo;
-        e.flip = w.flip; e.x = w.x + (w.flip ? -84 : 84); e.y = w.y + 6; updateRect(e);
+        const w = e.leashTo, dx = w.flip ? -84 : 84;
+        e.flip = w.flip;
+        e.x = !blockedAt(w.x + dx, w.y + 6) ? w.x + dx : !blockedAt(w.x - dx, w.y + 6) ? w.x - dx : w.x;
+        e.y = w.y + 6;
+        updateRect(e);
       }
       if (movedY && t - lastSort > 200) { sortList(); lastSort = t; }
     }

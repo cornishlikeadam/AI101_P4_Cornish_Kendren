@@ -338,6 +338,35 @@ await test('city: the west and east wings carry their landmarks, streets and sea
   await page.close();
 });
 
+await test('city: no person, animal or target candidate stands on a building roof or wall', async () => {
+  const { page } = await open('?seed=SAV-2026&scene=savannah&density=dense');
+  const hits = await page.evaluate(async () => {
+    const far = WS.game.world.entities.filter((e) => e.layer === 'far');
+    for (const b of far) if (!b.sprite.img) await WS.sprites.decode(b.sprite);
+    const masks = far.map((b) => {
+      const [rx, ry, rw, rh] = b.rect;
+      const cv = document.createElement('canvas'); cv.width = Math.ceil(rw); cv.height = Math.ceil(rh);
+      const ctx = cv.getContext('2d');
+      if (b.flip) { ctx.translate(rw, 0); ctx.scale(-1, 1); }
+      ctx.drawImage(b.sprite.img, 0, 0, rw, rh);
+      return { asset: b.asset, rx, ry, cw: cv.width, ch: cv.height, data: ctx.getImageData(0, 0, cv.width, cv.height).data };
+    });
+    const onRoof = (m, wx, wy) => {
+      const px = Math.round(wx - m.rx), py = Math.round(wy - m.ry) - 4;
+      return px >= 0 && px < m.cw && py >= 0 && py < m.ch && m.data[(py * m.cw + px) * 4 + 3] > 30;
+    };
+    const out = [];
+    for (const seed of ['SAV-2026', 'CITY-1', 'WIDE-1']) {
+      const w = WS.scenes.savannah.build({ seed, scene: 'savannah', difficulty: 'normal', density: 'dense', crowd: null, artVersion: 1 });
+      for (const e of w.entities) if (e.kind === 'person' || e.kind === 'animal') for (const m of masks) if (onRoof(m, e.x, e.y)) out.push([seed, e.asset, e.zone || e.story, Math.round(e.x), Math.round(e.y), m.asset]);
+      for (const c of w.candidates) for (const m of masks) if (onRoof(m, c.x, c.y)) out.push([seed, 'candidate', c.spot, Math.round(c.x), Math.round(c.y), m.asset]);
+    }
+    return out;
+  });
+  assert.deepEqual(hits, [], JSON.stringify(hits.slice(0, 5)));
+  await page.close();
+});
+
 await test('touch: a finger tap near a small person counts, a two-finger pinch never guesses', async () => {
   const { page } = await open('?seed=TOUCH-1&difficulty=easy', { width: 390, height: 844 });
   await page.click('#startBtn');

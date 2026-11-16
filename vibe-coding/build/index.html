@@ -461,10 +461,14 @@ window.WS_ASSETS = {"artVersion":1,"svg":{"characters/archetypes/bride":"<svg xm
       const z = rng.weighted(zonePairs);
       const [x, y] = z.pt(rng);
       if (blocked(x, y) || near(x, y, spacing)) continue;
-      const asset = rng.weighted(z.path ? POOL_PATH : POOL_STAND);
+      let asset = rng.weighted(z.path ? POOL_PATH : POOL_STAND);
       if (asset === C + 'cyclist' && z.id === 'promenade' && rng.chance(0.5)) continue;
-      const e = person(asset, Math.round(x), Math.round(y), rng.chance(0.5) ? 1 : 0, { zone: z.id });
-      if (asset === C + 'dog-walker') push({ asset: 'props/animals/dog-dachshund', x: e.x + (e.flip ? -84 : 84), y: e.y + 6, k: 0.9, flip: e.flip, kind: 'animal', leash: e.id });
+      const flip = rng.chance(0.5) ? 1 : 0;
+      const rx = Math.round(x), ry = Math.round(y);
+      const dogOk = asset === C + 'dog-walker' && !/^(wing-ns|bull-walk|side-walks|between-squares)$/.test(z.id) && !blocked(rx + (flip ? -84 : 84), ry + 6);
+      if (asset === C + 'dog-walker' && !dogOk) asset = B + 'walk';
+      const e = person(asset, rx, ry, flip, { zone: z.id });
+      if (dogOk) push({ asset: 'props/animals/dog-dachshund', x: e.x + (e.flip ? -84 : 84), y: e.y + 6, k: 0.9, flip: e.flip, kind: 'animal', leash: e.id });
       placed++;
     }
 
@@ -531,7 +535,7 @@ window.WS_ASSETS = {"artVersion":1,"svg":{"characters/archetypes/bride":"<svg xm
   }
   // Pedestrians keep off the asphalt of Bull Street.
   const onBullRoad = (x, y, y0, y1) => x > BULL.x0 - 4 && x < BULL.x1 + 4 && y > y0 && y < y1;
-  const bullWalk = (y0, y1) => ({ id: 'bull-walk', w: 4, path: true, pt: (r) => [r() < 0.5 ? BULL.s0 + 4 + r() * 22 : BULL.x1 + 4 + r() * 22, y0 + 40 + r() * (y1 - y0 - 80)] });
+  const bullWalk = (y0, y1) => ({ id: 'bull-walk', w: 4, path: true, pt: (r) => [r() < 0.5 ? BULL.s0 + 8 + r() * 18 : BULL.x1 + 4 + r() * 20, y0 + 40 + r() * (y1 - y0 - 80)] });
   WS.streets = { BULL, street, bull, corner, onBullRoad, bullWalk };
 })();
 
@@ -783,7 +787,7 @@ window.WS_ASSETS = {"artVersion":1,"svg":{"characters/archetypes/bride":"<svg xm
     for (const [x, f] of [[2190, 0], [2230, 1], [2270, 0]]) s('festival', B + 'coffee', x, 470, f);
     s('festival', C + 'saxophonist', 2900, 560, 1); s('festival', 'props/furniture/tip-hat', 2860, 566, 0, { k: 0.9 });
     // pralines on River Street and a dropped ice cream
-    s('river-street', C + 'praline-vendor', 1500, 1000); s('river-street', B + 'child', 1580, 1012, 1); s('river-street', C + 'kid-balloon', 1640, 1020, 1);
+    s('river-street', C + 'praline-vendor', 1500, 1000); s('river-street', B + 'child', 1580, 1012, 1); s('river-street', C + 'kid-balloon', 1640, 1012, 1);
     // ghost-tour historian with a group on Factors Walk
     s('ghost-tour', C + 'historian', 2200, 1380); for (const [x, f] of [[2260, 1], [2300, 1], [2340, 1]]) s('ghost-tour', B + 'walk', x, 1385, f);
     // pigeons on the riverwalk
@@ -793,10 +797,10 @@ window.WS_ASSETS = {"artVersion":1,"svg":{"characters/archetypes/bride":"<svg xm
   const ZONES = [
     { id: 'riverwalk', w: 26, path: true, pt: (r) => [40 + r() * 3120, 470 + r() * 420] },
     { id: 'pier', w: 12, path: false, pt: (r) => [2040 + r() * 1080, 450 + r() * 30 - 0] },
-    { id: 'river-street', w: 12, path: true, pt: (r) => [40 + r() * 3120, 906 + r() * 128] },
+    { id: 'river-street', w: 12, path: true, pt: (r) => [40 + r() * 3120, 906 + r() * 110] },
     { id: 'factors-walk', w: 7, path: true, pt: (r) => [40 + r() * 3120, 1356 + r() * 40] },
   ];
-  const blocked = (x, y) => y < 456 && !(x > 2000 && y > 440) || (y > 1040 && y < 1350) || (y > 1400 && y < 1480) || TENTS.some(([tx, ty]) => inRect(x, y, [tx - 66, ty - 10, tx + 66, ty + 2])) || inRect(x, y, [370, 520, 470, 566]);
+  const blocked = (x, y) => y < 456 && !(x > 2000 && y > 440) || (y > 1018 && y < 1350) || (y > 1400 && y < 1480) || TENTS.some(([tx, ty]) => inRect(x, y, [tx - 66, ty - 10, tx + 66, ty + 2])) || inRect(x, y, [370, 520, 470, 566]);
   const SPOTS = [
     { id: 'riverwalk-open', x: 1400, y: 700, r: 400, d: ['easy'] },
     { id: 'festival-crowd', x: 2560, y: 540, r: 150, d: ['normal', 'hard'] },
@@ -882,10 +886,10 @@ window.WS_ASSETS = {"artVersion":1,"svg":{"characters/archetypes/bride":"<svg xm
     { id: 'johnson-paths', w: 14, path: true, pt: (r) => (r() < 0.5 ? [JS.cx - 600 + r() * 1200, JS.cy - 20 + r() * 40] : [JS.cx - 20 + r() * 40, JS.cy - 360 + r() * 720]) },
     { id: 'johnson-lawn', w: 8, path: false, pt: (r) => [JS.cx - 620 + r() * 1240, JS.cy - 360 + r() * 720] },
     { id: 'market-front', w: 10, path: true, pt: (r) => [40 + r() * 3120, 1840 + r() * 34] },
-    { id: 'congress-walk', w: 8, path: true, pt: (r) => [40 + r() * 3120, 2790 + r() * 150] },
+    { id: 'congress-walk', w: 8, path: true, pt: (r) => [40 + r() * 3120, 2788 + r() * 98] },
     ST().bullWalk(1480, 2700),
   ];
-  const blocked = (x, y) => y < 1836 || (y > 2696 && y < 2786) || ST().onBullRoad(x, y, 1480, 2700)
+  const blocked = (x, y) => y < 1836 || (y > 2696 && y < 2786) || (y > 2822 && x > 2110 && x < 2490) || (y > 2900 && (x < 1515 || x > 1685)) || ST().onBullRoad(x, y, 1480, 2700)
     || STALLS.some(([sx, sy]) => inRect(x, y, [sx - 62, sy - 26, sx + 62, sy + 4])) || TENTS.some(([tx, ty]) => inRect(x, y, [tx - 66, ty - 10, tx + 66, ty + 2]))
     || TABLES.some(([tx, ty]) => inRect(x, y, [tx - 40, ty - 12, tx + 40, ty + 6])) || PLANTERS.some((px) => ((x - px) / 92) ** 2 + ((y - 2440) / 38) ** 2 < 1)
     || ((x - JS.cx) / 60) ** 2 + ((y - JS.cy - 30) / 26) ** 2 < 1;
@@ -953,10 +957,10 @@ window.WS_ASSETS = {"artVersion":1,"svg":{"characters/archetypes/bride":"<svg xm
   const ZONES = [
     { id: 'square-paths', w: 20, path: true, pt: (r) => { const [cx, cy] = SQ[r() < 0.5 ? 0 : 1]; return r() < 0.5 ? [cx - 500 + r() * 1000, cy - 20 + r() * 40] : [cx - 20 + r() * 40, cy - 310 + r() * 620]; } },
     { id: 'square-lawns', w: 14, path: false, pt: (r) => { const [cx, cy] = SQ[r() < 0.5 ? 0 : 1]; return [cx - 500 + r() * 1000, cy - 300 + r() * 600]; } },
-    { id: 'square-sidewalks', w: 10, path: true, pt: (r) => [40 + r() * 3120, r() < 0.5 ? 3300 + r() * 26 : 4120 + r() * 160] },
+    { id: 'square-sidewalks', w: 10, path: true, pt: (r) => [40 + r() * 3120, r() < 0.5 ? 3300 + r() * 26 : 4120 + r() * 124] },
     ST().bullWalk(3290, 4040),
   ];
-  const blocked = (x, y) => y < 3296 || (y > 4036 && y < 4116) || ST().onBullRoad(x, y, 3290, 4300) || ((x - 900) / 110) ** 2 + ((y - 3655) / 50) ** 2 < 1 || ((x - 2300) / 150) ** 2 + ((y - 3650) / 60) ** 2 < 1;
+  const blocked = (x, y) => y < 3296 || (y > 4036 && y < 4116) || (y > 4250 && (x < 1515 || x > 1685)) || ST().onBullRoad(x, y, 3290, 4300) || ((x - 900) / 110) ** 2 + ((y - 3655) / 50) ** 2 < 1 || ((x - 2300) / 150) ** 2 + ((y - 3650) / 60) ** 2 < 1;
   const SPOTS = [
     { id: 'square-west-paths', x: 900, y: 3655, r: 420, d: ['easy', 'normal'] },
     { id: 'square-east-oaks', x: 2300, y: 3655, r: 480, d: ['hard', 'normal'] },
@@ -1029,11 +1033,11 @@ window.WS_ASSETS = {"artVersion":1,"svg":{"characters/archetypes/bride":"<svg xm
   const ZONES = [
     { id: 'jones-walk', w: 12, path: true, pt: (r) => [40 + r() * 3120, 4646 + r() * 28] },
     { id: 'monterey-paths', w: 10, path: true, pt: (r) => (r() < 0.5 ? [SQ.cx - 420 + r() * 840, SQ.cy - 16 + r() * 32] : [SQ.cx - 16 + r() * 32, SQ.cy - 150 + r() * 300]) },
-    { id: 'monterey-sidewalks', w: 10, path: true, pt: (r) => [40 + r() * 3120, 5020 + r() * 160] },
+    { id: 'monterey-sidewalks', w: 10, path: true, pt: (r) => [40 + r() * 3120, 5020 + r() * 136] },
     ST().bullWalk(4110, 4560),
   ];
   const inRing = (x, y) => x > RING[0] && x < RING[2] && y > RING[1] && y < RING[3] && !(Math.abs(x - SQ.cx) < SQ.hw && Math.abs(y - SQ.cy) < SQ.hh);
-  const blocked = (x, y) => y < 4644 || (y > 4556 && y < 4644) || inRing(x, y) || ST().onBullRoad(x, y, 4110, 4680) || ST().onBullRoad(x, y, 5140, 5200)
+  const blocked = (x, y) => y < 4644 || (y > 4556 && y < 4644) || (y > 5160 && (x < 1515 || x > 1685)) || inRing(x, y) || ST().onBullRoad(x, y, 4110, 4680) || ST().onBullRoad(x, y, 5140, 5200)
     || (y > 4688 && y < 4990 && (x < 1070 || x > 2130))                          // the houses' front gardens and fences
     || ((x - SQ.cx) / 54) ** 2 + ((y - SQ.cy - 40) / 22) ** 2 < 1;
   const SPOTS = [
@@ -1122,7 +1126,8 @@ window.WS_ASSETS = {"artVersion":1,"svg":{"characters/archetypes/bride":"<svg xm
   const sqWalk = (id, cx, cy, hw, hh, w = 12) => ({ id, w, path: true, pt: (r) => (r() < 0.5 ? [cx - hw + 30 + r() * (hw * 2 - 60), cy - 16 + r() * 32] : [cx - 16 + r() * 32, cy - hh + 30 + r() * (hh * 2 - 60)]) });
   const sqLawn = (id, cx, cy, hw, hh, w = 6) => ({ id, w, path: false, pt: (r) => [cx - hw + 30 + r() * (hw * 2 - 60), cy - hh + 30 + r() * (hh * 2 - 60)] });
   const walkH = (side, y0, y1, w = 8) => ({ id: 'wing-walk', w, path: true, pt: (r) => [x0(side) + 40 + r() * 2880, y0 + r() * (y1 - y0)] });
-  const walkNS = (side, y0, y1, w = 4) => ({ id: 'wing-ns', w, path: true, pt: (r) => { const xs = nsOf(side, y0), c = xs[Math.floor(r() * xs.length)]; return [c + (r() < 0.5 ? -78 : 62) + r() * 16, y0 + 40 + r() * (y1 - y0 - 80)]; } });
+  const walkNS = (side, y0, y1, w = 4) => ({ id: 'wing-ns', w, path: true, pt: (r) => { const xs = NS[side], c = xs[Math.floor(r() * xs.length)], y = y0 + 40 + r() * (y1 - y0 - 80); return [c + (y >= 7200 || r() >= 0.5 ? 62 : -76) + r() * 14, y]; } });
+  const inNSGap = (side, x, y) => (y >= 7240 ? NS[side].some((c) => x >= c + 58 && x <= c + 78) : nsOf(side, y).some((c) => Math.abs(x - c) < (c === 2905 || c === E + 75 ? 52 : 80)));
   const onRoad = (side, x, y) => ROADS.some(([ry, h]) => y > ry - 4 && y < ry + h + 4) || (y > 1476 && nsOf(side, y).some((c) => Math.abs(x - c) < 60));
   const part = (side, o) => Object.assign({ side, geography: () => [], stories: () => [], zones: [], spots: [], blocked: () => false, area: () => null }, o);
 
@@ -1156,10 +1161,10 @@ window.WS_ASSETS = {"artVersion":1,"svg":{"characters/archetypes/bride":"<svg xm
       },
       zones: [
         { id: 'riverwalk', w: 16, path: true, pt: (r) => [40 + r() * 2880, 470 + r() * 420] },
-        { id: 'river-street', w: 8, path: true, pt: (r) => [40 + r() * 2880, 906 + r() * 128] },
+        { id: 'river-street', w: 8, path: true, pt: (r) => [40 + r() * 2880, 906 + r() * 110] },
         { id: 'factors-walk', w: 4, path: true, pt: (r) => [40 + r() * 2880, 1356 + r() * 40] },
       ],
-      blocked: (x, y) => y < 456 || (y > 1040 && y < 1350) || (y > 1400 && y < 1480),
+      blocked: (x, y) => y < 456 || (y > 1018 && y < 1350) || (y > 1400 && y < 1480),
       spots: [
         { id: 'plant-terrace', x: 500, y: 540, r: 300, d: ['easy', 'normal'] },
         { id: 'plant-busker', x: 280, y: 580, r: 70, d: ['hard'] },
@@ -1194,11 +1199,11 @@ window.WS_ASSETS = {"artVersion":1,"svg":{"characters/archetypes/bride":"<svg xm
       },
       zones: [
         { id: 'riverwalk', w: 16, path: true, pt: (r) => [E + 40 + r() * 2880, 470 + r() * 420] },
-        { id: 'river-street', w: 8, path: true, pt: (r) => [E + 40 + r() * 2880, 906 + r() * 128] },
+        { id: 'river-street', w: 8, path: true, pt: (r) => [E + 40 + r() * 2880, 906 + r() * 110] },
         { id: 'factors-walk', w: 4, path: true, pt: (r) => [E + 40 + r() * 2880, 1356 + r() * 40] },
         { id: 'emmet-park', w: 6, path: false, pt: (r) => [E + 1520 + r() * 1160, 450 + r() * 100] },
       ],
-      blocked: (x, y) => y < 456 || (y > 1040 && y < 1350) || (y > 1400 && y < 1480) || inRect(x, y, [E + 1730, 490, E + 1770, 506]),
+      blocked: (x, y) => y < 456 || (y > 1018 && y < 1350) || (y > 1400 && y < 1480) || inRect(x, y, [E + 940, 968, E + 1030, 1025]) || inRect(x, y, [E + 1730, 490, E + 1770, 506]),
       spots: [
         { id: 'emmet-park', x: E + 2000, y: 510, r: 450, d: ['normal', 'hard'] },
         { id: 'harbor-light', x: E + 1750, y: 520, r: 90, d: ['easy'] },
@@ -1240,9 +1245,9 @@ window.WS_ASSETS = {"artVersion":1,"svg":{"characters/archetypes/bride":"<svg xm
       zones: [
         sqWalk('franklin-paths', FRANKLIN[0], FRANKLIN[1] + 60, FRANKLIN[2], FRANKLIN[3] - 60), sqLawn('franklin-lawn', FRANKLIN[0], FRANKLIN[1] + 60, FRANKLIN[2], FRANKLIN[3] - 60),
         { id: 'west-market', w: 16, path: false, pt: (r) => [2200 + r() * 740, 1880 + r() * 780] },
-        walkH('west', 1840, 1874), walkH('west', 2790, 2940), walkNS('west', 1480, 2700),
+        walkH('west', 1840, 1874), walkH('west', 2788, 2890), walkNS('west', 1480, 2700),
       ],
-      blocked: (x, y) => y < 1836 || onRoad('west', x, y) || inRect(x, y, [FRANKLIN[0] - 170, 1960, FRANKLIN[0] + 170, 2045]) || WSTALLS.some(([sx, sy]) => inRect(x, y, [sx - 62, sy - 26, sx + 62, sy + 4])),
+      blocked: (x, y) => y < 1836 || (y > 2910 && !inNSGap('west', x, y)) || onRoad('west', x, y) || inRect(x, y, [FRANKLIN[0] - 170, 1960, FRANKLIN[0] + 170, 2045]) || WSTALLS.some(([sx, sy]) => inRect(x, y, [sx - 62, sy - 26, sx + 62, sy + 4])),
       spots: [
         { id: 'franklin-square', x: FRANKLIN[0], y: 2330, r: 420, d: ['easy', 'normal'] },
         { id: 'church-tour', x: 1170, y: 2150, r: 70, d: ['hard'] },
@@ -1275,10 +1280,10 @@ window.WS_ASSETS = {"artVersion":1,"svg":{"characters/archetypes/bride":"<svg xm
       },
       zones: [
         sqWalk('reynolds-paths', REYNOLDS[0], REYNOLDS[1] + 60, REYNOLDS[2], REYNOLDS[3] - 60), sqLawn('reynolds-lawn', REYNOLDS[0], REYNOLDS[1] + 60, REYNOLDS[2], REYNOLDS[3] - 60),
-        sqWalk('warren-paths', ...WARREN), walkH('east', 1840, 1874), walkH('east', 2790, 2940), walkNS('east', 1480, 2700),
+        sqWalk('warren-paths', ...WARREN), walkH('east', 1840, 1874), walkH('east', 2788, 2890), walkNS('east', 1480, 2700),
         { id: 'east-sidewalks', w: 6, path: false, pt: (r) => [E + 40 + r() * 600, 1900 + r() * 760] },
       ],
-      blocked: (x, y) => y < 1836 || onRoad('east', x, y) || inRect(x, y, [REYNOLDS[0] - 200, 1960, REYNOLDS[0] + 200, 2045]) || ((x - REYNOLDS[0]) / 30) ** 2 + ((y - 2330) / 14) ** 2 < 1,
+      blocked: (x, y) => y < 1836 || (y > 2910 && !inNSGap('east', x, y)) || onRoad('east', x, y) || inRect(x, y, [REYNOLDS[0] - 200, 1960, REYNOLDS[0] + 200, 2045]) || ((x - REYNOLDS[0]) / 30) ** 2 + ((y - 2330) / 14) ** 2 < 1,
       spots: [
         { id: 'reynolds-square', x: REYNOLDS[0], y: 2330, r: 420, d: ['easy', 'normal'] },
         { id: 'pink-wedding', x: REYNOLDS[0], y: 2100, r: 90, d: ['normal', 'hard'] },
@@ -1311,8 +1316,8 @@ window.WS_ASSETS = {"artVersion":1,"svg":{"characters/archetypes/bride":"<svg xm
         s('garden-work', C + 'gardener', 300, 3700); s('garden-work', C + 'maintenance-worker', 2600, 3760, 1);
         return st;
       },
-      zones: [sqWalk('chatham-paths', ...CHATHAM), sqLawn('chatham-lawn', ...CHATHAM), walkH('west', 3300, 3330, 6), walkH('west', 4120, 4290, 8), walkNS('west', 2780, 4560), gardenZone(60, 560, 3340, 3980), gardenZone(2240, 2900, 3340, 3980)],
-      blocked: (x, y) => y < 3296 || onRoad('west', x, y) || ((x - CHATHAM[0]) / 110) ** 2 + ((y - CHATHAM[1]) / 50) ** 2 < 1 || inGardenFence(x, y, 60, 560, 3980) || inGardenFence(x, y, 2240, 2900, 3980),
+      zones: [sqWalk('chatham-paths', ...CHATHAM), sqLawn('chatham-lawn', ...CHATHAM), walkH('west', 3300, 3330, 6), walkH('west', 4120, 4248, 8), walkNS('west', 2780, 4560), gardenZone(60, 560, 3340, 3980), gardenZone(2240, 2900, 3340, 3980)],
+      blocked: (x, y) => y < 3296 || (y > 4270 && !inNSGap('west', x, y)) || onRoad('west', x, y) || ((x - CHATHAM[0]) / 110) ** 2 + ((y - CHATHAM[1]) / 50) ** 2 < 1 || inGardenFence(x, y, 60, 560, 3980) || inGardenFence(x, y, 2240, 2900, 3980),
       spots: [
         { id: 'chatham-square', x: CHATHAM[0], y: CHATHAM[1], r: 420, d: ['easy', 'normal'] },
         { id: 'chatham-chess', x: CHATHAM[0] + 200, y: 3750, r: 60, d: ['hard'] },
@@ -1346,9 +1351,9 @@ window.WS_ASSETS = {"artVersion":1,"svg":{"characters/archetypes/bride":"<svg xm
       },
       zones: [
         { id: 'cemetery-paths', w: 10, path: true, pt: (r) => (r() < 0.5 ? [E + 1520 + r() * 40, 3340 + r() * 650] : [CEM[0] + 20 + r() * 1120, 3646 + r() * 28]) },
-        sqWalk('troup-paths', ...TROUP), walkH('east', 3300, 3330, 6), walkH('east', 4120, 4290, 8), walkNS('east', 2780, 4560), gardenZone(E + 60, E + 690, 3340, 3980),
+        sqWalk('troup-paths', ...TROUP), walkH('east', 3300, 3330, 6), walkH('east', 4120, 4248, 8), walkNS('east', 2780, 4560), gardenZone(E + 60, E + 690, 3340, 3980),
       ],
-      blocked: (x, y) => y < 3296 || onRoad('east', x, y) || inGardenFence(x, y, E + 60, E + 690, 3980) || inRect(x, y, [E + 1380, 3960, E + 1700, 4004]) || TOMBS.some(([tx, ty]) => inRect(x, y, [tx - 50, ty - 16, tx + 50, ty + 4])) || ((x - TROUP[0]) / 40) ** 2 + ((y - TROUP[1] - 20) / 18) ** 2 < 1,
+      blocked: (x, y) => y < 3296 || (y > 4270 && !inNSGap('east', x, y)) || onRoad('east', x, y) || inGardenFence(x, y, E + 60, E + 690, 3980) || inRect(x, y, [E + 1380, 3960, E + 1700, 4004]) || TOMBS.some(([tx, ty]) => inRect(x, y, [tx - 50, ty - 16, tx + 50, ty + 4])) || ((x - TROUP[0]) / 40) ** 2 + ((y - TROUP[1] - 20) / 18) ** 2 < 1,
       spots: [
         { id: 'colonial-park', x: E + 1540, y: 3660, r: 520, d: ['normal', 'hard'] },
         { id: 'ghost-tour', x: E + 1380, y: 4070, r: 80, d: ['hard'] },
@@ -1377,16 +1382,16 @@ window.WS_ASSETS = {"artVersion":1,"svg":{"characters/archetypes/bride":"<svg xm
         s('lemonade', 'props/street/lemonade-stand', 1700, 5110); s('lemonade', B + 'child', 1680, 5120, 1); s('lemonade', B + 'child', 1730, 5124, 0);
         for (const [dx, a] of [[100, B + 'walk'], [140, B + 'coffee'], [180, C + 'jogger']]) s('lemonade', a, 1700 + dx, 5132, 1);
         // kids playing in the playground sand
-        for (const [x, y, f] of [[1260, 5090, 0], [1330, 5120, 1], [1420, 5100, 0], [1500, 5140, 1]]) s('playground', B + 'child', x, y, f);
-        s('playground', C + 'child-bubbles', 1380, 5160);
+        for (const [x, y, f] of [[1260, 5090, 0], [1330, 5120, 1], [1420, 5100, 0], [1500, 5136, 1]]) s('playground', B + 'child', x, y, f);
+        s('playground', C + 'child-bubbles', 1380, 5148);
         return st;
       },
-      zones: [walkH('west', 4646, 4676, 10), walkH('west', 5000, 5190, 8), walkNS('west', 4640, 5200), { id: 'pocket-playground', w: 4, path: false, pt: (r) => [1190 + r() * 400, 5050 + r() * 120] }, gardenZone(60, 610, 4690, 4990), gardenZone(790, 2010, 4690, 4990), gardenZone(2190, 2900, 4690, 4990)],
-      blocked: (x, y) => y < 4644 || onRoad('west', x, y) || [[60, 610], [790, 2010], [2190, 2900]].some(([a, b]) => inGardenFence(x, y, a, b, 4990)),
+      zones: [walkH('west', 4646, 4676, 10), walkH('west', 5000, 5168, 8), walkNS('west', 4640, 5200), { id: 'pocket-playground', w: 4, path: false, pt: (r) => [1190 + r() * 400, 5046 + r() * 100] }, gardenZone(60, 610, 4690, 4990), gardenZone(790, 2010, 4690, 4990), gardenZone(2190, 2900, 4690, 4990)],
+      blocked: (x, y) => y < 4644 || (y > 5180 && !inNSGap('west', x, y)) || onRoad('west', x, y) || [[60, 610], [790, 2010], [2190, 2900]].some(([a, b]) => inGardenFence(x, y, a, b, 4990)),
       spots: [
         { id: 'lemonade', x: 1760, y: 5120, r: 120, d: ['normal', 'hard'] },
         { id: 'jones-west', x: 1500, y: 4660, r: 1300, d: ['easy', 'normal'] },
-        { id: 'playground', x: 1380, y: 5110, r: 150, d: ['easy'] },
+        { id: 'playground', x: 1380, y: 5100, r: 140, d: ['easy'] },
       ],
       area: (x, y) => (y < 4700 ? 'on Jones Street, west side' : x > 1150 && x < 1850 && y > 5030 ? 'by the lemonade stand and the playground' : 'by the front gardens on Jones Street'),
     }),
@@ -1412,8 +1417,8 @@ window.WS_ASSETS = {"artVersion":1,"svg":{"characters/archetypes/bride":"<svg xm
         s('calhoun-reader', C + 'reader-seated', CALHOUN[0] - 200, 4855);
         return st;
       },
-      zones: [walkH('east', 4646, 4676, 10), walkH('east', 5000, 5190, 8), walkNS('east', 4640, 5200), sqWalk('calhoun-paths', ...CALHOUN), sqWalk('whitefield-paths', ...WHITEFIELD, 6)],
-      blocked: (x, y) => y < 4644 || onRoad('east', x, y) || inRect(x, y, [E + 60, 4690, E + 700, 4990]) || inRect(x, y, [WHITEFIELD[0] - 110, 4900, WHITEFIELD[0] + 110, 4950]),
+      zones: [walkH('east', 4646, 4676, 10), walkH('east', 5000, 5168, 8), walkNS('east', 4640, 5200), sqWalk('calhoun-paths', ...CALHOUN), sqWalk('whitefield-paths', ...WHITEFIELD, 6)],
+      blocked: (x, y) => y < 4644 || (y > 5180 && !inNSGap('east', x, y)) || onRoad('east', x, y) || inRect(x, y, [E + 60, 4690, E + 700, 4990]) || inRect(x, y, [WHITEFIELD[0] - 110, 4900, WHITEFIELD[0] + 110, 4950]),
       spots: [
         { id: 'calhoun-square', x: CALHOUN[0], y: CALHOUN[1], r: 380, d: ['easy', 'normal'] },
         { id: 'gazebo-wedding', x: WHITEFIELD[0], y: 4980, r: 120, d: ['normal', 'hard'] },
@@ -1425,6 +1430,7 @@ window.WS_ASSETS = {"artVersion":1,"svg":{"characters/archetypes/bride":"<svg xm
 
   // ---------- Forsyth band: the Victorian District ----------
   const VSTREETS = [[5470, 72, 0], [6200, 70, 1], [6900, 70, 2], [7520, 70, 3]];
+  const VBLOCKS = [[5542, 6200], [6270, 6900], [6970, 7520]];
   function victorian(side) {
     const a = x0(side), segs = side === 'west' ? [[40, 600], [800, 2000], [2200, 2830]] : [[150, 760], [940, 2150], [2340, 2920]];
     return part(side, {
@@ -1435,7 +1441,7 @@ window.WS_ASSETS = {"artVersion":1,"svg":{"characters/archetypes/bride":"<svg xm
           add(row, i < 3 ? a : a + 2960, y, 1, i < 3 ? 0 : 1, { layer: 'far' });
           streetLife(add, side, y, h, ['gaston', 'hall', 'parkave', null][i]);
         }
-        for (const y0 of [5542, 6270, 6970]) for (const [s0, s1] of segs) garden(add, a + s0, a + s1, y0 + 20, y0 + 300);
+        for (const [y0, y1] of VBLOCKS) for (const [s0, s1] of segs) garden(add, a + s0, a + s1, y0 + 20, Math.min(y1 - 280, y0 + 300));
         for (const c of nsOf(side, 5300)) { avenue(add, c, 5542, 6200); avenue(add, c, 6270, 6900); avenue(add, c, 6970, 7520); }
         return g;
       },
@@ -1443,26 +1449,28 @@ window.WS_ASSETS = {"artVersion":1,"svg":{"characters/archetypes/bride":"<svg xm
         const st = [], s = (story, asset, x, y, flip = 0, extra = {}) => st.push(Object.assign({ story, asset, x, y, flip }, extra));
         if (side === 'west') {
           // a painter painting a pink Victorian; kids on bikes; a gardener at the azaleas
-          s('house-painter', C + 'painter', 1100, 5900, 1); s('house-painter', 'props/furniture/easel-fountain-painting', 1040, 5902, 1, { k: 0.85 });
-          s('bike-kids', C + 'cyclist', 1500, 6250, 0); s('bike-kids', C + 'cyclist', 1600, 6240, 0); s('bike-kids', B + 'wave', 1760, 6300, 1);
-          s('azalea-garden', C + 'gardener', 2400, 6620); s('porch-wave', B + 'wave', 400, 7030, 0);
+          s('house-painter', C + 'painter', 1100, 5884, 1); s('house-painter', 'props/furniture/easel-fountain-painting', 1040, 5886, 1, { k: 0.85 });
+          s('bike-kids', C + 'cyclist', 1500, 6250, 0); s('bike-kids', C + 'cyclist', 1600, 6240, 0); s('bike-kids', B + 'wave', 1760, 6288, 1);
+          s('azalea-garden', C + 'gardener', 2400, 6530); s('porch-wave', B + 'wave', 400, 6984, 0);
         } else {
           // a second lemonade stand with a dog in the queue; a jogger and a stroller; a mail-day chat
-          s('lemonade-east', 'props/street/lemonade-stand', E + 1200, 6620); s('lemonade-east', B + 'child', E + 1180, 6632, 1); s('lemonade-east', 'props/animals/dog-dachshund', E + 1300, 6640, 1, { k: 0.9 });
-          s('neighbours', B + 'coffee', E + 2500, 5950, 0); s('neighbours', B + 'books', E + 2550, 5952, 1); s('neighbours', B + 'umbrella', E + 2600, 5960, 1);
-          s('stroll', C + 'parent-stroller', E + 600, 7300, 0);
+          s('lemonade-east', 'props/street/lemonade-stand', E + 1200, 6594); s('lemonade-east', B + 'child', E + 1180, 6604, 1); s('lemonade-east', 'props/animals/dog-dachshund', E + 1300, 6610, 1, { k: 0.9 });
+          s('neighbours', B + 'coffee', E + 2500, 5884, 0); s('neighbours', B + 'books', E + 2550, 5886, 1); s('neighbours', B + 'umbrella', E + 2600, 5892, 1);
+          s('stroll', C + 'parent-stroller', E + 600, 6984, 0);
         }
         return st;
       },
       zones: [
-        walkH(side, 5548, 5580, 10), walkH(side, 6276, 6300, 8), walkH(side, 6976, 7000, 8), walkH(side, 7596, 7598, 2),
-        walkH(side, 5880, 6190, 6), walkH(side, 6610, 6890, 6), walkH(side, 7310, 7510, 6), walkNS(side, 5542, 7520),
-        ...[5542, 6270, 6970].flatMap((y0) => segs.map(([s0, s1]) => gardenZone(a + s0, a + s1, y0 + 20, y0 + 300))),
+        walkH(side, 5548, 5564, 10), walkH(side, 6276, 6292, 8), walkH(side, 6976, 6992, 8), walkH(side, 7594, 7598, 2),
+        walkH(side, 5852, 5912, 6), walkH(side, 6580, 6612, 6), walkNS(side, 5542, 7520),
+        ...VBLOCKS.flatMap(([y0, y1]) => segs.map(([s0, s1]) => gardenZone(a + s0, a + s1, y0 + 20, Math.min(y1 - 280, y0 + 300)))),
       ],
-      blocked: (x, y) => y < 5546 || onRoad(side, x, y) || [5542, 6270, 6970].some((y0) => segs.some(([s0, s1]) => inGardenFence(x, y, a + s0, a + s1, y0 + 300))),
+      blocked: (x, y) => y < 5546 || onRoad(side, x, y)
+        || (!inNSGap(side, x, y) && ((y > 5920 && y < 6202) || (y > 6620 && y < 6902) || (y > 7240 && y < 7522)))
+        || VBLOCKS.some(([y0, y1]) => segs.some(([s0, s1]) => inGardenFence(x, y, a + s0, a + s1, Math.min(y1 - 280, y0 + 300)))),
       spots: side === 'west'
         ? [{ id: 'victorian-west', x: 1500, y: 6600, r: 1300, d: ['easy', 'normal'] }, { id: 'bike-kids', x: 1600, y: 6260, r: 120, d: ['hard', 'normal'] }, { id: 'whitaker-street', x: 2905, y: 6400, r: 400, d: ['easy'] }]
-        : [{ id: 'victorian-east', x: E + 1500, y: 6600, r: 1300, d: ['easy', 'normal'] }, { id: 'lemonade-east', x: E + 1260, y: 6630, r: 100, d: ['hard', 'normal'] }, { id: 'drayton-street', x: E + 75, y: 6400, r: 400, d: ['easy'] }],
+        : [{ id: 'victorian-east', x: E + 1500, y: 6600, r: 1300, d: ['easy', 'normal'] }, { id: 'lemonade-east', x: E + 1260, y: 6600, r: 100, d: ['hard', 'normal'] }, { id: 'drayton-street', x: E + 75, y: 6400, r: 400, d: ['easy'] }],
       area: (x, y) => (y < 5546 ? 'on Gaston Street, ' + (side === 'west' ? 'west' : 'east') + ' of Forsyth Park' : (side === 'west' && x > 2780) || (side === 'east' && x < E + 200) ? 'on ' + (side === 'west' ? 'Whitaker' : 'Drayton') + ' Street, beside Forsyth Park' : 'in the Victorian District, ' + (side === 'west' ? 'west' : 'east') + ' of Forsyth Park'),
     });
   }
@@ -1789,11 +1797,14 @@ window.WS_ASSETS = {"artVersion":1,"svg":{"characters/archetypes/bride":"<svg xm
         }
         updateRect(e);
       }
-      // dogs keep to their walkers
+      // dogs keep to their walkers, staying out of blocked buildings or walls
       for (const e of world.entities) {
         if (!e.leash || !e.leashTo) continue;
-        const w = e.leashTo;
-        e.flip = w.flip; e.x = w.x + (w.flip ? -84 : 84); e.y = w.y + 6; updateRect(e);
+        const w = e.leashTo, dx = w.flip ? -84 : 84;
+        e.flip = w.flip;
+        e.x = !blockedAt(w.x + dx, w.y + 6) ? w.x + dx : !blockedAt(w.x - dx, w.y + 6) ? w.x - dx : w.x;
+        e.y = w.y + 6;
+        updateRect(e);
       }
       if (movedY && t - lastSort > 200) { sortList(); lastSort = t; }
     }

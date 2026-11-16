@@ -63,10 +63,14 @@
       const z = rng.weighted(zonePairs);
       const [x, y] = z.pt(rng);
       if (blocked(x, y) || near(x, y, spacing)) continue;
-      const asset = rng.weighted(z.path ? POOL_PATH : POOL_STAND);
+      let asset = rng.weighted(z.path ? POOL_PATH : POOL_STAND);
       if (asset === C + 'cyclist' && z.id === 'promenade' && rng.chance(0.5)) continue;
-      const e = person(asset, Math.round(x), Math.round(y), rng.chance(0.5) ? 1 : 0, { zone: z.id });
-      if (asset === C + 'dog-walker') push({ asset: 'props/animals/dog-dachshund', x: e.x + (e.flip ? -84 : 84), y: e.y + 6, k: 0.9, flip: e.flip, kind: 'animal', leash: e.id });
+      const flip = rng.chance(0.5) ? 1 : 0;
+      const rx = Math.round(x), ry = Math.round(y);
+      const dogOk = asset === C + 'dog-walker' && !/^(wing-ns|bull-walk|side-walks|between-squares)$/.test(z.id) && !blocked(rx + (flip ? -84 : 84), ry + 6);
+      if (asset === C + 'dog-walker' && !dogOk) asset = B + 'walk';
+      const e = person(asset, rx, ry, flip, { zone: z.id });
+      if (dogOk) push({ asset: 'props/animals/dog-dachshund', x: e.x + (e.flip ? -84 : 84), y: e.y + 6, k: 0.9, flip: e.flip, kind: 'animal', leash: e.id });
       placed++;
     }
 

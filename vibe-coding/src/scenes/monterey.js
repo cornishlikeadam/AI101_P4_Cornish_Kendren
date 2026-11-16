@@ -53,11 +53,11 @@
   const ZONES = [
     { id: 'jones-walk', w: 12, path: true, pt: (r) => [40 + r() * 3120, 4646 + r() * 28] },
     { id: 'monterey-paths', w: 10, path: true, pt: (r) => (r() < 0.5 ? [SQ.cx - 420 + r() * 840, SQ.cy - 16 + r() * 32] : [SQ.cx - 16 + r() * 32, SQ.cy - 150 + r() * 300]) },
-    { id: 'monterey-sidewalks', w: 10, path: true, pt: (r) => [40 + r() * 3120, 5020 + r() * 160] },
+    { id: 'monterey-sidewalks', w: 10, path: true, pt: (r) => [40 + r() * 3120, 5020 + r() * 136] },
     ST().bullWalk(4110, 4560),
   ];
   const inRing = (x, y) => x > RING[0] && x < RING[2] && y > RING[1] && y < RING[3] && !(Math.abs(x - SQ.cx) < SQ.hw && Math.abs(y - SQ.cy) < SQ.hh);
-  const blocked = (x, y) => y < 4644 || (y > 4556 && y < 4644) || inRing(x, y) || ST().onBullRoad(x, y, 4110, 4680) || ST().onBullRoad(x, y, 5140, 5200)
+  const blocked = (x, y) => y < 4644 || (y > 4556 && y < 4644) || (y > 5160 && (x < 1515 || x > 1685)) || inRing(x, y) || ST().onBullRoad(x, y, 4110, 4680) || ST().onBullRoad(x, y, 5140, 5200)
     || (y > 4688 && y < 4990 && (x < 1070 || x > 2130))                          // the houses' front gardens and fences
     || ((x - SQ.cx) / 54) ** 2 + ((y - SQ.cy - 40) / 22) ** 2 < 1;
   const SPOTS = [

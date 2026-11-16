@@ -63,10 +63,10 @@
     { id: 'johnson-paths', w: 14, path: true, pt: (r) => (r() < 0.5 ? [JS.cx - 600 + r() * 1200, JS.cy - 20 + r() * 40] : [JS.cx - 20 + r() * 40, JS.cy - 360 + r() * 720]) },
     { id: 'johnson-lawn', w: 8, path: false, pt: (r) => [JS.cx - 620 + r() * 1240, JS.cy - 360 + r() * 720] },
     { id: 'market-front', w: 10, path: true, pt: (r) => [40 + r() * 3120, 1840 + r() * 34] },
-    { id: 'congress-walk', w: 8, path: true, pt: (r) => [40 + r() * 3120, 2790 + r() * 150] },
+    { id: 'congress-walk', w: 8, path: true, pt: (r) => [40 + r() * 3120, 2788 + r() * 98] },
     ST().bullWalk(1480, 2700),
   ];
-  const blocked = (x, y) => y < 1836 || (y > 2696 && y < 2786) || ST().onBullRoad(x, y, 1480, 2700)
+  const blocked = (x, y) => y < 1836 || (y > 2696 && y < 2786) || (y > 2822 && x > 2110 && x < 2490) || (y > 2900 && (x < 1515 || x > 1685)) || ST().onBullRoad(x, y, 1480, 2700)
     || STALLS.some(([sx, sy]) => inRect(x, y, [sx - 62, sy - 26, sx + 62, sy + 4])) || TENTS.some(([tx, ty]) => inRect(x, y, [tx - 66, ty - 10, tx + 66, ty + 2]))
     || TABLES.some(([tx, ty]) => inRect(x, y, [tx - 40, ty - 12, tx + 40, ty + 6])) || PLANTERS.some((px) => ((x - px) / 92) ** 2 + ((y - 2440) / 38) ** 2 < 1)
     || ((x - JS.cx) / 60) ** 2 + ((y - JS.cy - 30) / 26) ** 2 < 1;

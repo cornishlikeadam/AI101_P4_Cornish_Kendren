@@ -41,10 +41,10 @@
   const ZONES = [
     { id: 'square-paths', w: 20, path: true, pt: (r) => { const [cx, cy] = SQ[r() < 0.5 ? 0 : 1]; return r() < 0.5 ? [cx - 500 + r() * 1000, cy - 20 + r() * 40] : [cx - 20 + r() * 40, cy - 310 + r() * 620]; } },
     { id: 'square-lawns', w: 14, path: false, pt: (r) => { const [cx, cy] = SQ[r() < 0.5 ? 0 : 1]; return [cx - 500 + r() * 1000, cy - 300 + r() * 600]; } },
-    { id: 'square-sidewalks', w: 10, path: true, pt: (r) => [40 + r() * 3120, r() < 0.5 ? 3300 + r() * 26 : 4120 + r() * 160] },
+    { id: 'square-sidewalks', w: 10, path: true, pt: (r) => [40 + r() * 3120, r() < 0.5 ? 3300 + r() * 26 : 4120 + r() * 124] },
     ST().bullWalk(3290, 4040),
   ];
-  const blocked = (x, y) => y < 3296 || (y > 4036 && y < 4116) || ST().onBullRoad(x, y, 3290, 4300) || ((x - 900) / 110) ** 2 + ((y - 3655) / 50) ** 2 < 1 || ((x - 2300) / 150) ** 2 + ((y - 3650) / 60) ** 2 < 1;
+  const blocked = (x, y) => y < 3296 || (y > 4036 && y < 4116) || (y > 4250 && (x < 1515 || x > 1685)) || ST().onBullRoad(x, y, 3290, 4300) || ((x - 900) / 110) ** 2 + ((y - 3655) / 50) ** 2 < 1 || ((x - 2300) / 150) ** 2 + ((y - 3650) / 60) ** 2 < 1;
   const SPOTS = [
     { id: 'square-west-paths', x: 900, y: 3655, r: 420, d: ['easy', 'normal'] },
     { id: 'square-east-oaks', x: 2300, y: 3655, r: 480, d: ['hard', 'normal'] },
