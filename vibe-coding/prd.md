@@ -1,23 +1,23 @@
-# Product requirements: Waldo's Savannah (illustrated edition)
+# PRD: Waldo's Savannah
 
-*One screen. Decisions live in [ADR-002](decisions/ADR-002-illustrated-world.md); the look lives in [art direction](sources/art-direction.md). Version 1 is archived in [docs/history/prd-v1.md](docs/history/prd-v1.md).*
+**Goal:** a fun, fair search-and-find game that a ten-year-old can play without help.
 
-## The story a ten-year-old would tell
+**User:** a ten-year-old I tutor, on a laptop or tablet.
 
-You open a giant picture book of Savannah. Forsyth Park is packed: painters at easels, a dog running off with a sandwich, a saxophone player with a hat full of coins, kids chasing bubbles round the big white fountain. Somewhere in there is one person in a red-and-white striped shirt, a striped bobble hat, round glasses, blue trousers, with a walking stick. Drag and zoom to search. Click him. The clock stops.
+**Features**
 
-## What we are building
+1. The user can drag, scroll, pinch and use the keys to explore one big illustrated Savannah, from the river down Bull Street to Forsyth Park.
+2. The user can tap people to find the one with all five clues, while a timer runs and wrong taps are counted.
+3. The user can ask for up to three hints and save a score to a top-ten list on their own device.
 
-1. **Scenes.** Forsyth Park first, as the quality benchmark. Then SCAD and Poetter Hall, River Street and Factors Walk, and the Savannah Festival (which keeps the old Festival Pier and Oglethorpe Squares zone). Each scene has authored, fixed geography.
-2. **Art.** Original hand-drawn SVG assets with ink outlines, rich colour, detailed architecture, live oaks with moss, and at least 20 small stories per scene. Nothing copied from existing books.
-3. **People.** At least 24 archetypes, each with its own silhouette, outfit and activity, varied by skin tone, hair, build, clothes, accessories, pose and facing. Gentle activity animation; still with reduced motion.
-4. **The target.** Exactly one per round with all five traits (`#E53935` and `#FFFFFF` stripes, striped bobble hat with white pom-pom, round glasses, `#1E88E5` trousers, `#8D6E63` stick). Decoys carry at most two. A validator keeps enough of him visible to be fair.
-5. **Play.** Intro, playing, won and fallback states. Timer, wrong guesses, optional hints, difficulty, density modes. Drag, pinch, wheel zoom, arrows and WASD, reset. Clicks need under 6 CSS px of travel; picking follows the drawn silhouettes and what is in front.
-6. **Keep.** Seeded replay and share links, `?seed`, `?fallback=1`, `?beacon=1`, `?crowd`. Local top-ten leaderboard under `waldos_savannah_leaderboard_v1`, old records still readable.
-7. **Never.** No third-party request of any kind at runtime, no accounts, analytics or remote storage. `build/index.html` opens directly from disk and over HTTP.
+**What happens:** the player sees a picture of Waldo and presses Play. The timer starts. They search the crowd. A wrong tap gives a playful "not him" and adds to the counter. The right tap stops the clock and shows a celebration with the time and points.
 
-## Done when
+**Look and feel:** a hand-drawn picture book. Ink outlines, warm colours, live oaks with moss, real Savannah landmarks, and lots of small stories in the crowd. Big buttons and very little text.
 
-1. **The picture works without the UI.** A screenshot of Forsyth Park, with the interface hidden, reads as a richly illustrated Savannah scene of distinct characters, and scores at least 4.0 on the HARNESS rubric with no category under 3.5, backed by stored screenshots.
-2. **The game still works.** Scripted browser tests pass for start, pan, pinch and wheel zoom, keyboard, wrong guess, win, save score, seeded replay, share link, fallback, beacon and mobile layout, with zero runtime errors and zero requests outside the build folder.
-3. **The numbers are real.** `build-record/performance.md` reports measured load time, frame time and density for named devices and browsers, and states plainly anything not yet met.
+**Out of scope:** accounts, online leaderboards, multiplayer, sound, a geographically exact map, and any request to another website.
+
+**Done when**
+
+1. Open `build/index.html`, press Play, find Waldo (add `?beacon=1` to mark him) and tap him: the timer stops and the celebration shows.
+2. Zoom all the way out and drag to every edge: the screen always shows city, never blank space.
+3. Drag across the crowd and let go: the wrong-guess counter stays at 0.
