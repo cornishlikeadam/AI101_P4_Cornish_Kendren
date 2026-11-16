@@ -37,3 +37,9 @@ Short record of consequential AI sessions. Prompt descriptions are summarized wh
 **Prompt (summary):** Shorten the submission docs to match the course templates, inline all JS/assets into a single `build/index.html` with 100% HTML repo language settings, strip `Co-Authored-By:` git trailers, speed up loading and panning, and sync the Obsidian folder.
 **Result:** Shortened docs and ADRs, packed all assets and game scripts inline into `build/index.html`, set `.gitattributes` for HTML-only repo language detection, cleared all 29/29 tests, redeployed Vercel, cleaned git history, and synced Obsidian.
 **My contribution:** Reviewed the docs, GitHub sidebar, and Obsidian folder, caught overly long technical text, enforced the single-file HTML rule and contributor settings, and kept `reflection.md` human-written.
+
+**Date:** 2026-11-16
+**AI tool:** Codex + GitHub API
+**Prompt (summary):** Verify and fix the stale GitHub Languages bar so the single-file submission reports 100% HTML.
+**Result:** Confirmed GitHub was still serving its pre-submission language snapshot, strengthened `.gitattributes` to exclude authoring sources and force the packed HTML artifact to count, and triggered a fresh Linguist analysis.
+**My contribution:** Rechecked the public repository and reiterated that the course submission must display as HTML only.
