@@ -1,0 +1,94 @@
+# Asset register
+
+Every runtime asset, its origin and its permission. All entries are original work made for this project; nothing is traced, extracted or adapted from existing books, games or asset packs. Agents drew the SVG by hand in code. Where a helper script in `tools/author/` is named, the composition was placed by hand and the script only did repetitive drafting (fence posts, scalloped leaf edges, moss strands, grass and paving texture, palm leaflet edges, hedge scallops). Python files in `tools/author/` that write character parts, bodies and archetypes only wrap hand-written path coordinates into files. No image-generation service was used.
+
+Packed for runtime into `build/js/assets.bundle.js` by `tools/pack-assets.mjs` (art version 1). Count: 84 SVG files.
+
+| File | Origin | Author and date | Permission |
+|---|---|---|---|
+| `assets/characters/archetypes/bride.svg` | Original SVG, hand-authored | Waldo's Savannah project, 2026-11-15 | Project-owned, no third-party material |
+| `assets/characters/archetypes/chess-players.svg` | Original SVG, hand-authored; coordinates written by hand, file written by `tools/author/character-archetypes-2.py` | Waldo's Savannah project, 2026-11-15 | Project-owned, no third-party material |
+| `assets/characters/archetypes/child-bubbles.svg` | Original SVG, hand-authored | Waldo's Savannah project, 2026-11-15 | Project-owned, no third-party material |
+| `assets/characters/archetypes/cyclist.svg` | Original SVG, hand-authored | Waldo's Savannah project, 2026-11-15 | Project-owned, no third-party material |
+| `assets/characters/archetypes/dancer.svg` | Original SVG, hand-authored; coordinates written by hand, file written by `tools/author/character-archetypes-2.py` | Waldo's Savannah project, 2026-11-15 | Project-owned, no third-party material |
+| `assets/characters/archetypes/dog-walker.svg` | Original SVG, hand-authored | Waldo's Savannah project, 2026-11-15 | Project-owned, no third-party material |
+| `assets/characters/archetypes/elder-pigeon-feeder.svg` | Original SVG, hand-authored | Waldo's Savannah project, 2026-11-15 | Project-owned, no third-party material |
+| `assets/characters/archetypes/gardener.svg` | Original SVG, hand-authored; coordinates written by hand, file written by `tools/author/character-archetypes-2.py` | Waldo's Savannah project, 2026-11-15 | Project-owned, no third-party material |
+| `assets/characters/archetypes/groom.svg` | Original SVG, hand-authored | Waldo's Savannah project, 2026-11-15 | Project-owned, no third-party material |
+| `assets/characters/archetypes/jogger.svg` | Original SVG, hand-authored | Waldo's Savannah project, 2026-11-15 | Project-owned, no third-party material |
+| `assets/characters/archetypes/juggler.svg` | Original SVG, hand-authored; coordinates written by hand, file written by `tools/author/character-archetypes-2.py` | Waldo's Savannah project, 2026-11-15 | Project-owned, no third-party material |
+| `assets/characters/archetypes/kid-balloon.svg` | Original SVG, hand-authored | Waldo's Savannah project, 2026-11-15 | Project-owned, no third-party material |
+| `assets/characters/archetypes/maintenance-worker.svg` | Original SVG, hand-authored; coordinates written by hand, file written by `tools/author/character-archetypes-2.py` | Waldo's Savannah project, 2026-11-15 | Project-owned, no third-party material |
+| `assets/characters/archetypes/painter.svg` | Original SVG, hand-authored | Waldo's Savannah project, 2026-11-15 | Project-owned, no third-party material |
+| `assets/characters/archetypes/parent-stroller.svg` | Original SVG, hand-authored | Waldo's Savannah project, 2026-11-15 | Project-owned, no third-party material |
+| `assets/characters/archetypes/picnicker-startled.svg` | Original SVG, hand-authored | Waldo's Savannah project, 2026-11-15 | Project-owned, no third-party material |
+| `assets/characters/archetypes/praline-vendor.svg` | Original SVG, hand-authored | Waldo's Savannah project, 2026-11-15 | Project-owned, no third-party material |
+| `assets/characters/archetypes/reader-seated.svg` | Original SVG, hand-authored | Waldo's Savannah project, 2026-11-15 | Project-owned, no third-party material |
+| `assets/characters/archetypes/saxophonist.svg` | Original SVG, hand-authored | Waldo's Savannah project, 2026-11-15 | Project-owned, no third-party material |
+| `assets/characters/archetypes/scad-student-portfolio.svg` | Original SVG, hand-authored | Waldo's Savannah project, 2026-11-15 | Project-owned, no third-party material |
+| `assets/characters/archetypes/sculptor.svg` | Original SVG, hand-authored; coordinates written by hand, file written by `tools/author/character-archetypes-2.py` | Waldo's Savannah project, 2026-11-15 | Project-owned, no third-party material |
+| `assets/characters/archetypes/target-walker.svg` | Original SVG, hand-authored | Waldo's Savannah project, 2026-11-15 | Project-owned, no third-party material |
+| `assets/characters/archetypes/tour-guide.svg` | Original SVG, hand-authored | Waldo's Savannah project, 2026-11-15 | Project-owned, no third-party material |
+| `assets/characters/archetypes/tourist-photographer.svg` | Original SVG, hand-authored | Waldo's Savannah project, 2026-11-15 | Project-owned, no third-party material |
+| `assets/characters/bodies/cane.svg` | Original SVG, hand-authored; coordinates written by hand, file written by `tools/author/character-bodies.py` | Waldo's Savannah project, 2026-11-15 | Project-owned, no third-party material |
+| `assets/characters/bodies/child.svg` | Original SVG, hand-authored; coordinates written by hand, file written by `tools/author/character-bodies.py` | Waldo's Savannah project, 2026-11-15 | Project-owned, no third-party material |
+| `assets/characters/bodies/coffee.svg` | Original SVG, hand-authored; coordinates written by hand, file written by `tools/author/character-bodies.py` | Waldo's Savannah project, 2026-11-15 | Project-owned, no third-party material |
+| `assets/characters/bodies/dress.svg` | Original SVG, hand-authored; coordinates written by hand, file written by `tools/author/character-bodies.py` | Waldo's Savannah project, 2026-11-15 | Project-owned, no third-party material |
+| `assets/characters/bodies/phone.svg` | Original SVG, hand-authored; coordinates written by hand, file written by `tools/author/character-bodies.py` | Waldo's Savannah project, 2026-11-15 | Project-owned, no third-party material |
+| `assets/characters/bodies/tote.svg` | Original SVG, hand-authored; coordinates written by hand, file written by `tools/author/character-bodies.py` | Waldo's Savannah project, 2026-11-15 | Project-owned, no third-party material |
+| `assets/characters/bodies/walk.svg` | Original SVG, hand-authored; coordinates written by hand, file written by `tools/author/character-bodies.py` | Waldo's Savannah project, 2026-11-15 | Project-owned, no third-party material |
+| `assets/characters/parts/beards/full.svg` | Original SVG, hand-authored; coordinates written by hand, file written by `tools/author/character-parts.py` | Waldo's Savannah project, 2026-11-15 | Project-owned, no third-party material |
+| `assets/characters/parts/beards/moustache.svg` | Original SVG, hand-authored; coordinates written by hand, file written by `tools/author/character-parts.py` | Waldo's Savannah project, 2026-11-15 | Project-owned, no third-party material |
+| `assets/characters/parts/faces/happy.svg` | Original SVG, hand-authored; coordinates written by hand, file written by `tools/author/character-parts.py` | Waldo's Savannah project, 2026-11-15 | Project-owned, no third-party material |
+| `assets/characters/parts/faces/neutral.svg` | Original SVG, hand-authored; coordinates written by hand, file written by `tools/author/character-parts.py` | Waldo's Savannah project, 2026-11-15 | Project-owned, no third-party material |
+| `assets/characters/parts/faces/smile.svg` | Original SVG, hand-authored; coordinates written by hand, file written by `tools/author/character-parts.py` | Waldo's Savannah project, 2026-11-15 | Project-owned, no third-party material |
+| `assets/characters/parts/faces/surprised.svg` | Original SVG, hand-authored; coordinates written by hand, file written by `tools/author/character-parts.py` | Waldo's Savannah project, 2026-11-15 | Project-owned, no third-party material |
+| `assets/characters/parts/faces/talk.svg` | Original SVG, hand-authored; coordinates written by hand, file written by `tools/author/character-parts.py` | Waldo's Savannah project, 2026-11-15 | Project-owned, no third-party material |
+| `assets/characters/parts/glasses/round.svg` | Original SVG, hand-authored; coordinates written by hand, file written by `tools/author/character-parts.py` | Waldo's Savannah project, 2026-11-15 | Project-owned, no third-party material |
+| `assets/characters/parts/glasses/square.svg` | Original SVG, hand-authored; coordinates written by hand, file written by `tools/author/character-parts.py` | Waldo's Savannah project, 2026-11-15 | Project-owned, no third-party material |
+| `assets/characters/parts/glasses/sun.svg` | Original SVG, hand-authored; coordinates written by hand, file written by `tools/author/character-parts.py` | Waldo's Savannah project, 2026-11-15 | Project-owned, no third-party material |
+| `assets/characters/parts/hair/afro.svg` | Original SVG, hand-authored; coordinates written by hand, file written by `tools/author/character-parts.py` | Waldo's Savannah project, 2026-11-15 | Project-owned, no third-party material |
+| `assets/characters/parts/hair/bald.svg` | Original SVG, hand-authored; coordinates written by hand, file written by `tools/author/character-parts.py` | Waldo's Savannah project, 2026-11-15 | Project-owned, no third-party material |
+| `assets/characters/parts/hair/bob.svg` | Original SVG, hand-authored; coordinates written by hand, file written by `tools/author/character-parts.py` | Waldo's Savannah project, 2026-11-15 | Project-owned, no third-party material |
+| `assets/characters/parts/hair/bun.svg` | Original SVG, hand-authored; coordinates written by hand, file written by `tools/author/character-parts.py` | Waldo's Savannah project, 2026-11-15 | Project-owned, no third-party material |
+| `assets/characters/parts/hair/crop.svg` | Original SVG, hand-authored; coordinates written by hand, file written by `tools/author/character-parts.py` | Waldo's Savannah project, 2026-11-15 | Project-owned, no third-party material |
+| `assets/characters/parts/hair/curly.svg` | Original SVG, hand-authored; coordinates written by hand, file written by `tools/author/character-parts.py` | Waldo's Savannah project, 2026-11-15 | Project-owned, no third-party material |
+| `assets/characters/parts/hair/locs.svg` | Original SVG, hand-authored; coordinates written by hand, file written by `tools/author/character-parts.py` | Waldo's Savannah project, 2026-11-15 | Project-owned, no third-party material |
+| `assets/characters/parts/hair/long.svg` | Original SVG, hand-authored; coordinates written by hand, file written by `tools/author/character-parts.py` | Waldo's Savannah project, 2026-11-15 | Project-owned, no third-party material |
+| `assets/characters/parts/hair/ponytail.svg` | Original SVG, hand-authored; coordinates written by hand, file written by `tools/author/character-parts.py` | Waldo's Savannah project, 2026-11-15 | Project-owned, no third-party material |
+| `assets/characters/parts/hair/sidepart.svg` | Original SVG, hand-authored; coordinates written by hand, file written by `tools/author/character-parts.py` | Waldo's Savannah project, 2026-11-15 | Project-owned, no third-party material |
+| `assets/characters/parts/hats/beanie.svg` | Original SVG, hand-authored; coordinates written by hand, file written by `tools/author/character-parts.py` | Waldo's Savannah project, 2026-11-15 | Project-owned, no third-party material |
+| `assets/characters/parts/hats/boater.svg` | Original SVG, hand-authored; coordinates written by hand, file written by `tools/author/character-parts.py` | Waldo's Savannah project, 2026-11-15 | Project-owned, no third-party material |
+| `assets/characters/parts/hats/bobble.svg` | Original SVG, hand-authored; coordinates written by hand, file written by `tools/author/character-parts.py` | Waldo's Savannah project, 2026-11-15 | Project-owned, no third-party material |
+| `assets/characters/parts/hats/bucket.svg` | Original SVG, hand-authored; coordinates written by hand, file written by `tools/author/character-parts.py` | Waldo's Savannah project, 2026-11-15 | Project-owned, no third-party material |
+| `assets/characters/parts/hats/cap.svg` | Original SVG, hand-authored; coordinates written by hand, file written by `tools/author/character-parts.py` | Waldo's Savannah project, 2026-11-15 | Project-owned, no third-party material |
+| `assets/characters/parts/hats/fedora.svg` | Original SVG, hand-authored; coordinates written by hand, file written by `tools/author/character-parts.py` | Waldo's Savannah project, 2026-11-15 | Project-owned, no third-party material |
+| `assets/characters/parts/hats/headwrap.svg` | Original SVG, hand-authored; coordinates written by hand, file written by `tools/author/character-parts.py` | Waldo's Savannah project, 2026-11-15 | Project-owned, no third-party material |
+| `assets/characters/parts/hats/sunhat.svg` | Original SVG, hand-authored; coordinates written by hand, file written by `tools/author/character-parts.py` | Waldo's Savannah project, 2026-11-15 | Project-owned, no third-party material |
+| `assets/characters/parts/hats/tophat.svg` | Original SVG, hand-authored; coordinates written by hand, file written by `tools/author/character-parts.py` | Waldo's Savannah project, 2026-11-15 | Project-owned, no third-party material |
+| `assets/effects/bubbles.svg` | Original SVG, hand-authored | Waldo's Savannah project, 2026-11-15 | Project-owned, no third-party material |
+| `assets/effects/kite.svg` | Original SVG, hand-authored; coordinates written by hand, file written by `tools/author/props-2.py` | Waldo's Savannah project, 2026-11-15 | Project-owned, no third-party material |
+| `assets/environments/forsyth/fountain.svg` | Original SVG, hand-composed; author helper `tools/author/fence.mjs` (fence posts only) | Waldo's Savannah project, 2026-11-15 | Project-owned, no third-party material |
+| `assets/environments/forsyth/gaston-street-houses.svg` | Original SVG, hand-authored | Waldo's Savannah project, 2026-11-15 | Project-owned, no third-party material |
+| `assets/environments/forsyth/ground-north.svg` | Original SVG, hand-composed; author helper `tools/author/forsyth-ground.mjs` | Waldo's Savannah project, 2026-11-15 | Project-owned, no third-party material |
+| `assets/environments/forsyth/ground.svg` | Original SVG, hand-composed; author helper `tools/author/forsyth-ground-full.mjs` (layout hand-placed; script scatters grass, daisies, paving) | Waldo's Savannah project, 2026-11-15 | Project-owned, no third-party material |
+| `assets/props/animals/dog-dachshund.svg` | Original SVG, hand-authored | Waldo's Savannah project, 2026-11-15 | Project-owned, no third-party material |
+| `assets/props/animals/dog-sandwich-thief.svg` | Original SVG, hand-authored | Waldo's Savannah project, 2026-11-15 | Project-owned, no third-party material |
+| `assets/props/animals/pigeon.svg` | Original SVG, hand-authored | Waldo's Savannah project, 2026-11-15 | Project-owned, no third-party material |
+| `assets/props/food/picnic-blanket.svg` | Original SVG, hand-authored | Waldo's Savannah project, 2026-11-15 | Project-owned, no third-party material |
+| `assets/props/furniture/cafe-table.svg` | Original SVG, hand-authored; coordinates written by hand, file written by `tools/author/props-2.py` | Waldo's Savannah project, 2026-11-15 | Project-owned, no third-party material |
+| `assets/props/furniture/easel-fountain-painting.svg` | Original SVG, hand-authored | Waldo's Savannah project, 2026-11-15 | Project-owned, no third-party material |
+| `assets/props/furniture/lamp-post.svg` | Original SVG, hand-authored | Waldo's Savannah project, 2026-11-15 | Project-owned, no third-party material |
+| `assets/props/furniture/park-bench.svg` | Original SVG, hand-authored | Waldo's Savannah project, 2026-11-15 | Project-owned, no third-party material |
+| `assets/props/furniture/tip-hat.svg` | Original SVG, hand-authored | Waldo's Savannah project, 2026-11-15 | Project-owned, no third-party material |
+| `assets/props/market/stall-flowers.svg` | Original SVG, hand-authored; coordinates written by hand, file written by `tools/author/props-2.py` | Waldo's Savannah project, 2026-11-15 | Project-owned, no third-party material |
+| `assets/props/market/stall-honey.svg` | Original SVG, hand-authored; coordinates written by hand, file written by `tools/author/props-2.py` | Waldo's Savannah project, 2026-11-15 | Project-owned, no third-party material |
+| `assets/props/market/stall-peaches.svg` | Original SVG, hand-authored; coordinates written by hand, file written by `tools/author/props-2.py` | Waldo's Savannah project, 2026-11-15 | Project-owned, no third-party material |
+| `assets/props/vegetation/azalea-bush.svg` | Original SVG, hand-authored | Waldo's Savannah project, 2026-11-15 | Project-owned, no third-party material |
+| `assets/props/vegetation/hedge.svg` | Original SVG, hand-composed; author helper `tools/author/props-2.py` (scalloped top and leaf marks scattered by the script) | Waldo's Savannah project, 2026-11-15 | Project-owned, no third-party material |
+| `assets/props/vegetation/live-oak-lean.svg` | Original SVG, hand-composed; author helper `tools/author/live-oak.mjs` (leaning variant: reshaped crown, own seed) | Waldo's Savannah project, 2026-11-15 | Project-owned, no third-party material |
+| `assets/props/vegetation/live-oak-tall.svg` | Original SVG, hand-composed; author helper `tools/author/live-oak.mjs` (tall variant: reshaped crown, own seed) | Waldo's Savannah project, 2026-11-15 | Project-owned, no third-party material |
+| `assets/props/vegetation/live-oak.svg` | Original SVG, hand-composed; author helper `tools/author/live-oak.mjs` | Waldo's Savannah project, 2026-11-15 | Project-owned, no third-party material |
+| `assets/props/vegetation/palmetto.svg` | Original SVG, hand-composed; author helper `tools/author/props-2.py` (frond angles and lengths hand-set; script draws the leaflet edges) | Waldo's Savannah project, 2026-11-15 | Project-owned, no third-party material |
+
+Fonts: none bundled. The interface uses system font stacks (`build/illustrated.html`); no web font is requested.

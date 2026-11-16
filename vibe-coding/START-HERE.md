@@ -43,7 +43,8 @@ vibe-coding/
 ├── reflection.md          # Project reflection
 ├── disclosure.md          # AI contribution disclosure
 ├── build/
-│   └── index.html          # Complete self-contained game
+│   ├── index.html          # The illustrated game (opens from disk)
+│   └── js/                 # game.js and assets.bundle.js, written by tools/build.mjs
 ├── sources/
 │   └── source-index.md     # Research dossier
 ├── decisions/

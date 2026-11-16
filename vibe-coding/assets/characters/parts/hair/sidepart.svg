@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="10 -8 48 52" width="48" height="52" data-anchor="34 44" data-part="hair" data-asset="characters/parts/hair/sidepart" data-hats="all" data-author="original, hand-authored SVG, Waldo's Savannah 2026-11-15">
+<style>
+.o{stroke:#2B1D16;stroke-width:1.5;stroke-linejoin:round;stroke-linecap:round}
+.l{fill:none;stroke:#2B1D16;stroke-width:1;stroke-linecap:round;stroke-linejoin:round}
+.fold{fill:none;stroke:#2B1D16;stroke-opacity:.4;stroke-width:.8;stroke-linecap:round}
+.sh{fill:#2B1D16;opacity:.15}.ink{fill:#2B1D16}.wht{fill:#FFFFFF}
+.skin{fill:var(--skin,#E0A97E)}.hair{fill:var(--hair,#4A2F1E)}
+.hat{fill:var(--hat,#3E8E7E)}.hat2{fill:var(--hat2,#F5F0E6)}
+</style>
+<!--front-->
+<path class="hair o" d="M22.6,21 C21,12.6 26.4,7.4 34,7.6 C41,7.8 46,11.6 45.6,17.4 C44.4,14.6 41.4,12.8 37.8,12.8 C34.6,13 32,15 29.2,15.2 C28.4,17.4 27.4,19.6 26.4,21.6 C25.8,23 25,23.8 24,24 C23.2,23.2 22.8,22.2 22.6,21 Z"/>
+<path class="fold" d="M37.8,12.8 C35,10.6 31,10.4 27.6,12 M41,10.2 q2.6,1.4 3.8,3.8"/>
+<!--/front-->
+</svg>

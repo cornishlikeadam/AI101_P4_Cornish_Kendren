@@ -1,0 +1,52 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 -2 66 104" width="66" height="104" data-anchor="30 100" data-asset="characters/archetypes/elder-pigeon-feeder" data-slots="skin hair top bottom hat" data-traits="stick" data-author="original, hand-authored SVG, Waldo's Savannah 2026-11-15">
+<style>
+.o{stroke:#2B1D16;stroke-width:1.5;stroke-linejoin:round;stroke-linecap:round}
+.l{fill:none;stroke:#2B1D16;stroke-width:1;stroke-linecap:round;stroke-linejoin:round}
+.fold{fill:none;stroke:#2B1D16;stroke-opacity:.4;stroke-width:.8;stroke-linecap:round}
+.sh{fill:#2B1D16;opacity:.15}
+.skin{fill:var(--skin,#E8B48E)}.hair{fill:var(--hair,#E9E6DF)}
+.top{fill:var(--top,#8A9B3C)}.bot{fill:var(--bottom,#7A6A55)}.hat{fill:var(--hat,#6B5A44)}
+</style>
+<ellipse cx="32" cy="100" rx="17" ry="3" class="sh"/>
+<!-- cane in the back hand -->
+<path d="M13.4,58 C12.2,54.6 16.6,52.6 18.4,55.4 L16.4,99" fill="none" stroke="#2B1D16" stroke-width="3.6" stroke-linecap="round"/>
+<path d="M13.4,58 C12.2,54.6 16.6,52.6 18.4,55.4 L16.4,99" fill="none" stroke="#3A2A20" stroke-width="2" stroke-linecap="round"/>
+<!-- legs -->
+<path class="bot o" d="M24.4,68 L23.4,95 L29.6,95 L31.2,68 Z"/>
+<path class="bot o" d="M32,68 L34.6,94.6 L40.6,94.2 L39.4,67.6 Z"/>
+<path class="fold" d="M26,74 L26.2,88 M36.2,74 L37,88"/>
+<path fill="#3A2A20" class="o" d="M21.4,94.4 L30,94.6 C32,94.8 32.6,97.4 31.8,98.8 L20.8,98.8 C20.2,97.2 20.4,95.2 21.4,94.4 Z"/>
+<path fill="#3A2A20" class="o" d="M33.4,94 L41.2,93.6 C43.6,93.6 44.6,96.2 43.8,98.2 L33.4,98.6 C32.6,97 32.6,95 33.4,94 Z"/>
+<!-- back arm to the cane -->
+<path class="top o" d="M23,42 C19.6,46 17.6,51 16.6,55.4 L21.4,57.4 C22.6,53 24.6,49 27.4,45.6 Z"/>
+<circle class="skin o" cx="17.4" cy="56.6" r="2.7"/>
+<!-- cardigan, a slight stoop -->
+<path class="top o" d="M20,44 C20,39 24.6,36.4 31,36.6 C37.6,36.6 42.4,39.6 43,44.4 L43.4,69.4 C36,71.4 26.4,71.4 19.6,69.4 Z"/>
+<path class="l" d="M31.4,37 C31,48 31.2,58 31.6,70.6"/>
+<g fill="#E9E1C8" stroke="#2B1D16" stroke-width=".7"><circle cx="32.8" cy="46" r="1"/><circle cx="32.8" cy="53" r="1"/><circle cx="32.9" cy="60" r="1"/></g>
+<path fill="#F5F0E6" class="o" d="M27,37.4 L31.2,44 L35.2,37.6 Q31,39.6 27,37.4 Z"/>
+<rect x="21.6" y="58" width="7" height="6.4" rx="1" class="top o"/>
+<path class="sh" d="M38,38 C41,39.4 42.8,41.4 43,44.4 L43.4,69.4 C41.6,70 39.8,70.4 38,70.6 C39.4,60 39.6,48 38,38 Z"/>
+<path class="fold" d="M22,66 l3,-1 M36.6,66 l3.4,-.8"/>
+<!-- neck, head pushed forward -->
+<path class="skin o" d="M28,31 L36,31 L36.6,38 Q32,40 27.6,38 Z"/>
+<path class="skin o" d="M24,22.6 C24,15.4 28.6,11.6 34.6,11.6 C41,11.6 45,15.8 45,22.6 C45,29.2 41,34 34.2,34 C27.8,34 24,29.4 24,22.6 Z"/>
+<path class="skin o" d="M44.2,21.6 C48.6,22 49.2,26.4 44.8,27.2"/>
+<ellipse class="skin o" cx="26.4" cy="23.6" rx="2.3" ry="3.2"/>
+<path class="hair o" d="M24.2,24.8 C23,21 23.6,17.6 25.4,15.6 L28.4,18.6 C27.4,20.6 26.4,23 24.2,24.8 Z"/>
+<!-- square glasses, bushy white brows and moustache -->
+<rect x="29.6" y="19.6" width="6" height="4.6" rx="1" fill="#FFFFFF" fill-opacity=".3" stroke="#2B1D16" stroke-width="1.1"/>
+<rect x="38.2" y="19.6" width="5.6" height="4.6" rx="1" fill="#FFFFFF" fill-opacity=".3" stroke="#2B1D16" stroke-width="1.1"/>
+<path class="l" d="M35.6,21.4 L38.2,21.4 M29.6,21.2 L27.4,22.2"/>
+<circle cx="32.8" cy="22" r=".9" fill="#2B1D16"/><circle cx="41" cy="22" r=".9" fill="#2B1D16"/>
+<path class="hair o" style="stroke-width:1" d="M29.4,18.4 C31,16.6 34,16.8 35.2,18.2 C33.4,18.6 31.4,18.8 29.4,18.4 Z M38.4,18 C40,16.6 42.8,16.8 43.8,18.2 C42,18.6 40,18.6 38.4,18 Z"/>
+<path class="hair o" d="M36.4,27.4 C38,26 41.6,26 43.6,27 C44.6,28.6 43,30 41.4,29.6 C40,30.4 37.6,30.2 36.4,27.4 Z"/>
+<!-- flat cap -->
+<path class="hat o" d="M23.2,17 C22.6,11.2 27.6,7.6 34.6,7.6 C41,7.6 45.4,10.2 46.2,14.4 C46.4,15.6 45.8,16.6 44.4,16.8 C38,17.4 30,17.6 23.2,17 Z"/>
+<path class="hat o" d="M41.6,15 C45.4,14.6 49.4,15.2 51,16.6 C49,18.2 44.6,18.4 41.4,17.8 Z"/>
+<path class="fold" d="M26,13 C31,11 38,10.6 44.6,12.4 M34,8 L33.6,15.6"/>
+<!-- front arm scattering crumbs -->
+<path class="top o" d="M38.6,41 C43.6,43 47.4,46.2 50.4,49.6 L53.4,47.2 L56,50 C52.6,54 49.6,55 46.8,53.2 C43.6,51 40.6,48.6 37.4,46.4 Z"/>
+<path class="skin o" d="M53.2,46.6 C55.4,45.2 58.4,46.4 58.6,48.6 C58.8,50.8 56.6,51.8 54.8,51.2 Z"/>
+<g fill="#E8D3A0" stroke="#7A5A30" stroke-width=".4"><circle cx="60.6" cy="53" r=".9"/><circle cx="58.8" cy="57.4" r=".8"/><circle cx="62.4" cy="58.8" r=".7"/><circle cx="60" cy="62" r=".8"/><circle cx="63.2" cy="64.6" r=".7"/></g>
+</svg>

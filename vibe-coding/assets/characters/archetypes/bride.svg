@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 -4 72 108" width="72" height="108" data-anchor="34 100" data-asset="characters/archetypes/bride" data-slots="skin hair" data-author="original, hand-authored SVG, Waldo's Savannah 2026-11-15">
+<style>
+.o{stroke:#2B1D16;stroke-width:1.5;stroke-linejoin:round;stroke-linecap:round}
+.l{fill:none;stroke:#2B1D16;stroke-width:1;stroke-linecap:round;stroke-linejoin:round}
+.fold{fill:none;stroke:#2B1D16;stroke-opacity:.3;stroke-width:.8;stroke-linecap:round}
+.sh{fill:#2B1D16;opacity:.15}
+.skin{fill:var(--skin,#6E432A)}.hair{fill:var(--hair,#1E1410)}
+.gown{fill:#FBF8F1}.gown-sh{fill:#E4DFD3}
+</style>
+<ellipse cx="36" cy="100" rx="24" ry="3.4" class="sh"/>
+<!-- veil flowing behind -->
+<path d="M24,14 C14,24 8,46 6,74 C12,76 18,74 22,70 C22,52 24,32 30,18 Z" fill="#FFFFFF" fill-opacity=".7" stroke="#2B1D16" stroke-width="1.1" stroke-linejoin="round"/>
+<!-- full skirt -->
+<path class="gown o" d="M24,58 C18,72 12,86 8,98 C26,102 46,102 62,98 C58,86 52,72 46,58 Z"/>
+<path class="gown-sh" d="M40,59 L46,58 C52,72 58,86 62,98 C58,99 54,99.6 50,100 C48,86 44,72 40,59 Z"/>
+<path class="fold" d="M30,64 C27,74 24,86 22,98 M36,64 L36,100 M42,64 C45,76 47,88 48,99"/>
+<path class="l" style="stroke-opacity:.5" d="M8,98 q6,-3 12,0 q6,-3 12,0 q6,-3 12,0 q6,-3 12,0 q4,-2 6,0"/>
+<!-- bodice -->
+<path class="gown o" d="M25,40 C25,36.6 28.6,35 34.4,35 C40,35 43.6,36.6 44,40 L46,58.6 C38,60.6 30,60.6 24,58.6 Z"/>
+<path class="l" style="stroke-opacity:.45" d="M24.6,52 C31,54 39,54 45.4,52"/>
+<!-- neck, head -->
+<path class="skin o" d="M30.4,30 L38.2,30 L38.6,36.4 Q34.4,38.6 30,36.4 Z"/>
+<path class="hair o" d="M25.4,14 C21.4,18 21.4,26 24.6,30.4 C27.4,26 27,20 28,16 Z"/>
+<path class="skin o" d="M25,21 C25,13.5 30,9.5 36,9.5 C42.5,9.5 46.6,14 46.6,21 C46.6,27.6 42.6,32.6 35.6,32.6 C29,32.6 25,28 25,21 Z"/>
+<path class="skin o" d="M45.8,20.4 C49,20.8 49.6,24 46.4,25"/>
+<path class="hair o" d="M24.8,20.6 C23.4,14.4 27.6,9.4 34.4,9 C40.6,8.6 45.6,11.8 46.6,16.4 C42,15.4 37.6,15.8 34,17.6 C31.6,16.8 28.6,17.6 27,20 Z"/>
+<circle class="hair o" cx="26.4" cy="10.6" r="4.6"/>
+<!-- flower crown -->
+<g stroke="#2B1D16" stroke-width=".6"><circle cx="29.4" cy="10.4" r="2" fill="#F49AB8"/><circle cx="33.6" cy="9" r="2" fill="#FBF8F1"/><circle cx="38" cy="8.8" r="2" fill="#F7C548"/><circle cx="42.4" cy="10" r="2" fill="#F49AB8"/><circle cx="45.6" cy="12.6" r="1.8" fill="#FBF8F1"/></g>
+<circle cx="36.6" cy="21" r=".95" fill="#2B1D16"/><circle cx="43.2" cy="20.8" r=".95" fill="#2B1D16"/>
+<path class="l" d="M38.6,26.6 Q41.6,29.4 44.4,26.4"/>
+<circle cx="44.6" cy="24.4" r="1.7" fill="#F08C7A" opacity=".45"/>
+<!-- arms holding the bouquet -->
+<path class="skin o" d="M26,40 C23.6,46 24,52 28,55 C31,57 36,56 40,54.4 L39,50.6 C35.6,51.6 32,52 30.6,50.4 C29.6,48 30,44.6 31,42 Z"/>
+<path class="skin o" d="M41,39.4 C44.6,42 45.4,46 44,50 C43,52.6 41.6,54 40,54.6 L38.4,51 C40,49.6 40.6,48 40.6,46 C40.6,44.4 39.6,43 38.4,42 Z"/>
+<g stroke="#2B1D16" stroke-width=".7"><circle cx="38.6" cy="53" r="3.2" fill="#F49AB8"/><circle cx="42.6" cy="51.6" r="3" fill="#FBF8F1"/><circle cx="41.4" cy="55.8" r="2.8" fill="#E2557E"/><circle cx="36" cy="56.4" r="2.6" fill="#F7C548"/></g>
+<path d="M40,58 l-1,6 M42,58 l1,5" stroke="#5C9248" stroke-width="1.4" stroke-linecap="round"/>
+</svg>

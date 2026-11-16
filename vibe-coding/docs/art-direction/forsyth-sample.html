@@ -1,0 +1,160 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Forsyth Park sample</title>
+<style>
+  html, body { margin: 0; background: #2B1D16; }
+  canvas { display: block; }
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<script src="../../build/js/assets.bundle.js"></script>
+<script>
+// Art-direction sample: composes the packed SVG assets the same way the game will
+// (SVG text -> Blob URL -> raster sprite -> depth-sorted draw). Placements are hand-composed.
+const A = window.WS_ASSETS;
+const W = 1600, H = 1000;
+const P = 0.8;  // people scale (SVG units -> world units)
+
+const look = {
+  a: { skin: '#F6D2B8', hair: '#2B1D16', top: '#4F6CC4', top2: '#F7C548', bottom: '#3B3A48', hat: '#E8457A', acc: '#F2D55C' },
+  b: { skin: '#9C6440', hair: '#1E1410', top: '#E07A3F', top2: '#F5F0E6', bottom: '#2F4858', hat: '#3E8E7E', acc: '#4F6CC4' },
+  c: { skin: '#E0A97E', hair: '#B5452C', top: '#5C9E4A', top2: '#F4A3B5', bottom: '#6B5A44', hat: '#F2D55C', acc: '#E8457A' },
+  d: { skin: '#6E432A', hair: '#2B1D16', top: '#F2D55C', top2: '#7D5BA6', bottom: '#26324A', hat: '#2F7FA8', acc: '#3FC1C9' },
+  e: { skin: '#FBE0C8', hair: '#D9B06A', top: '#A33F6B', top2: '#F5F0E6', bottom: '#C9B48A', hat: '#F5F0E6', acc: '#5C9E4A' },
+  f: { skin: '#C68858', hair: '#4A2F1E', top: '#2F9C95', top2: '#E8457A', bottom: '#7A3B3B', hat: '#3D4F6E', acc: '#F7C548' },
+  g: { skin: '#4E2E1E', hair: '#1E1410', top: '#E8457A', top2: '#F2D55C', bottom: '#2F7FA8', hat: '#F5F0E6', acc: '#7D5BA6' },
+  h: { skin: '#F1C7A0', hair: '#8E8E8E', top: '#7D5BA6', top2: '#F2D55C', bottom: '#3B3A48', hat: '#C73E3A', acc: '#E07A3F' },
+};
+const C = 'characters/archetypes/';
+
+// Hand-composed stories. [asset, x, y, scale, flip, look]
+const items = [
+  // perimeter azaleas and entrance beds
+  ['props/vegetation/azalea-bush', 70, 404, 1, 0], ['props/vegetation/azalea-bush', 210, 406, .9, 1], ['props/vegetation/azalea-bush', 1400, 406, .9, 0], ['props/vegetation/azalea-bush', 1535, 404, 1, 1],
+  ['props/vegetation/azalea-bush', 660, 486, .85, 0], ['props/vegetation/azalea-bush', 940, 486, .85, 1],
+  // oaks: two behind the plaza, one framing the lower left
+  ['props/vegetation/live-oak', 120, 640, .95, 0], ['props/vegetation/live-oak', 1500, 700, .9, 1], ['props/vegetation/live-oak', 150, 1060, 1.05, 1],
+  // fountain, basin centred on the plaza at (800, 640)
+  ['environments/forsyth/fountain', 800, 742, 1, 0],
+  ['props/furniture/lamp-post', 450, 610, .95, 0], ['props/furniture/lamp-post', 1150, 610, .95, 0], ['props/furniture/lamp-post', 712, 840, .95, 0], ['props/furniture/lamp-post', 890, 840, .95, 0],
+  ['props/furniture/park-bench', 410, 712, .9, 0], ['props/furniture/park-bench', 1190, 714, .9, 0], ['props/furniture/park-bench', 560, 476, .85, 0],
+
+  // 1. painter at an easel, painting the fountain
+  [C + 'painter', 476, 646, P, 0], ['props/furniture/easel-fountain-painting', 536, 648, .85, 0],
+  // 2. saxophone busker by the north gate: tip hat, three listeners, bubbles drifting past
+  [C + 'saxophonist', 1060, 474, P, 1], ['props/furniture/tip-hat', 1012, 482, .9, 0],
+  [C + 'scad-student-portfolio', 962, 490, P, 0, 'c'], [C + 'elder-pigeon-feeder', 1118, 500, P, 1, 'h'], [C + 'child-bubbles', 1004, 516, P, 0, 'b'],
+  // 3. wedding photo in front of the fountain
+  [C + 'groom', 742, 800, P, 0], [C + 'bride', 786, 802, P, 1], [C + 'tourist-photographer', 900, 880, P, 1, 'e'],
+  // 4. picnic raid
+  ['props/food/picnic-blanket', 1100, 948, 1.1, 0], [C + 'picnicker-startled', 1052, 936, P, 0], ['props/animals/dog-sandwich-thief', 1240, 976, .95, 0],
+  // 5. pigeons and crumbs
+  [C + 'elder-pigeon-feeder', 420, 902, P, 0],
+  ['props/animals/pigeon', 486, 908, .9, 0], ['props/animals/pigeon', 508, 922, .9, 1], ['props/animals/pigeon', 470, 928, .9, 1], ['props/animals/pigeon', 520, 900, .9, 0], ['props/animals/pigeon', 494, 940, .9, 0],
+  // 6. bubbles
+  [C + 'child-bubbles', 612, 884, P, 0],
+  // 7. towed by a dachshund
+  [C + 'dog-walker', 786, 972, P, 0], ['props/animals/dog-dachshund', 870, 978, .9, 0],
+  // 8. jogger on the south-east walk
+  [C + 'jogger', 1380, 900, P, 1],
+  // 9. cyclist on Gaston Street; 10. stroller on the perimeter walk
+  [C + 'cyclist', 300, 334, P, 0], [C + 'cyclist', 1260, 318, P, 1, 'g'],
+  [C + 'parent-stroller', 560, 398, P, 0],
+  // 11. walking tour: guide with umbrella, the group trailing behind
+  [C + 'tour-guide', 1186, 818, P, 0], [C + 'tourist-photographer', 1236, 826, P, 1, 'a'], [C + 'tourist-photographer', 1280, 812, P, 1, 'd'],
+  [C + 'scad-student-portfolio', 1322, 832, P, 1, 'e'], [C + 'parent-stroller', 1322, 790, P, 1, 'f'],
+  // 12. praline cart with a queue; 13. a balloon getting away
+  [C + 'praline-vendor', 1300, 478, P, 1], [C + 'jogger', 1226, 494, P, 0, 'h'], [C + 'kid-balloon', 1370, 500, P, 0],
+  // 14. reader on the east bench, a sitter on the north bench
+  [C + 'reader-seated', 1180, 718, P, 0], [C + 'reader-seated', 548, 480, P, 1, 'f'],
+  // the target: walking the plaza ring on the north-west side
+  [C + 'target-walker', 610, 552, P, 0],
+];
+const effects = [['effects/bubbles', 640, 846, .9], ['effects/bubbles', 1030, 484, .7]];
+const leashes = [[786, 972, 0, C + 'dog-walker', 870, 978, 0]];
+
+// Seeded filler crowd along the walks and the plaza ring, as the game will place it.
+(function fill() {
+  let s = 20261115; const r = () => ((s = (s * 16807) % 2147483647) / 2147483647);
+  const pool = ['jogger', 'tourist-photographer', 'scad-student-portfolio', 'elder-pigeon-feeder', 'child-bubbles', 'groom', 'parent-stroller', 'jogger', 'tourist-photographer'];
+  const looks = Object.keys(look);
+  const taken = items.filter((it) => it[0].startsWith(C)).map((it) => [it[1], it[2]]);
+  const free = (x, y) => taken.every(([tx, ty]) => Math.hypot(tx - x, (ty - y) * 2.2) > 46);
+  const inEll = (x, y, cx, cy, rx, ry) => ((x - cx) / rx) ** 2 + ((y - cy) / ry) ** 2 < 1;
+  const zones = [
+    [34, () => { const x = 380 + r() * 840, y = 470 + r() * 340; return inEll(x, y, 800, 640, 425, 168) && !inEll(x, y, 800, 640, 292, 118) ? [x, y] : null; }],
+    [12, () => [20 + r() * 1560, 382 + r() * 18]],
+    [6, () => [752 + r() * 96, 420 + r() * 50]],
+    [6, () => [752 + r() * 96, 830 + r() * 160]],
+    [10, () => { const x = r() * 1600, y = 600 + r() * 380; return (x < 380 || x > 1220) && y > 700 ? [x, y] : null; }],
+  ];
+  for (const [n, pick] of zones) {
+    for (let k = 0, tries = 0; k < n && tries < 600; tries++) {
+      const pt = pick(); if (!pt) continue;
+      const [x, y] = pt; if (!free(x, y)) continue;
+      taken.push([x, y]); k++;
+      items.push([C + pool[Math.floor(r() * pool.length)], Math.round(x), Math.round(y), P, r() < 0.5 ? 1 : 0, looks[Math.floor(r() * looks.length)]]);
+    }
+  }
+})();
+
+const cache = new Map();
+function sprite(id, lk) {
+  const key = id + '|' + (lk || '');
+  if (cache.has(key)) return cache.get(key);
+  let s = A.svg[id];
+  if (lk) s = s.replace('<svg ', `<svg style="${Object.entries(look[lk]).map(([k, v]) => `--${k}:${v}`).join(';')}" `);
+  const img = new Image();
+  const p = new Promise((res, rej) => { img.onload = () => res(img); img.onerror = () => rej(new Error('asset failed: ' + id)); });
+  img.src = URL.createObjectURL(new Blob([s], { type: 'image/svg+xml' }));
+  cache.set(key, p);
+  return p;
+}
+function place(ctx, img, id, x, y, k, flip) {
+  const m = A.meta[id], [vx, vy, vw, vh] = m.viewBox, [ax, ay] = m.anchor;
+  ctx.save();
+  ctx.translate(x, y);
+  ctx.scale(flip ? -k : k, k);
+  ctx.drawImage(img, vx - ax, vy - ay, vw, vh);
+  ctx.restore();
+}
+function worldPoint(id, pt, x, y, k, flip) {
+  const [ax, ay] = A.meta[id].anchor;
+  return [x + (flip ? -1 : 1) * (pt[0] - ax) * k, y + (pt[1] - ay) * k];
+}
+
+(async () => {
+  const scale = Number(new URLSearchParams(location.search).get('scale') || 1);
+  const c = document.getElementById('c');
+  c.width = W * scale; c.height = H * scale;
+  c.style.width = W + 'px'; c.style.height = H + 'px';
+  const ctx = c.getContext('2d');
+  ctx.scale(scale, scale);
+  const ground = await sprite('environments/forsyth/ground-north');
+  place(ctx, ground, 'environments/forsyth/ground-north', 0, 0, 1, 0);
+  const houses = await sprite('environments/forsyth/gaston-street-houses');
+  place(ctx, houses, 'environments/forsyth/gaston-street-houses', 0, 270, 1, 0);
+  const ground2 = items.filter((it) => A.meta[it[0]].layer === 'ground');
+  const world = items.filter((it) => A.meta[it[0]].layer !== 'ground').map((it, i) => ({ it, i })).sort((a, b) => a.it[2] - b.it[2] || a.i - b.i).map((o) => o.it);
+  for (const [id, x, y, k, flip, lk] of ground2) place(ctx, await sprite(id, lk), id, x, y, k, flip);
+  for (const [id, x, y, k, flip, lk] of world) {
+    place(ctx, await sprite(id, lk), id, x, y, k, flip);
+    for (const [wx, wy, wf, wid, dx, dy, df] of leashes) {
+      if (id === 'props/animals/dog-dachshund' && x === dx && y === dy) {
+        const h = worldPoint(wid, A.meta[wid].hand, wx, wy, P, wf);
+        const col = worldPoint(id, A.meta[id].collar, dx, dy, k, df);
+        ctx.strokeStyle = '#C73E3A'; ctx.lineWidth = 1.2;
+        ctx.beginPath(); ctx.moveTo(h[0], h[1]); ctx.quadraticCurveTo((h[0] + col[0]) / 2, Math.max(h[1], col[1]) + 6, col[0], col[1]); ctx.stroke();
+      }
+    }
+  }
+  for (const [id, x, y, k] of effects) place(ctx, await sprite(id), id, x, y, k, 0);
+  document.title = 'ready';
+})().catch((e) => { document.title = 'error: ' + e.message; });
+</script>
+</body>
+</html>

@@ -1,0 +1,57 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 -4 70 108" width="70" height="108" data-anchor="34 100" data-asset="characters/archetypes/tourist-photographer" data-slots="skin hair top top2 bottom hat" data-author="original, hand-authored SVG, Waldo's Savannah 2026-11-15">
+<style>
+.o{stroke:#2B1D16;stroke-width:1.5;stroke-linejoin:round;stroke-linecap:round}
+.l{fill:none;stroke:#2B1D16;stroke-width:1;stroke-linecap:round;stroke-linejoin:round}
+.fold{fill:none;stroke:#2B1D16;stroke-opacity:.4;stroke-width:.8;stroke-linecap:round}
+.sh{fill:#2B1D16;opacity:.15}
+.skin{fill:var(--skin,#F6D2B8)}.hair{fill:var(--hair,#D9B06A)}
+.top{fill:var(--top,#2F9C95)}.top2{fill:var(--top2,#F7C548)}.bot{fill:var(--bottom,#C9B48A)}.hat{fill:var(--hat,#EADBB0)}
+.pack{fill:#D9573F}
+</style>
+<ellipse cx="38" cy="100" rx="17" ry="3.2" class="sh"/>
+<!-- backpack behind -->
+<path class="pack o" d="M14,42 C12,40 13,37.6 16,37.4 L24,37.6 L24.6,64 L15.4,64 C13,64 12,62 12.4,60 Z"/>
+<path class="fold" d="M14.4,52 L23.6,52"/><rect class="pack o" x="13.4" y="53.6" width="9" height="7" rx="1.6"/>
+<!-- legs in shorts, long socks and sandals -->
+<path class="skin o" d="M26,74 L25.4,92 L30.6,92 L31.6,74 Z"/>
+<path class="skin o" d="M34,74 L36.6,91.6 L41.6,91 L39.8,74 Z"/>
+<path fill="#FFFFFF" class="o" d="M25.4,86 L30.8,86 L30.6,93.4 L25.2,93.4 Z"/>
+<path fill="#FFFFFF" class="o" d="M36,85.6 L41.4,85 L41.8,92.6 L36.6,93 Z"/>
+<path class="fold" d="M25.6,88 L30.6,88 M36.2,87.6 L41.4,87"/>
+<path fill="#7A4A26" class="o" d="M23.4,93 L31.6,93.2 C33.4,93.6 33.6,96.6 32.6,98.2 L22.6,98.2 C22,96.4 22.4,94 23.4,93 Z"/>
+<path fill="#7A4A26" class="o" d="M35.6,92.6 L43,92 C45.2,92.2 46,95.4 45,97.6 L35.4,98 C34.6,96.2 34.8,93.8 35.6,92.6 Z"/>
+<path class="bot o" d="M21.6,64 L44.6,64 L45.6,77 L35.2,78.4 L33.4,72.4 L31.4,78.6 L20.4,77.4 Z"/>
+<path class="fold" d="M33.4,66 L33.4,72.4 M24,70 q2,1.4 4,.6"/>
+<!-- holiday shirt -->
+<path class="top o" d="M21.5,41 C21.5,36.5 25.5,34.5 32,34.5 C38.5,34.5 43,36.5 43.5,41 L45,66 C37,68.4 27,68.4 20.6,66 Z"/>
+<g class="top2"><path d="M26,42 c1.6,-2 4,-1 3.4,1 c2,.6 1,3.2 -1,2.6 c-.4,2 -3.2,1.4 -2.6,-.6 c-2,-.2 -1.6,-3 .2,-3 Z"/><path d="M35.6,50 c1.6,-2 4,-1 3.4,1 c2,.6 1,3.2 -1,2.6 c-.4,2 -3.2,1.4 -2.6,-.6 c-2,-.2 -1.6,-3 .2,-3 Z"/><path d="M25,57.4 c1.6,-2 4,-1 3.4,1 c2,.6 1,3.2 -1,2.6 c-.4,2 -3.2,1.4 -2.6,-.6 c-2,-.2 -1.6,-3 .2,-3 Z"/></g>
+<g fill="#5C9E4A"><path d="M30.6,46.6 q2.4,-1 3,1.6 q-2.4,.6 -3,-1.6 Z"/><path d="M40,58.6 q2.4,-1 3,1.6 q-2.4,.6 -3,-1.6 Z"/><path d="M31,60.8 q2.4,-1 3,1.6 q-2.4,.6 -3,-1.6 Z"/></g>
+<path class="sh" d="M38,35 C42,36.4 43.5,38.4 43.5,41 L45,66 C42.4,67.2 40.2,67.7 38,68 C39.6,58 39.6,46 38,35 Z"/>
+<path class="l" d="M32,37 L32,66.6"/>
+<path d="M24,38 L22,47" stroke="#2B1D16" stroke-width="1.6"/>
+<!-- neck with camera strap -->
+<path class="skin o" d="M28.4,30 L36.2,30 L36.6,36.4 Q32.4,38.6 28,36.4 Z"/>
+<path class="l" style="stroke-width:1.3" d="M28.2,35 C30,42 38,44 44,30"/>
+<!-- arms raised, holding the camera to the eye -->
+<path class="top o" d="M23.4,38.6 C21,43 21.6,48 25.4,49.6 C30,51 37,40 41,31 L45.4,33 C42,42.4 34,55.4 25.6,54.4 C19.6,53.6 18.4,45 20.6,39.4 Z"/>
+<path class="top o" d="M39.6,37.6 C42.4,35.2 44,32.6 45.6,29.8 L49.6,31.6 C48,35.4 45.6,39 42.4,41.6 Z"/>
+<!-- head -->
+<path class="hair o" d="M23.6,16 C19.6,20 20,27 24.4,30.6 C24.2,26.4 25,22.6 26.4,19.6 Z"/>
+<path class="skin o" d="M23.6,21.6 C23.6,14.2 28.2,10.2 34.4,10.2 C40.8,10.2 44.8,14.4 44.8,21.2 C44.8,27.8 40.6,32.4 33.8,32.4 C27.4,32.4 23.6,28 23.6,21.6 Z"/>
+<ellipse class="skin o" cx="26" cy="23" rx="2.2" ry="3"/>
+<path class="l" d="M35.4,28 Q38,29.4 40.4,27.6"/>
+<circle cx="35" cy="25.2" r="1.6" fill="#F08C7A" opacity=".5"/>
+<!-- camera -->
+<path fill="#2F3338" class="o" d="M38.4,16.6 L49.6,16.2 C51,16.2 51.6,17 51.6,18.2 L51.8,24.6 C51.8,25.8 51,26.4 49.8,26.4 L38.8,26.8 C37.6,26.8 37,26 37,24.8 L36.8,18.4 C36.8,17.4 37.4,16.6 38.4,16.6 Z"/>
+<path fill="#2F3338" class="o" d="M40.4,16.6 L41.6,14.2 L45.4,14 L46.6,16.4 Z"/>
+<circle fill="#5A6470" class="o" cx="52.8" cy="21.4" r="3.4"/>
+<circle fill="#9EC3D8" cx="53.6" cy="20.6" r="1.3"/>
+<rect x="47.2" y="17.6" width="2.4" height="1.4" fill="#F4F1E8"/>
+<circle class="skin o" cx="47.4" cy="27.8" r="2.6"/>
+<circle class="skin o" cx="38" cy="27" r="2.6"/>
+<!-- sun hat -->
+<path class="hat o" d="M14.4,15.8 C18,12.6 26,11.6 34,11.6 C42,11.6 50,12.6 53.6,15.4 C52,17.6 46,17.4 34,17.6 C22,17.8 15.6,18 14.4,15.8 Z"/>
+<path class="hat o" d="M24.4,14 C24.4,7.6 28.6,4 34.4,4 C40.4,4 44.4,7.4 44.4,13.8 C38,15 30,15.2 24.4,14 Z"/>
+<path fill="#D9573F" class="o" d="M24.4,11.4 C30.6,12.6 38.6,12.6 44.4,11.2 L44.4,13.8 C38,15 30,15.2 24.4,14 Z"/>
+<path class="fold" d="M18,15.8 q16,-2.4 32,-.6"/>
+</svg>

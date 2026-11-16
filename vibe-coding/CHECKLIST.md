@@ -2,6 +2,9 @@
 
 Keep this open while you finish. Each item says what your work must show.
 
+> **Re-verified 2026-11-15 on the illustrated build.** Version 1 did not meet the network and frame-rate items (FAIL-06, never measured). The illustrated `build/index.html` now meets them, with evidence noted on each line. Visual approval of checkpoint 3 is still pending.
+
+
 ## The Idea and the Plan
 
 - [x] `plan.md` names one real user, one rejected idea and why, and the boundary.
@@ -72,15 +75,15 @@ Keep this open while you finish. Each item says what your work must show.
 
 ### Non-Functional Requirements
 
-- [x] **Strict Localhost Isolation**: Zero external HTTP/HTTPS requests required at runtime
+- [x] **Strict Localhost Isolation**: Zero external HTTP/HTTPS requests required at runtime (Playwright request log, from `file://` and over HTTP; `tests/illustrated.test.mjs` test 1)
 - [x] **No Accounts/Analytics**: No accounts, no cookies, no analytics, no telemetry
 - [x] **Privacy Compliant**: All data stored in localStorage only
 - [x] **Zero Dependencies**: No npm, no build step, no CDN required
 
 ### Performance Requirements
 
-- [x] **60 FPS Target**: Game runs at 60 frames per second on localhost
-- [x] **Crowd Performance**: Supports up to 10,000 animated citizens
+- [x] **60 FPS Target**: Game runs at 60 frames per second on localhost (20 s pan-and-zoom tour, Apple M4, all densities; `build-record/performance.md`)
+- [x] **Crowd Performance**: Supports up to 10,000 animated citizens (`?crowd=10000`: 59.5 FPS average with motion on; `build-record/performance.md`)
 - [x] **Default Performance**: Runs smoothly with default 420 NPCs
 
 ### Testing Requirements
@@ -106,4 +109,4 @@ Keep this open while you finish. Each item says what your work must show.
 
 ---
 
-**Status**: Complete | **Last Verified**: 2026-11-15
+**Status**: Re-verification in progress for the illustrated rebuild | **Last Updated**: 2026-11-15
