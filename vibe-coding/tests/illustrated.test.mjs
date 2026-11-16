@@ -198,13 +198,16 @@ await test('people move, and prefers-reduced-motion freezes them', async () => {
     await page.goto(PAGE + '?seed=MOVE-1');
     await page.waitForFunction(() => document.title.includes('Waldo'));
     await page.waitForTimeout(600);
-    const r = await page.evaluate(() => ({ on: WS.game.engine.motion, moving: WS.game.world.entities.filter((e) => e.oy).length }));
+    await page.waitForTimeout(400);
+    const r = await page.evaluate(() => ({ on: WS.game.engine.motion, moving: WS.game.world.entities.filter((e) => e.oy).length,
+      framed: WS.game.world.entities.filter((e) => e.sprite1).length, passing: WS.game.world.entities.filter((e) => e.sprite1 && e.sprite === e.sprite1).length }));
     await page.close();
     return r;
   };
   const normal = await offsets(false), still = await offsets(true);
   assert.ok(normal.on && normal.moving > 100, JSON.stringify(normal));
-  assert.ok(!still.on && still.moving === 0, JSON.stringify(still));
+  assert.ok(normal.framed > 100 && normal.passing > 10, 'walkers alternate two drawn frames: ' + JSON.stringify(normal));
+  assert.ok(!still.on && still.moving === 0 && still.passing === 0, JSON.stringify(still));
 });
 
 await test('beacon only when ?beacon=1', async () => {

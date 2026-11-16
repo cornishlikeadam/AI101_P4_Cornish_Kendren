@@ -14,7 +14,7 @@ O = f'stroke="{INK}" stroke-width="1.6" stroke-linejoin="round"'
 # ---------- River Street cotton warehouses (four storeys, arched openings) ----------
 random.seed(41)
 BRICK = ['#9C4A33', '#B4573E', '#8A3F2E', '#A85A3E', '#C06A48', '#7E3A2C']
-SIGNS = ['PRALINES', 'TAVERN', 'GALLERY', 'CANDY', 'OYSTERS', 'GIFTS', 'RIVER INN', 'FUDGE', 'BOOKS', 'BBQ']
+SIGNS = ['COTTON EXCHANGE', 'FACTORS ROW', 'SHIP CHANDLER', 'BROKERS', 'NAVAL STORES', 'WAREHOUSE No. 3', 'RICE FACTORS', 'CUSTOMS AGENT']
 def arch_window(x, y, ww, hh, shut):
     r = ww / 2
     s = f'<path d="M{f(x)},{f(y+hh)} L{f(x)},{f(y+r)} A{f(r)},{f(r)} 0 0,1 {f(x+ww)},{f(y+r)} L{f(x+ww)},{f(y+hh)} Z" fill="#3D5468" {O}/>'
@@ -37,15 +37,29 @@ def warehouse(x, wdt):
             s += f'<rect x="{x+8}" y="{fy+52}" width="{wdt-16}" height="5" fill="{INK}"/>'
             s += ''.join(f'<path d="M{f(x+10+k*8)},{fy+36} V{fy+52}" stroke="{INK}" stroke-width="1.3"/>' for k in range(int((wdt-18)/8)))
             s += f'<path d="M{x+8},{fy+36} H{x+wdt-8}" stroke="{INK}" stroke-width="2"/>'
-    sy = 214; sign = random.choice(SIGNS); sc = random.choice(['#2F5D50', '#F2D55C', '#E8E2D2', '#3D4F6E', '#7A3B3B'])
-    tc = INK if sc in ('#F2D55C', '#E8E2D2') else '#F5F0E6'
-    s += f'<rect x="{x+wdt*0.15}" y="{sy}" width="{wdt*0.7}" height="24" rx="3" fill="{sc}" {O}/>'
-    s += f'<text x="{f(x+wdt/2)}" y="{sy+17}" text-anchor="middle" font-family="Georgia, serif" font-weight="700" font-size="14" fill="{tc}" letter-spacing="1.5">{sign}</text>'
+    # Bay Street face: upper-floor offices reached by iron footbridges over the lower Factors Walk,
+    # above a stone retaining wall with vaulted openings (the River Street shopfronts face the other way).
+    sy = 214; sign = random.choice(SIGNS); sc = random.choice(['#2F5D50', '#E8E2D2', '#3D4F6E', '#7A3B3B'])
+    tc = INK if sc == '#E8E2D2' else '#F5F0E6'
+
+    s += f'<rect x="{x}" y="252" width="{wdt}" height="{H-252}" fill="#A9A294" {O}/>'
+    for yy in range(264, H, 13): s += f'<path d="M{x},{yy} H{x+wdt}" stroke="{INK}" stroke-opacity=".25" stroke-width=".8"/>'
+    for yy, off in zip(range(252, H, 13), [0, 18] * 10):
+        for bx in range(x + off, x + wdt, 36): s += f'<path d="M{bx},{yy} v13" stroke="{INK}" stroke-opacity=".2" stroke-width=".8"/>'
     for i in range(n):
-        dx = x + gap * i + gap * 0.2; dw = gap * 0.6
-        s += f'<path d="M{f(dx)},{H} L{f(dx)},{f(258+dw/2)} A{f(dw/2)},{f(dw/2)} 0 0,1 {f(dx+dw)},{f(258+dw/2)} L{f(dx+dw)},{H} Z" fill="{INK}" {O}/>'
-        s += f'<path d="M{f(dx+4)},{H} L{f(dx+4)},{f(262+dw/2)}" stroke="#F2C76A" stroke-width="2" opacity=".55"/>'
-        s += f'<path d="M{f(dx-3)},{f(258+dw/2)} A{f(dw/2+3)},{f(dw/2+3)} 0 0,1 {f(dx+dw+3)},{f(258+dw/2)}" fill="none" stroke="#D8CBB0" stroke-width="4"/>'
+        if i % 2: continue
+        dx = x + gap * i + gap * 0.25; dw = gap * 0.5
+        s += f'<path d="M{f(dx)},{H} L{f(dx)},{f(286+dw/2)} A{f(dw/2)},{f(dw/2)} 0 0,1 {f(dx+dw)},{f(286+dw/2)} L{f(dx+dw)},{H} Z" fill="{INK}" opacity=".85" {O}/>'
+    bi = random.choice([0, n - 1]); bx = x + gap * bi + gap * 0.5
+    # the sign hangs on whichever half of the facade the bridge does not use
+    sw = wdt * 0.5; sxp = x + 10 if bx > x + wdt / 2 else x + wdt - sw - 10
+    s += f'<rect x="{f(sxp)}" y="{sy}" width="{f(sw)}" height="20" rx="3" fill="{sc}" {O}/>'
+    s += f'<text x="{f(sxp+sw/2)}" y="{sy+14}" text-anchor="middle" font-family="Georgia, serif" font-weight="700" font-size="{f(min(10.5, (sw - 8) / (len(sign) * 0.66)))}" fill="{tc}">{sign}</text>'
+    s += f'<path d="M{f(bx-14)},252 L{f(bx-14)},226 A14,14 0 0,1 {f(bx+14)},226 L{f(bx+14)},252 Z" fill="#2B3A44" {O}/>'
+    s += f'<path d="M{f(bx-18)},252 L{f(bx+18)},252 L{f(bx+30)},{H} L{f(bx-30)},{H} Z" fill="#5A4A3E" {O}/>'
+    s += ''.join(f'<path d="M{f(bx-18-k*1.6)},{252+k*10} H{f(bx+18+k*1.6)}" stroke="#3B2E26" stroke-width="1"/>' for k in range(8))
+    s += f'<path d="M{f(bx-18)},240 L{f(bx-30)},{H-12} M{f(bx+18)},240 L{f(bx+30)},{H-12}" stroke="{INK}" stroke-width="2.4"/>'
+    s += ''.join(f'<path d="M{f(bx-18-k*1.5)},{240+k*9} v12 M{f(bx+18+k*1.5)},{240+k*9} v12" stroke="{INK}" stroke-width="1"/>' for k in range(9))
     s += f'<path d="M{x+wdt-6},20 V{H}" stroke="{INK}" stroke-width="3"/><path d="M{x+wdt-6},20 V{H}" stroke="#7E7A72" stroke-width="1.5"/>'
     return s
 body = ''; x = 0

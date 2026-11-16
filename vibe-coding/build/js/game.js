@@ -78,7 +78,7 @@
   const defaultKit = (assetId, n) => parseKit(A().meta[assetId][n === 2 ? 'kit2' : 'kit']);
 
   // colours: { skin, hair, top, top2, bottom, hat, hat2, acc, shoe } plus skin2, hair2, top3, top4, bottom2, shoe2, hat3 for a second person
-  function compose(assetId, colours, kit, kit2) {
+  function compose(assetId, colours, kit, kit2, frame = 1) {
     const a = A();
     let svg = a.svg[assetId];
     if (!svg) throw new Error('unknown asset ' + assetId);
@@ -86,6 +86,7 @@
     const head = (pos, k) => '<g transform="translate(' + pos[0] + ' ' + pos[1] + ') scale(' + pos[2] + ')">' + headAssembly(k) + '</g>';
     if (svg.includes('<!--HEAD-->')) svg = svg.replace('<!--HEAD-->', head(m.head || [0, 0, 1], Object.assign(defaultKit(assetId, 1), kit || {})));
     if (svg.includes('<!--HEAD2-->')) svg = svg.replace('<!--HEAD2-->', head(m.head2 || [0, 0, 1], Object.assign(defaultKit(assetId, 2), kit2 || {})));
+    if (frame === 2) svg = svg.replace('<g data-frame="1">', '<g data-frame="1" display="none">').replace('<g data-frame="2" display="none">', '<g data-frame="2">');
     if (colours) {
       const style = Object.entries(colours).filter(([, v]) => v).map(([k, v]) => '--' + k + ':' + v).join(';');
       svg = svg.replace('<svg ', '<svg style="' + style + '" ');
@@ -549,7 +550,7 @@
     if (x > 2000 && y < 640) return 'on the Festival Pier';
     if (y < 900) return x < 900 ? 'on the riverwalk by the Waving Girl' : 'on the riverwalk along the Savannah River';
     if (y < 1100) return 'on cobbled River Street';
-    return 'on Factors Walk and Bay Street';
+    return 'on Bay Street by the Factors Walk bridges';
   }
   WS.districts = Object.assign(WS.districts || {}, { riverfront: () => ({ id: 'riverfront', name: 'River Street', y0: 0, h: 1500, geography, stories, zones: ZONES, blocked, spots: SPOTS, area }) });
 })();
@@ -696,7 +697,8 @@
 (function () {
   const WS = (window.WS = window.WS || {});
   const TIERS = [0.25, 0.5, 1, 2, 4, 8];
-  const MAX_SIDE = 2048;          // largest raster side for one sprite tier
+  const MAX_SIDE = 8192;          // largest raster side for one sprite tier
+  const MAX_AREA = 4.2e6;         // largest raster area for one sprite tier (about 17 MB)
   const BUDGET_PX = 48e6;         // about 190 MB of RGBA across all tiers
   const byKey = new Map();
   const lru = new Map();          // 'key@tier' -> pixels, in recency order
@@ -706,14 +708,15 @@
   function variantKey(e) {
     return e.asset + (e.colours ? '|' + JSON.stringify(e.colours) : '') + (e.kit ? '|' + JSON.stringify(e.kit) : '') + (e.kit2 ? '|' + JSON.stringify(e.kit2) : '');
   }
-  function forEntity(e) {
-    const key = variantKey(e);
+  function forEntity(e, frame = 1) {
+    const key = variantKey(e) + (frame === 2 ? '|f2' : '');
     let s = byKey.get(key);
     if (!s) {
       const m = window.WS_ASSETS.meta[e.asset];
-      const svg = m.head || m.head2 || e.colours ? WS.characters.compose(e.asset, e.colours, e.kit, e.kit2) : window.WS_ASSETS.svg[e.asset];
+      const svg = m.head || m.head2 || e.colours || frame === 2 ? WS.characters.compose(e.asset, e.colours, e.kit, e.kit2, frame) : window.WS_ASSETS.svg[e.asset];
       s = { key, svg, vb: m.viewBox, anchor: m.anchor, img: null, tiers: new Map(), mask: null };
-      s.maxTier = MAX_SIDE / Math.max(s.vb[2], s.vb[3]);
+      // cap a tier by side length and by area, so long building rows can still render sharp up close
+      s.maxTier = Math.min(MAX_SIDE / Math.max(s.vb[2], s.vb[3]), Math.sqrt(MAX_AREA / (s.vb[2] * s.vb[3])));
       byKey.set(key, s);
     }
     return s;
@@ -863,7 +866,11 @@
       for (const e of list) {
         if (!e.motion) continue;
         const p = s * e.speed * Math.PI * 2 + e.phase;
-        if (e.motion === 'walk') e.oy = -Math.abs(Math.sin(p * 0.9)) * 1.8;
+        if (e.motion === 'walk') {
+          e.oy = -Math.abs(Math.sin(p * 0.9)) * 1.8;
+          // stride at the bottom of the bounce, passing pose at the top: two drawn frames per step
+          if (e.sprite1) e.sprite = Math.abs(Math.sin(p * 0.9)) > 0.5 ? e.sprite1 : e.sprite0;
+        }
         else if (e.motion === 'jog') e.oy = -Math.abs(Math.sin(p * 1.4)) * 3.2;
         else if (e.motion === 'idle') e.oy = Math.sin(p * 0.25) * 0.5;
         else if (e.motion === 'kite') { e.oy = Math.sin(p * 0.35) * 6; e.rot = Math.sin(p * 0.27) * 0.08; }
@@ -889,8 +896,12 @@
     // ---------- loading ----------
     const ground = { img: null, base: null, tiles: new Map() };
     async function load(progress) {
-      for (const e of world.entities) e.sprite = S().forEntity(e);
-      const sprites = [...new Set(world.entities.map((e) => e.sprite))];
+      for (const e of world.entities) {
+        e.sprite = e.sprite0 = S().forEntity(e);
+        // walking figures with a drawn second frame get it as a separate sprite (not in stress crowds)
+        if (window.WS_ASSETS.meta[e.asset].frames === 2 && world.people <= 2001) e.sprite1 = S().forEntity(e, 2);
+      }
+      const sprites = [...new Set(world.entities.flatMap((e) => (e.sprite1 ? [e.sprite0, e.sprite1] : [e.sprite0])))];
       let done = 0;
       const gsvg = window.WS_ASSETS.svg[world.ground];
       ground.img = new Image();
@@ -1132,7 +1143,7 @@
       addEffect(fn) { effects.push(fn); dirty = true; },
       removeEffect(fn) { effects = effects.filter((f) => f !== fn); dirty = true; },
       setBeacon(on) { beacon = on; dirty = true; },
-      setMotion(on) { motionOn = on && !reduced; for (const e of world.entities) { e.oy = 0; e.rot = 0; } dirty = true; },
+      setMotion(on) { motionOn = on && !reduced; for (const e of world.entities) { e.oy = 0; e.rot = 0; if (e.sprite0) e.sprite = e.sprite0; } dirty = true; },
       get motion() { return motionOn; },
       invalidate() { dirty = true; },
       start() { requestAnimationFrame(loop); },

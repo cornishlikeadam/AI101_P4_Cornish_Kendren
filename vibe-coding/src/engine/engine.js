@@ -55,7 +55,11 @@
       for (const e of list) {
         if (!e.motion) continue;
         const p = s * e.speed * Math.PI * 2 + e.phase;
-        if (e.motion === 'walk') e.oy = -Math.abs(Math.sin(p * 0.9)) * 1.8;
+        if (e.motion === 'walk') {
+          e.oy = -Math.abs(Math.sin(p * 0.9)) * 1.8;
+          // stride at the bottom of the bounce, passing pose at the top: two drawn frames per step
+          if (e.sprite1) e.sprite = Math.abs(Math.sin(p * 0.9)) > 0.5 ? e.sprite1 : e.sprite0;
+        }
         else if (e.motion === 'jog') e.oy = -Math.abs(Math.sin(p * 1.4)) * 3.2;
         else if (e.motion === 'idle') e.oy = Math.sin(p * 0.25) * 0.5;
         else if (e.motion === 'kite') { e.oy = Math.sin(p * 0.35) * 6; e.rot = Math.sin(p * 0.27) * 0.08; }
@@ -81,8 +85,12 @@
     // ---------- loading ----------
     const ground = { img: null, base: null, tiles: new Map() };
     async function load(progress) {
-      for (const e of world.entities) e.sprite = S().forEntity(e);
-      const sprites = [...new Set(world.entities.map((e) => e.sprite))];
+      for (const e of world.entities) {
+        e.sprite = e.sprite0 = S().forEntity(e);
+        // walking figures with a drawn second frame get it as a separate sprite (not in stress crowds)
+        if (window.WS_ASSETS.meta[e.asset].frames === 2 && world.people <= 2001) e.sprite1 = S().forEntity(e, 2);
+      }
+      const sprites = [...new Set(world.entities.flatMap((e) => (e.sprite1 ? [e.sprite0, e.sprite1] : [e.sprite0])))];
       let done = 0;
       const gsvg = window.WS_ASSETS.svg[world.ground];
       ground.img = new Image();
@@ -324,7 +332,7 @@
       addEffect(fn) { effects.push(fn); dirty = true; },
       removeEffect(fn) { effects = effects.filter((f) => f !== fn); dirty = true; },
       setBeacon(on) { beacon = on; dirty = true; },
-      setMotion(on) { motionOn = on && !reduced; for (const e of world.entities) { e.oy = 0; e.rot = 0; } dirty = true; },
+      setMotion(on) { motionOn = on && !reduced; for (const e of world.entities) { e.oy = 0; e.rot = 0; if (e.sprite0) e.sprite = e.sprite0; } dirty = true; },
       get motion() { return motionOn; },
       invalidate() { dirty = true; },
       start() { requestAnimationFrame(loop); },
