@@ -112,3 +112,13 @@ Same method and machine. The crowd budget doubled with the area (standard 1,800,
 | dense | 3,001 | 4560 | 59.1 | 16.8 | 116.6 | 92.9 |
 
 Loading takes about 2.5 times longer than the 3200-wide city (1529 ms). Expect noticeably longer loads on slower laptops and phones, which were not measured. The worst frames are one-off hitches while ground tiles are drawn the first time.
+
+### After load & frame optimization (2026-11-16, final)
+
+SVG `<pattern>` fills and safe path compaction cut `assets.bundle.js` from 6.94 MB (1.03 MB gzip) to 2.89 MB (310 KB gzip). Deferred walk-frame decoding, lazy hit-mask rasterization, crowd look pooling (up to 40 looks per archetype for crowds > 650), and a 400-tile LRU ground cache cut startup load by ~7x on the 9120 × 7600 city:
+
+| Run | People | Load ms | First frame ms | Avg FPS | p95 ms | Worst ms | Feedback ms | Heap MB | Raster MPx |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+| standard | 1,801 | 565 | 595 | 59.6 | 16.7 | 66.7 | 38.1 | 28.0 | 33.7 |
+| dense | 3,001 | 564 | 602 | 59.7 | 16.7 | 66.6 | 38.4 | 31.6 | 34.1 |
+
