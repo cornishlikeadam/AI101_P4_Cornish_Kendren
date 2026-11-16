@@ -487,11 +487,12 @@ await test('fallback: ?fallback=1, the test button, and recovery to a new scene'
   await page.close();
 });
 
-await test('difficulty picker reloads with the same seed and the new difficulty', async () => {
+await test('difficulty picker reloads with a fresh seed so Waldo moves to a new spot', async () => {
   const { page } = await open('?seed=PICK-1');
   await page.selectOption('#introDifficulty', 'hard');
   await page.waitForFunction(() => location.search.includes('difficulty=hard') && document.title.includes('Waldo'));
-  assert.equal(await page.evaluate(() => WS.game.identity.seed + '|' + WS.game.identity.difficulty), 'PICK-1|hard');
+  const id = await page.evaluate(() => WS.game.identity);
+  assert.equal(id.difficulty, 'hard'); assert.notEqual(id.seed, 'PICK-1');
   await page.close();
 });
 
@@ -551,6 +552,18 @@ await test('points: difficulty multiplies, mistakes and hints cost, floor of 100
   // a slower hard round outranks a faster easy round when it earns more points
   await page.evaluate(() => { localStorage.clear(); WS.leaderboard.save({ username: 'easyfast', elapsedMs: 30000, wrongGuesses: 0, seed: 'a', difficulty: 'easy', hints: 0 }); WS.leaderboard.save({ username: 'hardslow', elapsedMs: 90000, wrongGuesses: 1, seed: 'b', difficulty: 'hard', hints: 0 }); });
   assert.deepEqual(await page.evaluate(() => WS.leaderboard.load().map((r) => r.username)), ['hardslow', 'easyfast']);
+  await page.close();
+});
+
+await test('round state machine: only moves listed in the table are allowed (ADR-004)', async () => {
+  const { page } = await open('?seed=SAV-2026');
+  const r = await page.evaluate(() => {
+    const G = WS.gameplay, rd = G.createRound(), log = [];
+    for (const ev of ['start', 'loaded', 'loaded', 'found', 'start', 'found', 'start', 'fail', 'start']) log.push(ev + ':' + G.transition(rd, ev) + ':' + rd.state);
+    return { log, frozen: Object.isFrozen(G.ROUND_MOVES), live: WS.game && document.getElementById('intro').hidden === false };
+  });
+  assert.deepEqual(r.log, ['start:false:INIT', 'loaded:true:INTRO', 'loaded:false:INTRO', 'found:false:INTRO', 'start:true:PLAYING', 'found:true:WON', 'start:false:WON', 'fail:true:FALLBACK', 'start:false:FALLBACK']);
+  assert.ok(r.frozen && r.live);
   await page.close();
 });
 

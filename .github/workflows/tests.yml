@@ -1,0 +1,35 @@
+# Runs the game's Playwright suite on every push and pull request (ADR-004).
+name: tests
+on:
+  push:
+  pull_request:
+concurrency:
+  group: tests-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  playwright:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Cache Chromium
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: chromium-playwright-core-1.48.2
+      - name: Install playwright-core and Chromium
+        run: |
+          npm install --no-save --prefix "$RUNNER_TEMP/pw" playwright-core@1.48.2
+          npx --prefix "$RUNNER_TEMP/pw" playwright-core install --with-deps chromium
+      - name: Build is up to date with src/
+        run: |
+          node vibe-coding/tools/build.mjs
+          git diff --exit-code -- vibe-coding/build/index.html
+      - name: Run tests
+        run: |
+          export PLAYWRIGHT_CORE="$RUNNER_TEMP/pw/node_modules/playwright-core"
+          export CHROME="$(node -e "console.log(require(process.env.PLAYWRIGHT_CORE).chromium.executablePath())")"
+          node vibe-coding/tests/illustrated.test.mjs

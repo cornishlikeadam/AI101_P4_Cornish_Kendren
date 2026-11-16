@@ -27,7 +27,7 @@
     document.body.classList.toggle('playing', !id || id === 'won');
   }
   function fallback(reason) {
-    if (round) round.state = 'FALLBACK';
+    if (round) WS.gameplay.transition(round, 'fail');
     if (reason) console.warn('fallback:', reason);
     $('failText').textContent = reason && !/requested/.test(reason) ? reason : '';
     $('menu').hidden = true;
@@ -113,7 +113,7 @@
     WS.game.timings.firstFrameMs = performance.now() - t0;
     engine.start();
     document.title = world.name + ' · Waldo\'s Savannah';
-    round.state = 'INTRO';
+    WS.gameplay.transition(round, 'loaded');
     show('intro');
     $('startBtn').focus();
 
@@ -145,12 +145,12 @@
     });
 
     $('startBtn').addEventListener('click', () => {
-      round.state = 'PLAYING'; round.startedAt = performance.now(); round.wrong = 0; round.hints = 0; round.saved = false;
+      if (!WS.gameplay.transition(round, 'start')) return;
       $('wrong').textContent = '0'; $('hintCount').textContent = '';
       show(null);
       canvas.focus();
     });
-    $('introDifficulty').addEventListener('change', (e) => go({ difficulty: e.target.value }));
+    $('introDifficulty').addEventListener('change', (e) => go({ difficulty: e.target.value, seed: WS.gameplay.newSeed() }));
     $('zoomIn').addEventListener('click', () => engine.camera.zoomSmooth(1.4));
     $('zoomOut').addEventListener('click', () => engine.camera.zoomSmooth(1 / 1.4));
     $('zoomReset').addEventListener('click', () => engine.camera.reset());
@@ -259,7 +259,7 @@
       const r = canvas.getBoundingClientRect();
       const [wx, wy] = engine.camera.toWorld(cx - r.left, cy - r.top);
       if (hit && hit.isTarget) {
-        round.state = 'WON'; round.endedAt = performance.now();
+        WS.gameplay.transition(round, 'found');
         if (hintFx) engine.removeEffect(hintFx);
         marker(wx, wy, true);
         const t = world.target;
@@ -300,7 +300,7 @@
     $('boardClose').addEventListener('click', () => { $('board').hidden = true; });
     $('boardClear').addEventListener('click', () => { WS.leaderboard.clear(); renderBoard(); toast('Scores cleared.'); });
     $('newRoundBtn').addEventListener('click', () => go({ seed: WS.gameplay.newSeed() }));
-    $('difficulty').addEventListener('change', (e) => go({ difficulty: e.target.value }));
+    $('difficulty').addEventListener('change', (e) => go({ difficulty: e.target.value, seed: WS.gameplay.newSeed() }));
     $('density').addEventListener('change', (e) => go({ density: e.target.value }));
     $('testFallbackBtn').addEventListener('click', () => fallback('requested by the test button'));
   }

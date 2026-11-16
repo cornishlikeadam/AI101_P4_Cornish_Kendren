@@ -43,3 +43,9 @@ Short record of consequential AI sessions. Prompt descriptions are summarized wh
 **Prompt (summary):** Verify and fix the stale GitHub Languages bar so the single-file submission reports 100% HTML.
 **Result:** Confirmed GitHub was still serving its pre-submission language snapshot, strengthened `.gitattributes` to exclude authoring sources and force the packed HTML artifact to count, and triggered a fresh Linguist analysis.
 **My contribution:** Rechecked the public repository and reiterated that the course submission must display as HTML only.
+
+**Date:** 2026-11-16
+**AI tool:** Claude Code + GitHub CLI + Vercel CLI
+**Prompt (summary):** Audit CI, find the app's implicit state machines, then make the round one explicit table, add CI and branch previews, and fix Waldo staying in one spot.
+**Result:** Found no CI runs existed. Added the round state table (ADR-004), a GitHub Actions test workflow, Vercel Git previews, a fresh seed on difficulty change and a wider Waldo stroll. Tests 31/31.
+**My contribution:** Chose option E, reported the stuck-Waldo bug from play testing, and reviewed the preview before merging.

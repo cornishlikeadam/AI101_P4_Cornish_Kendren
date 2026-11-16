@@ -92,7 +92,7 @@
       const r = WS.rng.mulberry32(WS.rng.fnv1a(e.id + '#walk'));
       const v = SPEED(e.asset) * (0.85 + r() * 0.3);
       e.hx = e.x; e.hy = e.y;
-      if (e.isTarget) e.travel = { kind: 'wander', v: 9, r: 22, r_: r };
+      if (e.isTarget) e.travel = { kind: 'wander', v: 18, r: { easy: 70, normal: 100, hard: 130 }[world.identity.difficulty] || 100, r_: r }; // he strolls around his hiding spot; harder = wider
       else if (!e.zone) e.travel = null;
       else if (H_LANES.has(e.zone)) e.travel = { kind: 'h', v };
       else if (V_LANES.has(e.zone)) e.travel = { kind: 'v', v, y0: e.y - 380, y1: e.y + 380 };
