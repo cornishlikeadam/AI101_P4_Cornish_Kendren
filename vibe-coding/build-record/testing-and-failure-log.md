@@ -62,6 +62,10 @@ Tests 15–19 added: leaderboard (save once, sort, max 10, injected name stays t
 
 Tests 20–22 added: the city has four districts and seeded first candidates land in all four over 40 seeds; winning in the city and the "Here" readout; points (multipliers, penalties, floor, a slow hard round outranking a fast easy round). Older tests now run `scene=forsyth` explicitly. **22 of 22 passed.**
 
+### Movement test (2026-11-15)
+
+Test 23: in 3 s more than 200 people move, more than 50 move over 40 units, the fastest covers over 120, and the target stays within 22 units of his spot. **23 of 23 passed.** Performance with everyone travelling: 60 FPS average at standard, dense and 10,000 (`performance.md` tour).
+
 ### FAIL-09: Story people had undefined ids
 
 - **Found**: 2026-11-15 when motion hashed entity ids and the page threw on load.

@@ -85,7 +85,7 @@
     const target = push({ id: 'target', asset: C + 'target-walker', x: candidates[0].x, y: candidates[0].y, flip: candidates[0].flip, kind: 'person', isTarget: true, colours: null, traits: ['stripes', 'bobble', 'glasses', 'blue', 'stick'], spot: candidates[0].spot });
 
     const area = (x, y) => { for (const d of districts) { const a = d.area(x, y); if (a) return a; } return 'somewhere in Savannah'; };
-    return { id: scene.id, name: scene.name, w: scene.w, h: scene.h, ground: scene.ground, background: '#F6E7C8', fountains: districts.flatMap((d) => d.fountains || (d.fountain ? [d.fountain] : [])), districts: districts.map((d) => ({ id: d.id, name: d.name, y0: d.y0, h: d.h })), area, entities, target, candidates, identity, people: people.length + 1, stories: new Set(allStories.map((s) => s.story)).size };
+    return { blocked, id: scene.id, name: scene.name, w: scene.w, h: scene.h, ground: scene.ground, background: '#F6E7C8', fountains: districts.flatMap((d) => d.fountains || (d.fountain ? [d.fountain] : [])), districts: districts.map((d) => ({ id: d.id, name: d.name, y0: d.y0, h: d.h })), area, entities, target, candidates, identity, people: people.length + 1, stories: new Set(allStories.map((s) => s.story)).size };
   }
 
   WS.buildScene = buildScene;

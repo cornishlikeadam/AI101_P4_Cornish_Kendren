@@ -350,6 +350,23 @@ await test('city: winning anywhere works and the HUD names the district in view'
   await page.close();
 });
 
+await test('city: crowd travels along walks, runs and wanders; target stays near his spot', async () => {
+  const { page } = await open('?seed=MOVE-2&scene=savannah');
+  const before = await page.evaluate(() => { const w = WS.game.world; return { pos: w.entities.filter((e) => e.kind === 'person').map((e) => [e.id, e.x, e.y]), t: [w.target.x, w.target.y] }; });
+  await page.waitForTimeout(3000);
+  const r = await page.evaluate((before) => {
+    const byId = new Map(WS.game.world.entities.map((e) => [e.id, e]));
+    let moved = 0, far = 0, fastest = 0;
+    for (const [id, x, y] of before.pos) { const e = byId.get(id), d = Math.hypot(e.x - x, e.y - y); if (d > 5) moved++; if (d > 40) far++; fastest = Math.max(fastest, d); }
+    const t = WS.game.world.target;
+    return { moved, far, fastest, targetDrift: Math.hypot(t.hx - t.x, t.hy - t.y), travellers: WS.game.world.entities.filter((e) => e.travel).length };
+  }, before);
+  assert.ok(r.travellers > 300, JSON.stringify(r));
+  assert.ok(r.moved > 200 && r.far > 50 && r.fastest > 120, 'people walk, joggers and cyclists cover ground: ' + JSON.stringify(r));
+  assert.ok(r.targetDrift <= 23, 'target paces within his spot: ' + JSON.stringify(r));
+  await page.close();
+});
+
 await test('points: difficulty multiplies, mistakes and hints cost, floor of 100', async () => {
   const { page } = await open('?seed=PTS-1');
   const p = await page.evaluate(() => {

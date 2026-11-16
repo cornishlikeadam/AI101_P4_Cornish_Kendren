@@ -22,3 +22,7 @@ River: open riverwalk (easy), festival crowd (normal, hard), among the tents (ha
 ## Known gaps
 
 The warehouse row is drawn as its Bay Street side, which is the side a viewer south of it really sees: upper-floor offices with cotton-trade signs reached by iron footbridges over Factors Walk, above a stone retaining wall (revision 3). Revision 2: the squares have their own row (pastel Italianate townhouses with high stoops and cast-iron balconies around a twin-spired church), and the market plaza gained 4 more stalls, 4 tents, planters and five more stories (tent shoppers, a juggler with kids, sketching students, a balloon kid, pigeons), with a larger share of the crowd. Vehicles carrying signs are never mirrored.
+
+## Movement (revision 4)
+
+Crowd people travel: along walks, streets, the riverwalk and River Street (back and forth across the city width), up and down the promenade and side paths, or wandering with pauses on lawns, plazas, the pier and the market. Joggers run (about 55 units/s), cyclists ride (85), walkers stroll (about 22), children and cane users go slower. Dogs on leads follow their walkers. Story characters stay at their stories. The target paces within 22 units of his validated hiding spot. Placement is still decided by the replay identity; positions after that depend on time. `prefers-reduced-motion` stops all of it.
