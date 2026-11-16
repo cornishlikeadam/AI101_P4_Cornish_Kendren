@@ -38,24 +38,11 @@
       if (highlight && i + 1 === highlight) li.className = 'mine';
       const name = document.createElement('span'); name.className = 'name'; name.textContent = r.username;
       const meta = document.createElement('span'); meta.className = 'meta';
-      meta.textContent = fmt(r.elapsedMs) + ' · ' + r.wrongGuesses + ' wrong' + (r.hints ? ' · ' + r.hints + ' hint' + (r.hints > 1 ? 's' : '') : '') + (r.difficulty ? ' · ' + r.difficulty : '');
+      meta.textContent = r.points.toLocaleString() + ' pts · ' + fmt(r.elapsedMs) + ' · ' + r.wrongGuesses + ' wrong' + (r.hints ? ' · ' + r.hints + ' hint' + (r.hints > 1 ? 's' : '') : '') + (r.difficulty ? ' · ' + r.difficulty : '');
       const seed = document.createElement('span'); seed.className = 'seed'; seed.textContent = r.seed;
       li.append(name, meta, seed);
       ol.appendChild(li);
     });
-  }
-
-  // Plain-language area names for hints.
-  function areaName(x, y) {
-    if (((x - 1600) / 430) ** 2 + ((y - 640) / 172) ** 2 < 1) return 'around the fountain plaza';
-    if (y < 470) return 'along Gaston Street and the north gate';
-    if (x > 1850 && x < 3000 && y > 1100 && y < 1480) return 'in the farmers market';
-    if (x > 380 && x < 1120 && y > 1140 && y < 1430) return 'on the café patio';
-    if (((x - 820) / 260) ** 2 + ((y - 1900) / 120) ** 2 < 1) return 'by the playground';
-    if (x > 1440 && x < 1760 && y > 1000) return 'under the oak alley on the promenade';
-    if (y > 2280) return 'along the south walk by the hedges';
-    if (y > 1600) return 'on the south lawn';
-    return 'on the ' + (x < 1600 ? 'west' : 'east') + ' lawn';
   }
 
   async function main() {
@@ -89,7 +76,8 @@
     engine.renderNow();
     WS.game.timings.firstFrameMs = performance.now() - t0;
     engine.start();
-    document.title = 'Forsyth Park · Waldo\'s Savannah';
+    document.title = world.name + ' · Waldo\'s Savannah';
+    $('sceneName').textContent = world.name;
     round.state = 'INTRO';
     show('intro');
     $('startBtn').focus();
@@ -97,6 +85,8 @@
     engine.onFrame(() => {
       if (round.state === 'PLAYING') $('timer').textContent = fmt(round.elapsed());
       $('zoomLabel').textContent = engine.camera.zoom.toFixed(1) + 'x';
+      const here = world.districts.find((d) => engine.camera.y >= d.y0 && engine.camera.y < d.y0 + d.h);
+      if (here && $('hereLabel').textContent !== here.name) $('hereLabel').textContent = here.name;
       return false;
     });
 
@@ -117,7 +107,7 @@
       const t = world.target, rng = WS.rng.make(WS.rng.identityKey(identity) + '#hint');
       if (round.hints === 0) {
         round.hints = 1;
-        toast('Hint: he is ' + areaName(t.x, t.y) + '.');
+        toast('Hint: he is ' + world.area(t.x, t.y) + '.');
       } else if (round.hints === 1) {
         round.hints = 2;
         const a = rng() * Math.PI * 2, d = 80 + rng() * 120, cx = t.x + Math.cos(a) * d, cy = t.y - 40 + Math.sin(a) * d * 0.6, r = 300;
@@ -178,8 +168,10 @@
         round.state = 'WON'; round.endedAt = performance.now();
         marker(wx, wy, true);
         if (hintFx) engine.removeEffect(hintFx);
+        const pts = WS.leaderboard.points({ elapsedMs: round.elapsed(), wrongGuesses: round.wrong, hints: round.hints, difficulty: identity.difficulty });
+        $('winPoints').textContent = pts.toLocaleString() + ' points' + (identity.difficulty !== 'easy' ? ' (×' + WS.leaderboard.MULT[identity.difficulty] + ' for ' + identity.difficulty + ')' : '');
         $('winText').textContent = 'You found him in ' + fmt(round.elapsed()) + ' with ' + round.wrong + ' wrong guess' + (round.wrong === 1 ? '' : 'es') + (round.hints ? ' and ' + round.hints + ' hint' + (round.hints > 1 ? 's' : '') : '') + '.';
-        $('winSpot').textContent = 'He was ' + areaName(world.target.x, world.target.y) + '.';
+        $('winSpot').textContent = 'He was ' + world.area(world.target.x, world.target.y) + '.';
         $('shareBox').value = WS.gameplay.shareUrl(identity, location.href);
         $('saveBtn').disabled = false; $('nameInput').disabled = false;
         engine.setBeacon(true);

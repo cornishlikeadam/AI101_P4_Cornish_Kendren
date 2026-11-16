@@ -49,6 +49,21 @@ Everyone now moves, so every frame redraws. Same tour, same machine:
 | `crowd=2000` | 2,001 | 2 | 317 | 334 | 60.0 | 16.7 | 16.8 | 33.3 | 37.8 | 14.5 | 47.9 |
 | `crowd=10000` | 10,001 | 2 | 363 | 395 | 58.8 | 16.8 | 33.3 | 33.4 | 43.9 | 26.3 | 47.9 |
 
+## The whole city (checkpoint 4)
+
+Default scene `savannah`: 3200 × 6700 world, four districts. Same tour keyframes, which cover River Street and City Market at the north end; the Forsyth numbers above still describe the south end. With motion on.
+
+| Density | People | DPR | Load ms | First frame ms | Avg FPS | p95 ms | p99 ms | Worst ms | Feedback ms | Heap MB | Raster MPx | Sprites |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+| low | 451 | 1 | 464 | 473 | 60.0 | 16.7 | 16.8 | 16.8 | 46.0 | 19.6 | 7.4 | 514 |
+| standard | 901 | 1 | 815 | 839 | 60.0 | 16.7 | 16.8 | 33.4 | 38.9 | 23.4 | 11.3 | 964 |
+| dense | 1,501 | 1 | 1,388 | 1,405 | 59.6 | 16.8 | 16.8 | 83.3 | 38.1 | 42.6 | 16.0 | 1,564 |
+| `crowd=10000` | 10,001 | 1 | 428 | 450 | 60.0 | 16.7 | 16.8 | 16.8 | 35.9 | 24.8 | 16.5 | 443 |
+| standard | 901 | 2 | 803 | 840 | 60.0 | 16.8 | 16.8 | 16.8 | 43.8 | 23.4 | 38.4 | 964 |
+| dense | 1,501 | 2 | 1,406 | 1,422 | 59.6 | 16.7 | 16.8 | 66.6 | 34.8 | 29.8 | 47.9 | 1,564 |
+
+Load time now scales with distinct sprites (every person has a unique look up to 2,000 people; stress crowds share looks). The asset bundle is 1.2 MB because the city ground embeds Forsyth's.
+
 ## What changed during measurement
 
 - First headless run without the GPU flags: 35 FPS at standard density, frame times in 16.7 ms steps. The page reported no WebGL renderer, which points to software compositing. Timing the draw call itself showed 26 ms per frame at 1.0x zoom.

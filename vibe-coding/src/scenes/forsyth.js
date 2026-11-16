@@ -156,85 +156,31 @@
     { id: 'hedge-line', x: 1600, y: 2370, r: 1300, d: ['hard'] },
     { id: 'plaza-crowd', x: 1600, y: 520, r: 260, d: ['hard', 'normal'] },
   ];
-  const BUDGET = { low: 180, standard: 360, dense: 600 };
-  const DECOY_RATE = { easy: 0.06, normal: 0.16, hard: 0.32 };
-
-  function build(identity) {
-    const rng = WS.rng.make(WS.rng.identityKey(identity));
-    const make = WS.characters.make;
-    const entities = [];
-    let n = 0;
-    const isPerson = (asset) => asset.startsWith('characters/');
-    const push = (o) => { const e = Object.assign({ k: o.k || (isPerson(o.asset) ? P : 1), flip: o.flip ? 1 : 0, layer: o.layer || (window.WS_ASSETS.meta[o.asset].layer === 'world' ? 'world' : window.WS_ASSETS.meta[o.asset].layer) }, o); if (!e.id) e.id = 'e' + n++; entities.push(e); return e; };
-    const people = [];
-    const grid = new Map(), CELL = 64;                       // spatial hash for spacing checks
-    const cellKey = (cx, cy) => cx + ',' + cy;
-    const decoyRate = DECOY_RATE[identity.difficulty] || DECOY_RATE.normal;
-    const total = identity.crowd ? Math.max(20, Math.min(10000, identity.crowd)) : BUDGET[identity.density] || BUDGET.standard;
-    // Stress crowds reuse a fixed set of looks so thousands of people do not mean thousands of sprite decodes.
-    const templates = total > 800 ? new Map() : null;
-    const person = (asset, x, y, flip, extra = {}) => {
-      let c;
-      if (templates) {
-        const list = templates.get(asset) || templates.set(asset, []).get(asset);
-        if (list.length < 24) { c = make(rng, asset, { decoys: rng.chance(decoyRate) ? 1 : 0 }); list.push(c); } else c = rng.pick(list);
-      } else c = make(rng, asset, { decoys: rng.chance(decoyRate) ? (rng.chance(0.45) ? 2 : 1) : 0 });
-      const e = push(Object.assign({ asset, x, y, flip, kind: 'person', colours: c.colours, kit: c.kit, kit2: c.kit2, traits: c.traits }, extra));
-      people.push(e);
-      const k = cellKey(Math.floor(x / CELL), Math.floor(y / CELL));
-      (grid.get(k) || grid.set(k, []).get(k)).push(e);
-      return e;
+  // Forsyth as a district placed with its north edge at world y = OY.
+  function district(OY = 0) {
+    const sh = (o) => Object.assign({}, o, { y: o.y + OY });
+    return {
+      id: 'forsyth', name: 'Forsyth Park', y0: OY, h: H,
+      geography: () => geography().map(sh),
+      stories: () => stories().map(sh),
+      zones: ZONES.map((z) => Object.assign({}, z, { pt: (r) => { const [x, y] = z.pt(r); return [x, y + OY]; } })),
+      blocked: (x, y) => blocked(x, y - OY),
+      spots: SPOTS.map(sh),
+      fountain: { x: 1600, y: 630 + OY, rx: 270, ry: 100 },
+      area(x, y) {
+        y -= OY;
+        if (y < 0 || y >= H) return null;
+        if (((x - 1600) / 430) ** 2 + ((y - 640) / 172) ** 2 < 1) return 'around the Forsyth Park fountain';
+        if (y < 470) return 'along Gaston Street at the top of Forsyth Park';
+        if (x > 1850 && x < 3000 && y > 1100 && y < 1480) return 'in the Forsyth farmers market';
+        if (x > 380 && x < 1120 && y > 1140 && y < 1430) return 'on the Forsyth café patio';
+        if (((x - 820) / 260) ** 2 + ((y - 1900) / 120) ** 2 < 1) return 'by the Forsyth playground';
+        if (x > 1440 && x < 1760 && y > 1000) return 'under the oak alley in Forsyth Park';
+        if (y > 2280) return 'along the south edge of Forsyth Park';
+        return 'on the ' + (x < 1600 ? 'west' : 'east') + ' side of Forsyth Park';
+      },
     };
-
-    for (const g of geography()) push(Object.assign({ kind: 'prop', colours: g.tint || null }, g, { tint: undefined }));
-    for (const s of stories()) {
-      if (isPerson(s.asset)) person(s.asset, s.x, s.y, s.flip, { story: s.story, id: s.id });
-      else push({ asset: s.asset, x: s.x, y: s.y, k: s.k, flip: s.flip, kind: s.asset.includes('animals') ? 'animal' : 'prop', story: s.story, leash: s.leash, colours: s.tint || null });
-    }
-
-    // spacing grid: people keep apart; the y distance counts double because the ground is foreshortened
-    const near = (x, y, d) => {
-      const cx = Math.floor(x / CELL), cy = Math.floor(y / CELL);
-      for (let i = cx - 1; i <= cx + 1; i++) for (let j = cy - 1; j <= cy + 1; j++) {
-        const cell = grid.get(cellKey(i, j));
-        if (cell && cell.some((p) => Math.hypot(p.x - x, (p.y - y) * 2.2) < d)) return true;
-      }
-      return false;
-    };
-    const fill = Math.max(0, total - people.length);
-    const spacing = total > 1200 ? 8 : total > 700 ? 18 : 30;
-    const POOL_PATH = [[B + 'walk', 20], [B + 'dress', 13], [B + 'tote', 10], [B + 'phone', 7], [B + 'cane', 5], [B + 'child', 6], [C + 'jogger', 7], [C + 'tourist-photographer', 5], [C + 'scad-student-portfolio', 4], [C + 'dog-walker', 3], [C + 'parent-stroller', 3], [C + 'cyclist', 2]];
-    const POOL_STAND = [[B + 'coffee', 14], [B + 'phone', 12], [B + 'walk', 10], [B + 'dress', 10], [B + 'tote', 8], [B + 'child', 7], [B + 'cane', 4], [C + 'tourist-photographer', 5], [C + 'scad-student-portfolio', 3]];
-    const zonePairs = ZONES.map((z) => [z, z.w]);
-    for (let placed = 0, tries = 0; placed < fill && tries < fill * 60; tries++) {
-      const z = rng.weighted(zonePairs);
-      const [x, y] = z.pt(rng);
-      if (blocked(x, y) || near(x, y, spacing)) continue;
-      const asset = rng.weighted(z.path ? POOL_PATH : POOL_STAND);
-      if (asset === C + 'cyclist' && z.id === 'promenade' && rng.chance(0.5)) continue;
-      const e = person(asset, Math.round(x), Math.round(y), rng.chance(0.5) ? 1 : 0, { zone: z.id });
-      if (asset === C + 'dog-walker') push({ asset: 'props/animals/dog-dachshund', x: e.x + (e.flip ? -84 : 84), y: e.y + 6, k: 0.9, flip: e.flip, kind: 'animal', leash: e.id });
-      placed++;
-    }
-
-    // Target candidates in seeded order: spots for this difficulty first, then any spot.
-    const diff = identity.difficulty || 'normal';
-    const mine = SPOTS.filter((s) => s.d.includes(diff)), rest = SPOTS.filter((s) => !s.d.includes(diff));
-    const candidates = [];
-    for (const pool of [mine, mine, mine, rest]) {
-      for (let i = 0, guard = 0; i < 12 && guard < 400; guard++) {
-        const s = rng.pick(pool);
-        const a = rng() * Math.PI * 2, t = Math.sqrt(rng());
-        const x = Math.round(s.x + Math.cos(a) * s.r * t), y = Math.round(s.y + Math.sin(a) * s.r * t * 0.5);
-        if (blocked(x, y) || near(x, y, 18)) continue;
-        candidates.push({ spot: s.id, x, y, flip: rng.chance(0.5) ? 1 : 0 });
-        i++;
-      }
-    }
-    const target = push({ id: 'target', asset: C + 'target-walker', x: candidates[0].x, y: candidates[0].y, flip: candidates[0].flip, kind: 'person', isTarget: true, colours: null, traits: ['stripes', 'bobble', 'glasses', 'blue', 'stick'], spot: candidates[0].spot });
-
-    return { id: 'forsyth', name: 'Forsyth Park', w: W, h: H, ground: 'environments/forsyth/ground', background: '#F6E7C8', fountain: { x: 1600, y: 630, rx: 270, ry: 100 }, entities, target, candidates, identity, people: people.length + 1, stories: new Set(stories().map((s) => s.story)).size };
   }
-
-  WS.scenes = Object.assign(WS.scenes || {}, { forsyth: { build, SPOTS, BUDGET } });
+  WS.districts = Object.assign(WS.districts || {}, { forsyth: district });
+  WS.scenes = Object.assign(WS.scenes || {}, { forsyth: { build: (identity) => WS.buildScene(identity, { id: 'forsyth', name: 'Forsyth Park', w: W, h: H, ground: 'environments/forsyth/ground', districts: [district(0)], budget: { low: 180, standard: 360, dense: 600 } }) } });
 })();

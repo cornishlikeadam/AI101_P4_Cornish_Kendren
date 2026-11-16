@@ -25,8 +25,10 @@ async function open(query = '', viewport = { width: 1280, height: 800 }) {
   const external = [], errors = [];
   page.on('request', (r) => { const u = r.url(); if (!/^(file|blob|data):/.test(u)) external.push(u); });
   page.on('pageerror', (e) => errors.push(e.message));
+  // Tests written against Forsyth coordinates run the single-district scene unless they ask for another.
+  if (!/[?&]scene=/.test(query)) query += (query.includes('?') ? '&' : '?') + 'scene=forsyth';
   await page.goto(PAGE + query);
-  await page.waitForFunction(() => document.title.startsWith('Forsyth') || !document.getElementById('failed').hidden, null, { timeout: 60000 });
+  await page.waitForFunction(() => document.title.includes('Waldo') || !document.getElementById('failed').hidden, null, { timeout: 60000 });
   return { page, external, errors };
 }
 // A screen point (client px) where a pick returns the given entity, after centring the camera on it.
@@ -194,7 +196,7 @@ await test('people move, and prefers-reduced-motion freezes them', async () => {
   const offsets = async (reduced) => {
     const page = await browser.newPage({ viewport: { width: 1280, height: 800 }, reducedMotion: reduced ? 'reduce' : 'no-preference' });
     await page.goto(PAGE + '?seed=MOVE-1');
-    await page.waitForFunction(() => document.title.startsWith('Forsyth'));
+    await page.waitForFunction(() => document.title.includes('Waldo'));
     await page.waitForTimeout(600);
     const r = await page.evaluate(() => ({ on: WS.game.engine.motion, moving: WS.game.world.entities.filter((e) => e.oy).length }));
     await page.close();
@@ -247,7 +249,7 @@ async function win(page) {
 await test('leaderboard: save once, sorted, max 10, names rendered as text, tolerant of bad records', async () => {
   const { page } = await open('?seed=LB-1');
   await page.evaluate(() => {
-    const bad = [{ username: 'old', elapsedMs: 1, wrongGuesses: 1, seed: 'X' }, { nope: 1 }, 'junk'];
+    const bad = [{ username: 'old', elapsedMs: 1, difficulty: 'hard', wrongGuesses: 1, seed: 'X' }, { nope: 1 }, 'junk'];
     for (let i = 0; i < 11; i++) bad.push({ username: 'p' + i, elapsedMs: 60000 + i * 1000, wrongGuesses: 0, seed: 'S' + i });
     localStorage.setItem('waldos_savannah_leaderboard_v1', JSON.stringify(bad));
   });
@@ -263,7 +265,7 @@ await test('leaderboard: save once, sorted, max 10, names rendered as text, tole
   assert.equal(r.stored.filter((x) => x.username.startsWith('<img')).length, 1, 'saved exactly once');
   const mine = r.stored.find((x) => x.username.startsWith('<img'));
   assert.equal(mine.seed, 'LB-1'); assert.equal(mine.difficulty, 'normal'); assert.equal(mine.artVersion, 1); assert.equal(typeof mine.hints, 'number');
-  for (let i = 1; i < r.stored.length; i++) assert.ok(r.stored[i - 1].elapsedMs <= r.stored[i].elapsedMs, 'sorted by time');
+  for (let i = 1; i < r.stored.length; i++) assert.ok(r.stored[i - 1].points >= r.stored[i].points, 'sorted by points');
   assert.equal(r.stored[0].username, 'old', JSON.stringify(r.stored.slice(0, 3)));
   await page.close();
 });
@@ -276,8 +278,8 @@ await test('share link carries the replay identity and rebuilds the same park', 
   const a = await page.evaluate(() => [WS.game.world.target.x, WS.game.world.target.y]);
   await page.close();
   const page2 = await browser.newPage();
-  await page2.goto(url);
-  await page2.waitForFunction(() => document.title.startsWith('Forsyth'));
+  await page2.goto(url);   // the share link carries scene=forsyth
+  await page2.waitForFunction(() => document.title.includes('Waldo'));
   assert.deepEqual(await page2.evaluate(() => [WS.game.world.target.x, WS.game.world.target.y]), a);
   await page2.close();
 });
@@ -300,7 +302,7 @@ await test('fallback: ?fallback=1, the test button, and recovery to a new scene'
   const { page } = await open('?seed=FB-1&fallback=1');
   assert.equal(await page.isVisible('#failed'), true);
   await page.click('#recoverBtn');
-  await page.waitForFunction(() => document.title.startsWith('Forsyth'));
+  await page.waitForFunction(() => document.title.includes('Waldo'));
   const q = await page.evaluate(() => location.search);
   assert.ok(!/fallback/.test(q) && !/seed=FB-1/.test(q), q);
   await page.click('#testFallbackBtn');
@@ -312,8 +314,50 @@ await test('fallback: ?fallback=1, the test button, and recovery to a new scene'
 await test('difficulty picker reloads with the same seed and the new difficulty', async () => {
   const { page } = await open('?seed=PICK-1');
   await page.selectOption('#difficulty', 'hard');
-  await page.waitForFunction(() => location.search.includes('difficulty=hard') && document.title.startsWith('Forsyth'));
+  await page.waitForFunction(() => location.search.includes('difficulty=hard') && document.title.includes('Waldo'));
   assert.equal(await page.evaluate(() => WS.game.identity.seed + '|' + WS.game.identity.difficulty), 'PICK-1|hard');
+  await page.close();
+});
+
+// ---------- checkpoint 4: the whole city ----------
+await test('city: four districts in one world, target can land in any of them', async () => {
+  const { page, external, errors } = await open('?seed=CITY-1&scene=savannah');
+  assert.deepEqual(external, []); assert.deepEqual(errors, []);
+  const r = await page.evaluate(() => {
+    const w = WS.game.world, spotsBy = {};
+    for (let i = 0; i < 40; i++) {
+      const b = WS.scenes.savannah.build({ seed: 'SPREAD-' + i, scene: 'savannah', difficulty: ['easy', 'normal', 'hard'][i % 3], density: 'low', crowd: null, artVersion: 1 });
+      const t = b.target, d = b.districts.find((x) => t.y >= x.y0 && t.y < x.y0 + x.h);
+      spotsBy[d.id] = (spotsBy[d.id] || 0) + 1;
+    }
+    return { people: w.people, stories: w.stories, districts: w.districts.map((d) => d.id), h: w.h, spotsBy, ok: WS.game.placement.ok };
+  });
+  assert.deepEqual(r.districts, ['riverfront', 'market', 'squares', 'forsyth']);
+  assert.equal(r.people, 901); assert.ok(r.stories >= 40); assert.equal(r.h, 6700); assert.ok(r.ok);
+  assert.equal(Object.keys(r.spotsBy).length, 4, 'first candidates spread over every district: ' + JSON.stringify(r.spotsBy));
+  await page.close();
+});
+
+await test('city: winning anywhere works and the HUD names the district in view', async () => {
+  const { page } = await open('?seed=CITY-4&scene=savannah');
+  await page.evaluate(() => WS.game.engine.camera.centerOn(1600, 700, 1.5));
+  await page.waitForFunction(() => document.getElementById('hereLabel').textContent === 'River Street');
+  await win(page);
+  assert.match(await page.textContent('#winPoints'), /points/);
+  await page.close();
+});
+
+await test('points: difficulty multiplies, mistakes and hints cost, floor of 100', async () => {
+  const { page } = await open('?seed=PTS-1');
+  const p = await page.evaluate(() => {
+    const P = WS.leaderboard.points;
+    return { easy: P({ elapsedMs: 60000, wrongGuesses: 0, hints: 0, difficulty: 'easy' }), normal: P({ elapsedMs: 60000, wrongGuesses: 0, hints: 0, difficulty: 'normal' }), hard: P({ elapsedMs: 60000, wrongGuesses: 0, hints: 0, difficulty: 'hard' }),
+      wrong: P({ elapsedMs: 60000, wrongGuesses: 2, hints: 0, difficulty: 'easy' }), hint: P({ elapsedMs: 60000, wrongGuesses: 0, hints: 1, difficulty: 'easy' }), floor: P({ elapsedMs: 9e6, wrongGuesses: 50, hints: 2, difficulty: 'hard' }) };
+  });
+  assert.deepEqual(p, { easy: 9400, normal: 14100, hard: 23500, wrong: 8800, hint: 7900, floor: 250 });
+  // a slower hard round outranks a faster easy round when it earns more points
+  await page.evaluate(() => { localStorage.clear(); WS.leaderboard.save({ username: 'easyfast', elapsedMs: 30000, wrongGuesses: 0, seed: 'a', difficulty: 'easy', hints: 0 }); WS.leaderboard.save({ username: 'hardslow', elapsedMs: 90000, wrongGuesses: 1, seed: 'b', difficulty: 'hard', hints: 0 }); });
+  assert.deepEqual(await page.evaluate(() => WS.leaderboard.load().map((r) => r.username)), ['hardslow', 'easyfast']);
   await page.close();
 });
 

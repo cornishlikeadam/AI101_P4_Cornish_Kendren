@@ -18,7 +18,7 @@ for (const q of queries) {
   const page = await browser.newPage({ viewport: { width: 1440, height: 900 }, deviceScaleFactor: DPR });
   const t0 = Date.now();
   await page.goto(PAGE + q);
-  await page.waitForFunction(() => document.title.startsWith('Forsyth'), null, { timeout: 120000 });
+  await page.waitForFunction(() => document.title.includes('Waldo'), null, { timeout: 120000 });
   const wall = Date.now() - t0;
   await page.click('#startBtn');
   const r = await page.evaluate(() => new Promise((resolve) => {

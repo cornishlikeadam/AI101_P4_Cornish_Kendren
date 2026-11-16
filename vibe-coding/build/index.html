@@ -79,14 +79,14 @@
 </style>
 </head>
 <body>
-<canvas id="scene" tabindex="0" aria-label="Illustrated Forsyth Park. Drag or use arrow keys to pan, scroll, pinch or use plus and minus to zoom, click a person to guess."></canvas>
+<canvas id="scene" tabindex="0" aria-label="Illustrated Savannah, from River Street to Forsyth Park. Drag or use arrow keys to pan, scroll, pinch or use plus and minus to zoom, click a person to guess."></canvas>
 
 <div id="hud" class="card" role="status" aria-live="polite">
   <canvas id="portrait" width="88" height="128" aria-label="The person to find"></canvas>
   <div>
-    <h1>Forsyth Park</h1>
+    <h1 id="sceneName">Savannah</h1>
     <div class="sub">Striped shirt and hat, round glasses, blue trousers, walking stick</div>
-    <div class="stats"><span><small>Time</small><b id="timer">0:00.0</b></span><span><small>Wrong</small><b id="wrong">0</b></span></div>
+    <div class="stats"><span><small>Time</small><b id="timer">0:00.0</b></span><span><small>Wrong</small><b id="wrong">0</b></span><span><small>Here</small><b id="hereLabel" style="font-family:var(--font-sans)"></b></span></div>
   </div>
 </div>
 <div id="seedLabel" class="card" title="Replay seed and difficulty"></div>
@@ -106,18 +106,18 @@
 <div id="toast" class="card" role="status" aria-live="assertive"></div>
 
 <div id="loading" class="overlay"><div class="dialog card" role="dialog" aria-label="Loading">
-  <h2>Drawing Forsyth Park…</h2><p>Unpacking the illustrated crowd.</p><div class="bar"><div id="loadBar"></div></div>
+  <h2>Drawing Savannah…</h2><p>Unpacking the illustrated crowd.</p><div class="bar"><div id="loadBar"></div></div>
 </div></div>
 <div id="intro" class="overlay" hidden><div class="dialog card" role="dialog" aria-labelledby="introTitle">
   <h2 id="introTitle">Find the walker</h2>
-  <p>Somewhere in Forsyth Park, one person wears all five of these at once. Others may share one or two.</p>
+  <p>Somewhere in Savannah, from River Street to Forsyth Park, one person wears all five of these at once. Others may share one or two. Scroll and zoom to search.</p>
   <ul class="traits"><li>Red-and-white striped shirt</li><li>Striped bobble hat</li><li>Round glasses</li><li>Blue trousers</li><li>Brown walking stick</li></ul>
-  <div class="row"><label class="pick">Difficulty<select id="difficulty"><option value="easy">Easy</option><option value="normal">Normal</option><option value="hard">Hard</option></select></label>
-  <label class="pick">Crowd<select id="density"><option value="low">Light (180)</option><option value="standard">Busy (360)</option><option value="dense">Packed (600)</option></select></label></div>
+  <div class="row"><label class="pick">Difficulty<select id="difficulty"><option value="easy">Easy (×1 points)</option><option value="normal">Normal (×1.5)</option><option value="hard">Hard (×2.5)</option></select></label>
+  <label class="pick">Crowd<select id="density"><option value="low">Light</option><option value="standard">Busy</option><option value="dense">Packed</option></select></label></div>
   <div class="row"><button id="startBtn" class="primary">Start searching</button><button id="testFallbackBtn" class="secondary">Test fallback state</button></div>
 </div></div>
 <div id="won" class="overlay" hidden><div class="dialog card" role="dialog" aria-labelledby="wonTitle">
-  <h2 id="wonTitle">Found him!</h2><p id="winText"></p><p id="winSpot" style="color:var(--text-muted);font-size:14px"></p>
+  <h2 id="wonTitle">Found him!</h2><p id="winPoints" style="font:800 24px var(--font-mono);color:var(--accent-coral);margin:4px 0"></p><p id="winText"></p><p id="winSpot" style="color:var(--text-muted);font-size:14px"></p>
   <div class="row"><input type="text" id="nameInput" maxlength="18" placeholder="Your name" aria-label="Your name for the leaderboard" autocomplete="nickname"><button id="saveBtn" class="primary">Save time</button></div>
   <p style="margin:12px 0 4px;font-size:13px;color:var(--text-muted)">Share this exact park:</p>
   <textarea id="shareBox" readonly aria-label="Share link"></textarea>
