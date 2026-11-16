@@ -537,7 +537,7 @@ await test('city: crowd travels along walks, runs and wanders; target stays near
   }, before);
   assert.ok(r.travellers > 300, JSON.stringify(r));
   assert.ok(r.moved > 200 && r.far > 50 && r.fastest > 120, 'people walk, joggers and cyclists cover ground: ' + JSON.stringify(r));
-  assert.ok(r.targetDrift <= 23, 'target paces within his spot: ' + JSON.stringify(r));
+  assert.ok(r.targetDrift <= 131, 'target strolls within 130 px of his spot (ADR-004): ' + JSON.stringify(r));
   await page.close();
 });
 
