@@ -1,6 +1,6 @@
-# ADR-003: The camera always fills the screen
+# ADR-003: Full-screen camera bounds
 
-**Status:** Accepted (2026-11-16). Adds to ADR-002; replaces nothing.
-**Context:** In Cycle 1, zooming all the way out or panning to a corner showed blank space past the edge of the city. This happened at every screen size I tested (`build-record/visual-qa/overhaul/before/minzoom-*.png`). The minimum zoom was a fixed number, and panning wasn't kept inside the world.
-**Decision:** The minimum zoom is now worked out from the window size, so the city always covers the whole screen. The view is kept inside the world after every pan, zoom, resize or phone rotation. Wheel and pinch zoom stay anchored under the pointer or between the fingers.
-**Consequence:** Kids never see empty edges, and the camera tests check this at five window sizes. On a wide screen you can't zoom out as far as before, so you can't see the whole city at once. The minimap covers that.
+Status: Accepted (Cycle 2, 2026-11-16).
+Context: Cycle 1's edge-case test showed blank space past the city edges when zooming all the way out or panning to a corner (`build-record/visual-qa/overhaul/before/minzoom-*.png`).
+Decision: Set the minimum zoom from the window size so the city always fills the screen, and keep the view inside the city on every pan, zoom, resize, or rotation.
+Consequence: Kids never see empty edges at any tested screen size. Wide screens cannot zoom out to see the whole city at once, so the corner minimap shows where you are.

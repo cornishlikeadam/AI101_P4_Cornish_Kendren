@@ -1,18 +1,39 @@
 # AI-use log
 
-These are short summaries, not exact quotes. Where the original prompt isn't saved, the "What I asked" column is reconstructed from my notes. The full session notes are in `docs/history/ai-use-log-full.md`.
+Short record of consequential AI sessions. Prompt descriptions are summarized where full chat text is archived; full session notes are in `docs/history/ai-use-log-full.md`.
 
-| Date | Tool | What I asked | What came back | Keep/change/reject | Why |
-|---|---|---|---|---|---|
-| 2026-11-14 | Research session (the v1 log names REA) | Study reference games and pull out camera, seed and storage patterns | A list of design "keys" (isometric camera, seeded random, local scores) | Kept, later replaced | These shaped version 1. ADR-002 later dropped the camera and the no-art rule |
-| 2026-11-15 | AI agents (3-agent setup, v1) | Build the zero-asset 3D crowd game: engine, UI, QA | Version 1 in one `index.html` | Changed, then replaced | It worked but looked like boxes. I asked for the 6 px drag rule, the fixed-width timer and the fallback screen |
-| 2026-11-15 | Claude Code (Claude Opus 5.5) | Audit the project and plan an illustrated rebuild; draw a Forsyth Park sample | An audit, ADR-002, art direction and 32 SVG drawings | Kept | I approved the art direction at checkpoint 1 |
-| 2026-11-15 | Claude Code + playwright-core | Make Forsyth Park playable | Engine, crowd, picking, tests (12, then 14, passing) | Changed | I asked it to fix the gaps first (motion, seated poses, hard mode) before approving |
-| 2026-11-15 | Claude Code + playwright-core | Wire in scores, hints, share links and fallback | Gameplay features; 19 tests passing | Kept | I approved checkpoint 2 |
-| 2026-11-15 | Claude Code + playwright-core | Put every location in one world; difficulty should affect points | One city with four districts, a points system; 23 tests passing | Kept | I wanted Waldo to be able to hide anywhere |
-| 2026-11-16 | Claude Code (Vite, React) | Build a separate "Art Direction & Build Lab" | The `lab/` app | Kept, outside the game | A design workspace, not part of the submission build |
-| 2026-11-16 | Claude Code + playwright-core | Fix the camera, improve the art and make it kid-friendly; join the city with Bull Street | Full-screen camera, Bull Street city, 24 new drawings, simpler UI; 28 tests passing | Kept | Cycle 2. I wanted one believable Savannah, not separate maps |
-| 2026-11-16 | Claude Code + Vercel CLI | Deploy and update the repo | Live site and merged PRs | Kept | So I could check it myself |
-| 2026-11-16 | Claude Code + playwright-core + Vercel CLI | Make the world 2.85× wider with more real Savannah places | West and east wings, 78 new drawings; 29 tests passing | Kept | More to search, same gameplay |
-| 2026-11-16 | Claude Code | Clean up the documentation for submission | These shorter documents | Kept | Shortened to match templates |
-| 2026-11-16 | AI coding agent + playwright-core + Vercel CLI | Fix the reload test flake, 404 favicon, slow bundle download, and slow startup/panning | Fixed initial `<title>` race and favicon, cut bundle to 2.89 MB (310 KB gzip), cut load to 0.57 s, 29/29 tests passing, deployed live | Kept | Verified 29/29 Playwright tests and `perf.mjs` on Apple M4 |
+**Date:** 2026-11-14
+**AI tool:** Research session (REA)
+**Prompt (reconstructed):** Study reference search-and-find and isometric map games for camera, seed, and storage patterns.
+**Result:** Drafted the initial architecture plan and design rules for version 1.
+**My contribution:** Picked Savannah as the setting and chose the core rules (offline, no accounts, seeded replay).
+
+**Date:** 2026-11-15
+**AI tool:** Multi-agent coding setup
+**Prompt (reconstructed):** Build the first playable browser game in `build/index.html` using geometric 3D boxes with zero external assets.
+**Result:** Built version 1 (`docs/history/index-v1.html`).
+**My contribution:** Tested it, asked for the 6 px drag rule, fixed-width timer, and fallback screen, and rejected the box look because it did not feel like a picture book.
+
+**Date:** 2026-11-15
+**AI tool:** Claude Code + `playwright-core`
+**Prompt (summary):** Switch to original illustrated SVG art (ADR-002), build Forsyth Park first, then expand into one continuous Savannah with hints, scores, and tests.
+**Result:** Created the SVG artwork, 2D canvas engine, four connected districts, gameplay UI, and Playwright tests (23 passing).
+**My contribution:** Approved the art direction, rejected early drafts without motion or hard difficulty, and decided the landmarks should follow real Bull Street order.
+
+**Date:** 2026-11-16
+**AI tool:** Claude Code (Vite, React)
+**Prompt:** Master prompt to build an "Art Direction & Build Lab" workspace to inspect assets and before/after screenshots.
+**Result:** Built the separate `lab/` design tool outside the game build.
+**My contribution:** Used it to review visual gaps without mixing dev tools into `vibe-coding/build/`.
+
+**Date:** 2026-11-16
+**AI tool:** Claude Code + `playwright-core` + Vercel CLI
+**Prompt (summary):** Fix the zoomed-out blank edges (ADR-003), simplify the kid UI, widen the city with west and east wings, and deploy to Vercel.
+**Result:** Added full-screen camera clamping, 78 new drawings across a 9120-wide city, 29 automated tests, and the live Vercel deployment.
+**My contribution:** Caught the zoomed-out edge failure in Cycle 1, requested the wider city and kid-friendly UI, and verified the live site.
+
+**Date:** 2026-11-16
+**AI tool:** AI coding agents + `playwright-core` + Vercel CLI
+**Prompt (summary):** Shorten the submission docs to match the course templates, fix the reload test flake and 404, speed up loading and panning, and sync the Obsidian folder.
+**Result:** Shortened docs and ADRs, cut asset size to ~2.9 MB and startup load to ~0.6 s, cleared all 29/29 tests, redeployed Vercel, and synced Obsidian.
+**My contribution:** Reviewed the docs and Obsidian folder, caught overly long technical text in the ADRs and logs, and asked to keep the submission concise and faithful to the course format (with `reflection.md` left for me to write).
