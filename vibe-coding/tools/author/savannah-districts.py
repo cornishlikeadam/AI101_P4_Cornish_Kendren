@@ -199,3 +199,51 @@ w('props/vehicles/trolley', '0 0 320 160', '160 154', f'''
 <circle cx="256" cy="132" r="16" fill="#2B2B2B" {O}/><circle cx="256" cy="132" r="6" fill="#C9C2B2"/>
 ''')
 print('district assets written')
+
+# ---------- squares: Italianate row houses with high stoops, and a twin-spired church ----------
+random.seed(203)
+STUCCO = ['#E7C07A', '#9EC3B5', '#E8A28C', '#F0E2C4', '#C9D6E2', '#D9B48C', '#B4573E']
+def rowhouse(x, wdt):
+    H = 290; wall = random.choice(STUCCO); trim = '#F7F1E3'; shut = random.choice(['#2F5D50', '#3D4F6E', '#7A3B3B', '#2B2B2B'])
+    s = f'<rect x="{x}" y="40" width="{wdt}" height="{H-40}" fill="{wall}" {O}/><rect x="{x+wdt-10}" y="40" width="10" height="{H-40}" fill="{INK}" opacity=".12"/>'
+    s += f'<path d="M{x-6},40 L{x+wdt+6},40 L{x+wdt+2},28 L{x-2},28 Z" fill="{trim}" {O}/>'
+    s += ''.join(f'<path d="M{x+6+k*12},40 v6" stroke="{INK}" stroke-width="1.4"/>' for k in range(int(wdt/12)))
+    cols = 3 if wdt >= 150 else 2; gap = wdt / cols
+    for fy, hh in [(62, 48), (140, 64)]:
+        for i in range(cols):
+            wx = x + gap*i + gap*0.28; ww = gap*0.44
+            s += f'<rect x="{f(wx)}" y="{fy}" width="{f(ww)}" height="{hh}" fill="#3D5468" {O}/><path d="M{f(wx+ww/2)},{fy} v{hh} M{f(wx)},{fy+hh*0.5} h{f(ww)}" stroke="{trim}" stroke-width="1.6"/>'
+            s += f'<path d="M{f(wx-4)},{fy-2} h{f(ww+8)} l-3,-7 h{f(-ww-2)} Z" fill="{trim}" {O}/>'
+            s += f'<rect x="{f(wx-ww*0.36)}" y="{fy}" width="{f(ww*0.32)}" height="{hh}" fill="{shut}" {O}/><rect x="{f(wx+ww*1.04)}" y="{fy}" width="{f(ww*0.32)}" height="{hh}" fill="{shut}" {O}/>'
+    # cast-iron balcony across the parlour floor
+    s += f'<rect x="{x+6}" y="206" width="{wdt-12}" height="5" fill="{INK}"/>' + ''.join(f'<path d="M{f(x+8+k*7)},188 v18" stroke="{INK}" stroke-width="1.1"/>' for k in range(int((wdt-14)/7))) + f'<path d="M{x+6},188 H{x+wdt-6}" stroke="{INK}" stroke-width="2"/>'
+    s += ''.join(f'<path d="M{f(x+10+k*14)},198 q4,-6 8,0" fill="none" stroke="{INK}" stroke-width="1"/>' for k in range(int((wdt-20)/14)))
+    # high stoop with a double stair up to the door
+    dx = x + wdt*0.5
+    s += f'<rect x="{f(dx-14)}" y="218" width="28" height="44" fill="{shut}" {O}/><path d="M{f(dx-18)},218 A18,14 0 0,1 {f(dx+18)},218" fill="{trim}" {O}/>'
+    s += f'<rect x="{f(dx-24)}" y="260" width="48" height="8" fill="#C9C2B2" {O}/>'
+    s += f'<path d="M{f(dx-24)},268 L{f(dx-62)},290 L{f(dx-40)},290 L{f(dx-12)},268 Z M{f(dx+24)},268 L{f(dx+62)},290 L{f(dx+40)},290 L{f(dx+12)},268 Z" fill="#C9C2B2" {O}/>'
+    s += f'<path d="M{f(dx-24)},258 L{f(dx-64)},282 M{f(dx+24)},258 L{f(dx+64)},282" stroke="{INK}" stroke-width="2"/>'
+    s += f'<rect x="{x}" y="262" width="{wdt}" height="28" fill="#B9A88C" {O}/>' + ''.join(f'<rect x="{f(x+10+k*30)}" y="270" width="16" height="12" fill="#3D5468" stroke="{INK}" stroke-width="1"/>' for k in range(int((wdt-20)/30)) if abs(x+18+k*30-dx) > 70)
+    return s
+def church(x):
+    W = 420; s = ''
+    for sx in (x + 20, x + W - 100):
+        s += f'<rect x="{sx}" y="70" width="80" height="220" fill="#EDE6D6" {O}/>'
+        s += f'<path d="M{sx-4},70 L{sx+40},-80 L{sx+84},70 Z" fill="#5E8C78" {O}/><path d="M{sx+40},-80 L{sx+84},70 L{sx+56},70 Z" fill="#4A7262"/>'
+        s += f'<path d="M{sx+40},-80 v-22 M{sx+32},-94 h16" stroke="{INK}" stroke-width="2.4"/>'
+        s += f'<path d="M{sx+24},230 V140 A16,16 0 0,1 {sx+56},140 V230 Z" fill="#3D5468" {O}/><circle cx="{sx+40}" cy="100" r="12" fill="#F2D55C" {O}/>'
+    s += f'<rect x="{x+100}" y="130" width="{W-200}" height="160" fill="#E4DCC8" {O}/><path d="M{x+96},130 L{x+W/2},70 L{x+W-96},130 Z" fill="#E4DCC8" {O}/>'
+    s += f'<circle cx="{x+W/2}" cy="168" r="30" fill="#7D5BA6" {O}/>' + ''.join(f'<path d="M{x+W/2},168 l{f(30*__import__("math").cos(a*0.785))},{f(30*__import__("math").sin(a*0.785))}" stroke="{INK}" stroke-width="1.2"/>' for a in range(8))
+    s += f'<circle cx="{x+W/2}" cy="168" r="10" fill="#F2D55C" {O}/>'
+    s += f'<path d="M{x+W/2-30},290 V236 A30,30 0 0,1 {x+W/2+30},236 V290 Z" fill="#5A3A28" {O}/><path d="M{x+W/2},206 V290" stroke="{INK}" stroke-width="1.4"/>'
+    return s, W
+body = ''; x = 0; churchdone = False
+while x < 3200:
+    if not churchdone and x > 1350:
+        c, cw = church(x); body += c; x += cw; churchdone = True; continue
+    wdt = min(random.choice([140, 160, 180]), 3200 - x)
+    if wdt < 100: break
+    body += rowhouse(x, wdt); x += wdt
+w('environments/squares/row-houses', '0 -110 3200 400', '0 290', body, 'data-layer="far"')
+print('square row houses written')
