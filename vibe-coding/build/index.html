@@ -1748,7 +1748,7 @@ window.WS_ASSETS = {"artVersion":1,"svg":{"characters/archetypes/bride":"<svg xm
       const r = WS.rng.mulberry32(WS.rng.fnv1a(e.id + '#walk'));
       const v = SPEED(e.asset) * (0.85 + r() * 0.3);
       e.hx = e.x; e.hy = e.y;
-      if (e.isTarget) e.travel = { kind: 'wander', v: 9, r: 22, r_: r };
+      if (e.isTarget) e.travel = { kind: 'wander', v: 18, r: { easy: 70, normal: 100, hard: 130 }[world.identity.difficulty] || 100, r_: r }; // he strolls around his hiding spot; harder = wider
       else if (!e.zone) e.travel = null;
       else if (H_LANES.has(e.zone)) e.travel = { kind: 'h', v };
       else if (V_LANES.has(e.zone)) e.travel = { kind: 'v', v, y0: e.y - 380, y1: e.y + 380 };
@@ -2306,10 +2306,28 @@ window.WS_ASSETS = {"artVersion":1,"svg":{"characters/archetypes/bride":"<svg xm
     return base.split('?')[0].split('#')[0] + '?' + q.toString();
   }
   const newSeed = () => 'SAV-' + Math.floor(Math.random() * 1e4).toString().padStart(4, '0');
+  // The round's state machine, written out as one table (ADR-004). Each state lists the events it accepts
+  // and the state each one leads to. Anything missing from the table is an illegal move and is ignored.
+  const ROUND_MOVES = Object.freeze({
+    INIT:     { loaded: 'INTRO', fail: 'FALLBACK' },
+    INTRO:    { start: 'PLAYING', fail: 'FALLBACK' },
+    PLAYING:  { found: 'WON', fail: 'FALLBACK' },
+    WON:      { fail: 'FALLBACK' },
+    FALLBACK: {},
+  });
   function createRound() {
     return { state: 'INIT', wrong: 0, hints: 0, saved: false, startedAt: 0, endedAt: 0, elapsed() { return (this.endedAt || performance.now()) - this.startedAt; } };
   }
-  WS.gameplay = { readIdentity, createRound, shareUrl, newSeed };
+  // Move the round on by one event. Returns true if the move was allowed.
+  function transition(round, event) {
+    const next = (ROUND_MOVES[round.state] || {})[event];
+    if (!next) { console.warn('round: ignored', event, 'in', round.state); return false; }
+    round.state = next;
+    if (next === 'PLAYING') { round.startedAt = performance.now(); round.endedAt = 0; round.wrong = 0; round.hints = 0; round.saved = false; }
+    if (next === 'WON') round.endedAt = performance.now();
+    return true;
+  }
+  WS.gameplay = { readIdentity, createRound, shareUrl, newSeed, transition, ROUND_MOVES };
 })();
 
 /* ---- src/gameplay/leaderboard.js ---- */
@@ -2373,7 +2391,7 @@ window.WS_ASSETS = {"artVersion":1,"svg":{"characters/archetypes/bride":"<svg xm
     document.body.classList.toggle('playing', !id || id === 'won');
   }
   function fallback(reason) {
-    if (round) round.state = 'FALLBACK';
+    if (round) WS.gameplay.transition(round, 'fail');
     if (reason) console.warn('fallback:', reason);
     $('failText').textContent = reason && !/requested/.test(reason) ? reason : '';
     $('menu').hidden = true;
@@ -2459,7 +2477,7 @@ window.WS_ASSETS = {"artVersion":1,"svg":{"characters/archetypes/bride":"<svg xm
     WS.game.timings.firstFrameMs = performance.now() - t0;
     engine.start();
     document.title = world.name + ' · Waldo\'s Savannah';
-    round.state = 'INTRO';
+    WS.gameplay.transition(round, 'loaded');
     show('intro');
     $('startBtn').focus();
 
@@ -2491,12 +2509,12 @@ window.WS_ASSETS = {"artVersion":1,"svg":{"characters/archetypes/bride":"<svg xm
     });
 
     $('startBtn').addEventListener('click', () => {
-      round.state = 'PLAYING'; round.startedAt = performance.now(); round.wrong = 0; round.hints = 0; round.saved = false;
+      if (!WS.gameplay.transition(round, 'start')) return;
       $('wrong').textContent = '0'; $('hintCount').textContent = '';
       show(null);
       canvas.focus();
     });
-    $('introDifficulty').addEventListener('change', (e) => go({ difficulty: e.target.value }));
+    $('introDifficulty').addEventListener('change', (e) => go({ difficulty: e.target.value, seed: WS.gameplay.newSeed() }));
     $('zoomIn').addEventListener('click', () => engine.camera.zoomSmooth(1.4));
     $('zoomOut').addEventListener('click', () => engine.camera.zoomSmooth(1 / 1.4));
     $('zoomReset').addEventListener('click', () => engine.camera.reset());
@@ -2605,7 +2623,7 @@ window.WS_ASSETS = {"artVersion":1,"svg":{"characters/archetypes/bride":"<svg xm
       const r = canvas.getBoundingClientRect();
       const [wx, wy] = engine.camera.toWorld(cx - r.left, cy - r.top);
       if (hit && hit.isTarget) {
-        round.state = 'WON'; round.endedAt = performance.now();
+        WS.gameplay.transition(round, 'found');
         if (hintFx) engine.removeEffect(hintFx);
         marker(wx, wy, true);
         const t = world.target;
@@ -2646,7 +2664,7 @@ window.WS_ASSETS = {"artVersion":1,"svg":{"characters/archetypes/bride":"<svg xm
     $('boardClose').addEventListener('click', () => { $('board').hidden = true; });
     $('boardClear').addEventListener('click', () => { WS.leaderboard.clear(); renderBoard(); toast('Scores cleared.'); });
     $('newRoundBtn').addEventListener('click', () => go({ seed: WS.gameplay.newSeed() }));
-    $('difficulty').addEventListener('change', (e) => go({ difficulty: e.target.value }));
+    $('difficulty').addEventListener('change', (e) => go({ difficulty: e.target.value, seed: WS.gameplay.newSeed() }));
     $('density').addEventListener('change', (e) => go({ density: e.target.value }));
     $('testFallbackBtn').addEventListener('click', () => fallback('requested by the test button'));
   }

@@ -24,8 +24,26 @@
     return base.split('?')[0].split('#')[0] + '?' + q.toString();
   }
   const newSeed = () => 'SAV-' + Math.floor(Math.random() * 1e4).toString().padStart(4, '0');
+  // The round's state machine, written out as one table (ADR-004). Each state lists the events it accepts
+  // and the state each one leads to. Anything missing from the table is an illegal move and is ignored.
+  const ROUND_MOVES = Object.freeze({
+    INIT:     { loaded: 'INTRO', fail: 'FALLBACK' },
+    INTRO:    { start: 'PLAYING', fail: 'FALLBACK' },
+    PLAYING:  { found: 'WON', fail: 'FALLBACK' },
+    WON:      { fail: 'FALLBACK' },
+    FALLBACK: {},
+  });
   function createRound() {
     return { state: 'INIT', wrong: 0, hints: 0, saved: false, startedAt: 0, endedAt: 0, elapsed() { return (this.endedAt || performance.now()) - this.startedAt; } };
   }
-  WS.gameplay = { readIdentity, createRound, shareUrl, newSeed };
+  // Move the round on by one event. Returns true if the move was allowed.
+  function transition(round, event) {
+    const next = (ROUND_MOVES[round.state] || {})[event];
+    if (!next) { console.warn('round: ignored', event, 'in', round.state); return false; }
+    round.state = next;
+    if (next === 'PLAYING') { round.startedAt = performance.now(); round.endedAt = 0; round.wrong = 0; round.hints = 0; round.saved = false; }
+    if (next === 'WON') round.endedAt = performance.now();
+    return true;
+  }
+  WS.gameplay = { readIdentity, createRound, shareUrl, newSeed, transition, ROUND_MOVES };
 })();

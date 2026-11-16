@@ -4,6 +4,7 @@ A search-and-find game in an illustrated Savannah, Georgia. Find the one person 
 
 - Play: https://waldo-savannah.vercel.app
 - Offline: open `vibe-coding/build/index.html`
+- Slides: [Waldo's Savannah, Weeks 7–10 (.pptx)](vibe-coding/docs/presentation/Waldos_Savannah_Weeks_7-10.pptx)
 
 The class project lives in [`vibe-coding/`](vibe-coding/). Start with [vibe-coding/START-HERE.md](vibe-coding/START-HERE.md).
 

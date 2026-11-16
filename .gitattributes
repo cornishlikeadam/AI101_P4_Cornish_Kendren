@@ -17,3 +17,4 @@ vibe-coding/tests/** linguist-vendored=true linguist-generated=true linguist-det
 
 # Override Linguist's generated-file heuristic for the packed submission.
 *.html linguist-vendored=false linguist-generated=false linguist-detectable=true linguist-language=HTML
+.github/** linguist-vendored=true linguist-generated=true linguist-detectable=false
