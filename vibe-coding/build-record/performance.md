@@ -101,3 +101,14 @@ Same machine and method as above (`tests/perf.mjs`, Apple M4, headless Chrome wi
 | after, `crowd=2000` | 2,001 | 3704 | 59.2 | 16.7 | 16.8 | 83.3 | 61.0 |
 
 The display caps at 60 Hz, so these show headroom on this laptop only. Phones and older laptops were not measured. An earlier 41 FPS figure came from the lab's iframe without GPU flags and is not comparable.
+
+## Wider city, 9120 × 7600 (2026-11-16, later)
+
+Same method and machine. The crowd budget doubled with the area (standard 1,800, dense 3,000).
+
+| Run | People | Load ms | Avg FPS | p95 ms | Worst ms | Heap MB |
+|---|---:|---:|---:|---:|---:|---:|
+| standard | 1,801 | 3838 | 59.0 | 16.8 | 216.6 | 68.9 |
+| dense | 3,001 | 4560 | 59.1 | 16.8 | 116.6 | 92.9 |
+
+Loading takes about 2.5 times longer than the 3200-wide city (1529 ms). Expect noticeably longer loads on slower laptops and phones, which were not measured. The worst frames are one-off hitches while ground tiles are drawn the first time.

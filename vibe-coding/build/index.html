@@ -49,7 +49,7 @@
 
   /* ---- bottom left: where am I, and a tiny map ---- */
   #where { position: fixed; left: max(10px, env(safe-area-inset-left)); bottom: max(10px, env(safe-area-inset-bottom)); display: flex; align-items: flex-end; gap: 8px; pointer-events: none; }
-  #minimap { pointer-events: auto; width: 46px; height: 110px; border-radius: 10px; border: 2px solid var(--ink); background: #F6E7C8; cursor: pointer; box-shadow: 2px 3px 0 var(--ink); }
+  #minimap { pointer-events: auto; width: 96px; height: 80px; border-radius: 10px; border: 2px solid var(--ink); background: #F6E7C8; cursor: pointer; box-shadow: 2px 3px 0 var(--ink); }
   #hereLabel { padding: 6px 10px; font: 700 13px var(--font-sans); white-space: nowrap; max-width: 46vw; overflow: hidden; text-overflow: ellipsis; }
 
   /* ---- toast and floating reactions ---- */
@@ -113,7 +113,7 @@
     #portrait { width: 28px; height: 40px; }
     .stat { font-size: 16px; }
     .pill { padding: 0 12px; }
-    #minimap { width: 38px; height: 90px; }
+    #minimap { width: 72px; height: 60px; }
     .dialog h2 { font-size: 26px; }
   }
   @media (prefers-reduced-motion: reduce) { #toast, #loadBar { transition: none; } #bigPortrait, .pop, #wrongStat.bump { animation: none; } }
@@ -140,7 +140,7 @@
   <div id="seedLabel" class="small" title="Replay seed"></div>
 </div>
 <div id="where" class="ingame-only">
-  <canvas id="minimap" width="92" height="220" aria-label="Map of the city: tap to jump there" role="button" tabindex="0"></canvas>
+  <canvas id="minimap" width="192" height="160" aria-label="Map of the city: tap to jump there" role="button" tabindex="0"></canvas>
   <div id="hereLabel" class="card"></div>
 </div>
 <div id="controls" class="ingame-only">
