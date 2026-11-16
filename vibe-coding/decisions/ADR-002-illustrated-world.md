@@ -1,6 +1,12 @@
 # ADR-002: An illustrated Savannah world
 
-**Status:** Accepted for the visual overhaul, subject to repository review
+**Status:** Accepted. Replaces ADR-001.
+**Context:** Version 1 drew everything as boxes with no art files, and players read it as a geometry demo, not a picture book.
+**Decision:** Switch to original SVG drawings in a 2D top-down picture-book view, with a camera you can pan and zoom.
+**Consequence:** The game looks like a search-and-find book. The build now needs a pack step and is heavier to load. Art changes can change how old seed links look.
+
+The details below are the full technical record.
+
 **Date:** 2026-11-15
 **Failure behind it:** FAIL-05, visual fidelity. Players and reviewers read the game as a geometry demo, not a search-and-find book (see `build-record/testing-and-failure-log.md` and `build-record/tests/visual-overhaul/before-*.png`).
 **Supersedes in ADR-001:** the zero-asset rule, procedural-geometry-only rendering, the fixed 45°/15° orthographic camera, the single-file packaging rule, sine-bob-only animation, the world-wide 80/15/5 palette rule, and the 10,000-citizen/60 FPS acceptance gate.
