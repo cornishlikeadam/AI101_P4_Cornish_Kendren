@@ -1,0 +1,50 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 6 120 98" width="120" height="98" data-anchor="60 100" data-asset="characters/archetypes/chess-players" data-slots="skin hair top top2 bottom shoe acc hat" data-head="-4 16 1" data-head2="-4 16 1" data-kit="face=neutral hair=bald glasses=square" data-kit2="face=talk hair=crop beard=full" data-author="original, hand-authored SVG, Waldo's Savannah 2026-11-15">
+<style>
+.o{stroke:#2B1D16;stroke-width:1.5;stroke-linejoin:round;stroke-linecap:round}
+.l{fill:none;stroke:#2B1D16;stroke-width:1;stroke-linecap:round;stroke-linejoin:round}
+.fold{fill:none;stroke:#2B1D16;stroke-opacity:.4;stroke-width:.8;stroke-linecap:round}
+.sh{fill:#2B1D16;opacity:.15}.ink{fill:#2B1D16}.wht{fill:#FFFFFF}
+.skin{fill:var(--skin,#E0A97E)}.hair{fill:var(--hair,#4A2F1E)}
+.top{fill:var(--top,#4F6CC4)}.top2{fill:var(--top2,#F5F0E6)}.bottom{fill:var(--bottom,#3B3A48)}
+.hat{fill:var(--hat,#3E8E7E)}.hat2{fill:var(--hat2,#F5F0E6)}.acc{fill:var(--acc,#F2D55C)}.shoe{fill:var(--shoe,#5A3A28)}
+</style>
+<ellipse cx="60" cy="100" rx="48" ry="3.2" class="sh"/>
+
+<path fill="#8A8A86" stroke="#2B1D16" stroke-width="1.4" d="M16,78 L32,78 L31,82 L17,82 Z M18.6,82 L18,99 M29.4,82 L30,99"/>
+<path class="bottom o" d="M30,74 C34,74 40,74.4 44,75 L44,80.6 C40,80.6 34,80.6 29,80 Z"/>
+<path class="bottom o" d="M39.6,75.4 L45,75 C45.6,82 46,89 46,95.4 L40.6,95.6 C40.6,89 40.2,82 39.6,75.4 Z"/>
+<path class="sh" d="M39.6,75.4 L45,75 C45.6,82 46,89 46,95.4 L40.6,95.6 C40.6,89 40.2,82 39.6,75.4 Z"/>
+<path class="shoe o" d="M39.6,94.8 L46.6,94.6 C49.6,94.8 50.6,97 49.8,98.8 L39.2,98.8 C38.6,97.4 38.8,95.8 39.6,94.8 Z"/>
+<path class="top o" d="M20.4,56.6 C20.4,52.4 24,50.6 29.6,50.6 C35.2,50.6 38.4,52.4 38.8,56.6 L39.4,78 C33,79.6 25.4,79.4 19.6,77.4 Z"/>
+<path class="sh" d="M34.6,51 C37.4,52 38.8,54 38.8,56.6 L39.4,78 C37.6,78.6 35.8,78.9 34,79 C35.4,70 35.6,60 34.6,51 Z"/>
+<path class="fold" d="M24,70 q3,1.6 6.6,.6"/>
+<g transform="translate(-4 16)"><path class="skin o" d="M28.4,30 L36.2,30 L36.6,36.4 Q32.4,38.6 28,36.4 Z"/></g>
+<path class="top2 o" d="M23.2,51 Q28.4,55.4 33.6,51 L34.4,52.4 Q28.4,57.4 22.4,52.4 Z"/>
+<path class="top o" d="M35,54 C39.6,57 43.6,61 46.4,65.6 L42.6,68.8 C40,64.6 36.4,61.4 32.6,59 Z"/>
+<circle class="skin o" cx="46.4" cy="67.8" r="2.8"/>
+<!--HEAD-->
+<g transform="translate(120 0) scale(-1 1)" style="--skin:var(--skin2,#6E432A);--hair:var(--hair2,#8E8E8E);--top:var(--top3,#2F7FA8);--top2:var(--top4,#F5F0E6);--bottom:var(--bottom2,#4A4A52);--shoe:var(--shoe2,#2B1D16);--hat:var(--hat3,#3D4F6E)">
+<path fill="#8A8A86" stroke="#2B1D16" stroke-width="1.4" d="M16,78 L32,78 L31,82 L17,82 Z M18.6,82 L18,99 M29.4,82 L30,99"/>
+<path class="bottom o" d="M30,74 C34,74 40,74.4 44,75 L44,80.6 C40,80.6 34,80.6 29,80 Z"/>
+<path class="bottom o" d="M39.6,75.4 L45,75 C45.6,82 46,89 46,95.4 L40.6,95.6 C40.6,89 40.2,82 39.6,75.4 Z"/>
+<path class="sh" d="M39.6,75.4 L45,75 C45.6,82 46,89 46,95.4 L40.6,95.6 C40.6,89 40.2,82 39.6,75.4 Z"/>
+<path class="shoe o" d="M39.6,94.8 L46.6,94.6 C49.6,94.8 50.6,97 49.8,98.8 L39.2,98.8 C38.6,97.4 38.8,95.8 39.6,94.8 Z"/>
+<path class="top o" d="M20.4,56.6 C20.4,52.4 24,50.6 29.6,50.6 C35.2,50.6 38.4,52.4 38.8,56.6 L39.4,78 C33,79.6 25.4,79.4 19.6,77.4 Z"/>
+<path class="sh" d="M34.6,51 C37.4,52 38.8,54 38.8,56.6 L39.4,78 C37.6,78.6 35.8,78.9 34,79 C35.4,70 35.6,60 34.6,51 Z"/>
+<path class="fold" d="M24,70 q3,1.6 6.6,.6"/>
+<g transform="translate(-4 16)"><path class="skin o" d="M28.4,30 L36.2,30 L36.6,36.4 Q32.4,38.6 28,36.4 Z"/></g>
+<path class="top2 o" d="M23.2,51 Q28.4,55.4 33.6,51 L34.4,52.4 Q28.4,57.4 22.4,52.4 Z"/>
+<path class="top o" d="M35,54 C39.6,57 43.6,61 46.4,65.6 L42.6,68.8 C40,64.6 36.4,61.4 32.6,59 Z"/>
+<circle class="skin o" cx="46.4" cy="67.8" r="2.8"/>
+<!--HEAD2--></g>
+<path fill="#B9B3A5" stroke="#2B1D16" stroke-width="1.5" stroke-linejoin="round" d="M54,73 L66,73 L67,99 L53,99 Z"/>
+<path fill="#A29C8E" d="M62,73 L66,73 L67,99 L63,99 Z"/>
+<path fill="#D8D2C4" stroke="#2B1D16" stroke-width="1.5" stroke-linejoin="round" d="M42,66 L78,66 L80,72 L40,72 Z"/>
+<path fill="#B9B3A5" stroke="#2B1D16" stroke-width="1.2" d="M40,72 L80,72 L80,74.4 L40,74.4 Z"/>
+<path fill="#F4EEDD" stroke="#2B1D16" stroke-width="1" d="M47,66.4 L73,66.4 L74.4,71.2 L45.6,71.2 Z"/>
+<g fill="#2B1D16"><path d="M47,66.4 L50.3,66.4 L50,67.6 L46.6,67.6 Z M53.6,66.4 L56.9,66.4 L56.8,67.6 L53.3,67.6 Z M60.2,66.4 L63.4,66.4 L63.5,67.6 L60.1,67.6 Z M66.8,66.4 L70,66.4 L70.3,67.6 L66.9,67.6 Z"/>
+<path d="M50,67.6 L53.3,67.6 L53.1,68.8 L49.6,68.8 Z M56.8,67.6 L60.1,67.6 L60,68.8 L56.5,68.8 Z M63.5,67.6 L66.9,67.6 L67,68.8 L63.4,68.8 Z M70.3,67.6 L73.6,67.6 L74,68.8 L70.6,68.8 Z"/>
+<path d="M46.2,68.8 L49.6,68.8 L49.3,70 L45.9,70 Z M53.1,68.8 L56.5,68.8 L56.4,70 L52.9,70 Z M60,68.8 L63.4,68.8 L63.5,70 L60,70 Z M67,68.8 L70.6,68.8 L70.9,70 L67.3,70 Z"/></g>
+<g stroke="#2B1D16" stroke-width=".8"><path fill="#F4EEDD" d="M51,66 l1.2,-4.4 l1.2,4.4 Z"/><circle fill="#F4EEDD" cx="52.2" cy="61.2" r="1.2"/><path fill="#2B1D16" d="M66,66 l1.2,-5 l1.2,5 Z"/><circle fill="#2B1D16" cx="67.2" cy="60.6" r="1.3"/><path fill="#2B1D16" d="M70.6,66 l1,-3.4 l1,3.4 Z"/><path fill="#F4EEDD" d="M57,68 l1,-3 l1,3 Z"/></g>
+<path class="l" style="stroke-opacity:.5" d="M57.4,57 q2.6,-2.4 5.2,0"/>
+</svg>

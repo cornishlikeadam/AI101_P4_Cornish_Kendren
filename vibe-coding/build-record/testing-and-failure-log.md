@@ -14,7 +14,66 @@ Four core failure modes were identified and fixed. All tests are marked for both
 
 ---
 
-## Failure Modes & Fixes
+## Illustrated rebuild (2026-11-15)
+
+### FAIL-05: The game read as a geometry demo, not a picture book
+
+- **Found**: project lead review of the live build. Before captures: `build-record/tests/visual-overhaul/before-overview-1440.png` and `before-detail-1440.png` (seed `SAV-2026`).
+- **Cause**: ADR-001's zero-asset rule, fixed isometric box camera and 10,000-citizen budget made the cheapest drawing win (people are four rectangles and a circle).
+- **Fix in progress**: ADR-002. Original SVG assets, a composed 2D view, archetype characters and authored scenes. Checkpoint 1 sample: `build-record/visual-qa/art-direction/` (approved 2026-11-15). Checkpoint 2, the playable Forsyth Park scene: `build/illustrated.html`, `build-record/visual-qa/checkpoint-2/`.
+- **Status**: open. Checkpoint 1 self-scored 3.5; checkpoint 2 self-scores 3.9 of 5, still below the 4.0 bar (see `visual-qa/checkpoint-2/review.md`). Nothing animates yet.
+
+### FAIL-07: Zoomed-out frames cost 26 ms in software rendering
+
+- **Found**: 2026-11-15, first run of `tests/perf.mjs` (35 FPS at standard density in headless Chrome without GPU flags).
+- **Cause**: `imageSmoothingQuality = 'high'` while downscaling 480 sprites and the 1600 × 1200 ground base every frame.
+- **Fix**: bilinear smoothing (`'low'`) with sprite tiers chosen within 2x of the drawn size. Draw cost at 1.0x fell from 26 ms to 6 ms; with the Metal GPU the 20 s tour holds 60 FPS at every density (`performance.md`).
+- **Status**: fixed.
+
+### FAIL-08: Crowd spacing check would not scale to the stress crowd
+
+- **Found**: 2026-11-15 in code review before the first stress run. Every new person was checked against every placed person (O(n²), billions of checks at 10,000).
+- **Fix**: 64-unit spatial hash; stress crowds also reuse 24 looks per archetype so 10,000 people need about 370 sprite decodes.
+- **Verification**: `crowd=10000` builds and loads in about 350 ms; test "stress crowd of 10,000 builds and stays playable" passes.
+- **Status**: fixed.
+
+### Checkpoint 2 test run (2026-11-15)
+
+`node vibe-coding/tests/illustrated.test.mjs` against `build/illustrated.html` from `file://`, Chrome via `playwright-core` 1.49.1: **12 of 12 passed.** Revision 2 adds tests 13 (hard mode needs a crowd and nearby decoys) and 14 (motion runs; `prefers-reduced-motion` freezes it): **14 of 14 passed.**
+
+1. Loads with no external requests and no page errors; 361 people, at least 20 stories.
+2. Density budgets: low 181, standard 361, dense 601 people including the target.
+3. Same identity rebuilds the same scene; another seed does not.
+4. Across 36 seeds and three difficulties: exactly one five-trait person (the target), no decoy over two traits, no red top with white trim; hard has more decoys than easy.
+5. Validator places the target visibly for 8 seeds per difficulty, and a pick on a target pixel returns the target.
+6. Validator rejects a target behind the fountain (under 50% visible) and accepts one in the open.
+7. Clicking another person or the fountain counts a wrong guess; clicking the target wins and reports the count.
+8. A drag across the target pans and is not a guess; a 4 px wobble still counts as a click.
+9. Wheel zoom clamps at 3.5x and 0.6x; `0` resets, `+` zooms, `d` pans, the reset button works.
+10. Beacon appears only with `?beacon=1`.
+11. A stress crowd of 10,000 builds and places the target.
+12. On a 390 × 844 viewport the HUD fits and every button is at least 44 px.
+
+### Checkpoint 3 test run (2026-11-15)
+
+Tests 15–19 added: leaderboard (save once, sort, max 10, injected name stays text, bad records dropped), share link rebuilds the same park, hints (area name, then a circle near but not on him, max two), fallback (URL, test button, recovery), difficulty picker. **19 of 19 passed.** While writing them, the planted "fastest" record had to be 1 ms: the test bot wins in 23 ms.
+
+### FAIL-09: Story people had undefined ids
+
+- **Found**: 2026-11-15 when motion hashed entity ids and the page threw on load.
+- **Cause**: `Object.assign` copied `id: undefined` from story entries over the generated id.
+- **Fix**: assign generated ids after merging. **Status**: fixed; all tests pass.
+
+### FAIL-06: Version 1 made third-party requests despite the privacy claim
+
+- **Found**: 2026-11-15 by Playwright request logging while capturing the before images.
+- **Evidence**: four requests on load, to `fonts.googleapis.com` and `fonts.gstatic.com`, from `build/index.html` line 396.
+- **Impact**: CHECKLIST marked "zero external requests" as verified; that was not true for version 1.
+- **Fix**: the illustrated build bundles fonts or uses system fonts. Every QA capture logs requests outside the build folder; the art-direction captures logged zero.
+- **Status**: fixed in the art-direction sample; to verify again in the playable build.
+
+
+## Failure Modes & Fixes (version 1)
 
 ### FAIL-01: Camera Drag Counted as a Wrong Guess
 

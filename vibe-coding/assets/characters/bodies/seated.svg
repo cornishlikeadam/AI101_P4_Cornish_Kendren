@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 30 64 72" width="64" height="72" data-anchor="32 99" data-asset="characters/bodies/seated" data-slots="skin hair top top2 bottom shoe acc" data-head="-4 16 1" data-author="original, hand-authored SVG, Waldo's Savannah 2026-11-15">
+<style>
+.o{stroke:#2B1D16;stroke-width:1.5;stroke-linejoin:round;stroke-linecap:round}
+.l{fill:none;stroke:#2B1D16;stroke-width:1;stroke-linecap:round;stroke-linejoin:round}
+.fold{fill:none;stroke:#2B1D16;stroke-opacity:.4;stroke-width:.8;stroke-linecap:round}
+.sh{fill:#2B1D16;opacity:.15}.ink{fill:#2B1D16}.wht{fill:#FFFFFF}
+.skin{fill:var(--skin,#E0A97E)}.hair{fill:var(--hair,#4A2F1E)}
+.top{fill:var(--top,#4F6CC4)}.top2{fill:var(--top2,#F5F0E6)}.bottom{fill:var(--bottom,#3B3A48)}
+.hat{fill:var(--hat,#3E8E7E)}.hat2{fill:var(--hat2,#F5F0E6)}.acc{fill:var(--acc,#F2D55C)}.shoe{fill:var(--shoe,#5A3A28)}
+</style>
+<ellipse cx="34" cy="99" rx="13" ry="2.4" class="sh"/>
+<path class="bottom o" d="M30,74 C34,74 40,74.4 44,75 L44,80.6 C40,80.6 34,80.6 29,80 Z"/>
+<path class="bottom o" d="M39.6,75.4 L45,75 C45.6,82 46,89 46,95.4 L40.6,95.6 C40.6,89 40.2,82 39.6,75.4 Z"/>
+<path class="sh" d="M39.6,75.4 L45,75 C45.6,82 46,89 46,95.4 L40.6,95.6 C40.6,89 40.2,82 39.6,75.4 Z"/>
+<path class="shoe o" d="M39.6,94.8 L46.6,94.6 C49.6,94.8 50.6,97 49.8,98.8 L39.2,98.8 C38.6,97.4 38.8,95.8 39.6,94.8 Z"/>
+<path class="top o" d="M20.4,56.6 C20.4,52.4 24,50.6 29.6,50.6 C35.2,50.6 38.4,52.4 38.8,56.6 L39.4,78 C33,79.6 25.4,79.4 19.6,77.4 Z"/>
+<path class="sh" d="M34.6,51 C37.4,52 38.8,54 38.8,56.6 L39.4,78 C37.6,78.6 35.8,78.9 34,79 C35.4,70 35.6,60 34.6,51 Z"/>
+<path class="top2 o" style="stroke-width:1.1" d="M19.8,72 C26,73.6 33,73.6 39.2,72 L39.4,78 C33,79.6 25.4,79.4 19.6,77.4 Z"/>
+<g transform="translate(-4 16)"><path class="skin o" d="M28.4,30 L36.2,30 L36.6,36.4 Q32.4,38.6 28,36.4 Z"/></g>
+<path class="top2 o" d="M23.2,51 Q28.4,55.4 33.6,51 L34.4,52.4 Q28.4,57.4 22.4,52.4 Z"/>
+<path class="top o" d="M35,54 C39.6,56 43,59 45.4,62.6 L41.8,66 C39.6,62.8 36.4,60.6 32.6,59 Z"/>
+<path class="wht o" d="M43.6,58.4 L49.4,58.4 L48.8,64.4 C47.4,65.2 45.4,65.2 44.2,64.4 Z"/>
+<path class="l" d="M49.2,59.8 q2.4,.6 1.8,2.6 q-.6,1 -2,.6"/>
+<circle class="skin o" cx="44.6" cy="64.4" r="2.8"/>
+<!--HEAD-->
+</svg>

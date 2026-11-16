@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="10 -8 48 52" width="48" height="52" data-anchor="34 44" data-part="hat" data-asset="characters/parts/hats/tophat"  data-author="original, hand-authored SVG, Waldo's Savannah 2026-11-15">
+<style>
+.o{stroke:#2B1D16;stroke-width:1.5;stroke-linejoin:round;stroke-linecap:round}
+.l{fill:none;stroke:#2B1D16;stroke-width:1;stroke-linecap:round;stroke-linejoin:round}
+.fold{fill:none;stroke:#2B1D16;stroke-opacity:.4;stroke-width:.8;stroke-linecap:round}
+.sh{fill:#2B1D16;opacity:.15}.ink{fill:#2B1D16}.wht{fill:#FFFFFF}
+.skin{fill:var(--skin,#E0A97E)}.hair{fill:var(--hair,#4A2F1E)}
+.hat{fill:var(--hat,#3E8E7E)}.hat2{fill:var(--hat2,#F5F0E6)}
+</style>
+<path class="hat o" d="M19.4,15.4 C24,13.2 44,13.2 48.6,15 C47.6,17.2 44,16.8 34,16.4 C24,16.8 20.4,17.4 19.4,15.4 Z"/>
+<path class="hat o" d="M25.4,14.6 L24.6,-3.6 C30,-5 38,-5 43.4,-3.6 L42.6,14.6 Z"/>
+<path class="hat2 o" style="stroke-width:1.1" d="M25.2,9.6 C31,8.8 37,8.8 42.8,9.6 L42.7,13 C37,12.2 31,12.2 25.3,13 Z"/>
+<path class="sh" d="M39.6,-4.2 L43.4,-3.6 L42.6,14.6 L39.8,14.8 Z"/>
+<ellipse class="hat o" cx="34" cy="-3.8" rx="9.4" ry="1.6"/>
+</svg>

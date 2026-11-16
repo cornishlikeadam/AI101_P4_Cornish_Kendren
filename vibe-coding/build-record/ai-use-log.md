@@ -126,6 +126,47 @@
 
 ---
 
+## Session 7: Illustrated rebuild, phases 0 to 2 (art direction checkpoint)
+
+**Date**: 2026-11-15
+**Agents/Tools Used**: Claude Code (Claude Opus 5.5), one web-fetch subagent for the skill and engine docs, `playwright-core` driving the installed Chrome. An earlier Codex session wrote the first ADR-002 draft and captured `before.html`, then stopped at a usage limit.
+**Task & Prompt Summary**: Master Rebuild Directive V3. Audit the docs, correct the specs, review skills and engines, write the art direction, and build a representative Forsyth Park illustration from real asset files for the project lead's approval.
+**Work done**:
+- `docs/audit.md`: restrictions, binding requirements, wrong claims in the v1 record (Google Fonts requests, unmeasured 60 FPS), conflicts, risk register.
+- `docs/skill-and-engine-review.md`: frontend-design skill (read, applied by hand, not installed), PixiJS and Konva (read, not adopted), Playwright (adopted; `playwright-core` in a scratch folder only). Tested `file://` loading in Chrome: SVG files taint the canvas and `fetch` is refused, so assets are packed into a script.
+- Rewrote ADR-002, `prd.md`, `plan.md`, `HARNESS.md`, `AGENTS.md`, `HANDOFF.md`. Version 1 copies are in `docs/history/`.
+- Drew 32 original SVG assets (18 character archetypes, 3 animals, props, fountain, live oak, townhouses, ground). Wrote `tools/pack-assets.mjs` and author helpers in `tools/author/`.
+- Composed `docs/art-direction/forsyth-sample.html` and captured `build-record/visual-qa/art-direction/`.
+**Human Review & Modification Applied**: the project lead approved checkpoint 1 (art direction) on 2026-11-15.
+**Not done**: no playable illustrated build yet; `build/index.html` is still version 1. No performance numbers. Six archetypes short of 24.
+
+---
+
+## Session 8: Illustrated rebuild, phase 3 (first playable scene)
+
+**Date**: 2026-11-15
+**Agents/Tools Used**: Claude Code (Claude Opus 5.5), `playwright-core` driving the installed Chrome.
+**Task & Prompt Summary**: after checkpoint 1 approval, build the playable Forsyth Park scene: part libraries, the missing archetypes, the engine (camera, sprite tiers, alpha picking, target validator), tests and performance numbers.
+**Work done**:
+- Art (52 new SVG files, 84 in all): head part library (5 faces, 10 hair, 9 hats, 3 glasses, 2 beards), 7 bodies with a head socket, 6 archetypes (sculptor, dancer, gardener, maintenance worker, chess players, juggler), two more oak shapes, palmetto, hedge, three market stalls, café table, kite, full 3200 × 2400 ground.
+- Code in `src/`: seeded RNG, character composer and factory with the decoy cap, Forsyth scene (25 stories, seeded crowd, 16 hiding spots), sprite cache with zoom tiers and alpha masks, engine (camera, ground tiles, depth-sorted drawing, picking, validator), input, round logic. `tools/build.mjs` writes `build/js/game.js`; the page is `build/illustrated.html`.
+- Tests `tests/illustrated.test.mjs` (12 of 12 pass) and `tests/perf.mjs`; results in `testing-and-failure-log.md` and `performance.md`. FAIL-07 and FAIL-08 found and fixed.
+- Visual QA in `build-record/visual-qa/checkpoint-2/` with a self-assessed rubric of 3.9 of 5.
+**Human Review & Modification Applied**: the project lead chose to fix the gaps before approval. Revision 2 added procedural motion with reduced-motion support, a seated café pose, crowd-and-decoy rules for hard mode, and fixed FAIL-09. Tests 14 of 14. Resubmitted for checkpoint 2.
+**Not done**: no animation; leaderboard, hints, share links and fallback not wired into the new page; `build/index.html` still version 1; nothing deployed or committed.
+
+---
+
+## Session 9: Gameplay integration (checkpoint 3)
+
+**Date**: 2026-11-15
+**Agents/Tools Used**: Claude Code (Claude Opus 5.5), `playwright-core` driving the installed Chrome.
+**Work done**: leaderboard module, hints, share links, fallback state, difficulty and density pickers; the illustrated page became `build/index.html` with version 1 archived in `docs/history/index-v1.html`. Five new tests (19 of 19 pass). Captures in `build-record/visual-qa/checkpoint-3/`, served over HTTP with no outside requests.
+**Human Review & Modification Applied**: checkpoint 2 approved by the project lead; checkpoint 3 pending.
+**Not done**: not committed or deployed.
+
+---
+
 ## AI Tools & Skills Used Summary
 
 | Tool/Skill | Purpose | Sessions | Human Oversight |

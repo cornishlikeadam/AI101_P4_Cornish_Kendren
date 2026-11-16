@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="10 -8 48 52" width="48" height="52" data-anchor="34 44" data-part="glasses" data-asset="characters/parts/glasses/sun"  data-author="original, hand-authored SVG, Waldo's Savannah 2026-11-15">
+<style>
+.o{stroke:#2B1D16;stroke-width:1.5;stroke-linejoin:round;stroke-linecap:round}
+.l{fill:none;stroke:#2B1D16;stroke-width:1;stroke-linecap:round;stroke-linejoin:round}
+.fold{fill:none;stroke:#2B1D16;stroke-opacity:.4;stroke-width:.8;stroke-linecap:round}
+.sh{fill:#2B1D16;opacity:.15}.ink{fill:#2B1D16}.wht{fill:#FFFFFF}
+.skin{fill:var(--skin,#E0A97E)}.hair{fill:var(--hair,#4A2F1E)}
+.hat{fill:var(--hat,#3E8E7E)}.hat2{fill:var(--hat2,#F5F0E6)}
+</style>
+<path fill="#2B1D16" stroke="#2B1D16" stroke-width="1.1" stroke-linejoin="round" d="M28.4,18.8 L35.8,18.8 L35.4,22.2 C35,23.8 30,24 29,22.4 Z M37.6,18.8 L44.2,18.8 L44,22 C43.6,23.6 39,23.8 38,22.2 Z"/>
+<path class="l" d="M35.8,19.6 L37.6,19.6 M28.4,19.4 L26.2,20.6"/><path stroke="#FFFFFF" stroke-opacity=".6" stroke-width=".8" stroke-linecap="round" d="M30.2,20 L32,20 M39.2,20 L40.8,20"/>
+</svg>

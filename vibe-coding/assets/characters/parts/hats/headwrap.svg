@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="10 -8 48 52" width="48" height="52" data-anchor="34 44" data-part="hat" data-asset="characters/parts/hats/headwrap"  data-author="original, hand-authored SVG, Waldo's Savannah 2026-11-15">
+<style>
+.o{stroke:#2B1D16;stroke-width:1.5;stroke-linejoin:round;stroke-linecap:round}
+.l{fill:none;stroke:#2B1D16;stroke-width:1;stroke-linecap:round;stroke-linejoin:round}
+.fold{fill:none;stroke:#2B1D16;stroke-opacity:.4;stroke-width:.8;stroke-linecap:round}
+.sh{fill:#2B1D16;opacity:.15}.ink{fill:#2B1D16}.wht{fill:#FFFFFF}
+.skin{fill:var(--skin,#E0A97E)}.hair{fill:var(--hair,#4A2F1E)}
+.hat{fill:var(--hat,#3E8E7E)}.hat2{fill:var(--hat2,#F5F0E6)}
+</style>
+<path class="hat o" d="M21.8,19.6 C19.8,10.6 25.4,4 34,4 C42.6,4 47,9.6 46,16.8 C41,14.4 30,14.6 24.6,20.6 C23.6,21 22.4,20.6 21.8,19.6 Z"/>
+<path class="hat o" d="M36.6,5.4 C37.6,.6 43.4,-.4 44.6,3 C45.4,5.6 41.6,7.6 38.2,7 Z"/>
+<path class="fold" d="M24.4,15.4 C30,11.6 38,10.6 45.6,12.4 M23,11.4 C28,7.8 34,7 39.6,7.6"/>
+<g class="hat2"><circle cx="28" cy="10" r="1"/><circle cx="33" cy="12" r="1"/><circle cx="39" cy="10.2" r="1"/><circle cx="42.6" cy="14" r="1"/><circle cx="26.6" cy="15.6" r="1"/><circle cx="33.6" cy="6.6" r="1"/></g>
+</svg>

@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="10 -8 48 52" width="48" height="52" data-anchor="34 44" data-part="hair" data-asset="characters/parts/hair/locs" data-hats="headwrap beanie bucket" data-author="original, hand-authored SVG, Waldo's Savannah 2026-11-15">
+<style>
+.o{stroke:#2B1D16;stroke-width:1.5;stroke-linejoin:round;stroke-linecap:round}
+.l{fill:none;stroke:#2B1D16;stroke-width:1;stroke-linecap:round;stroke-linejoin:round}
+.fold{fill:none;stroke:#2B1D16;stroke-opacity:.4;stroke-width:.8;stroke-linecap:round}
+.sh{fill:#2B1D16;opacity:.15}.ink{fill:#2B1D16}.wht{fill:#FFFFFF}
+.skin{fill:var(--skin,#E0A97E)}.hair{fill:var(--hair,#4A2F1E)}
+.hat{fill:var(--hat,#3E8E7E)}.hat2{fill:var(--hat2,#F5F0E6)}
+</style>
+<!--back-->
+<g fill="none" stroke-linecap="round"><path stroke="#2B1D16" stroke-width="4.6" d="M24.4,12.6 L19.6,37 M27.6,10.4 L24,40 M22,16.4 L17.4,33.4 M30.6,10 L28.6,38.6"/>
+<path stroke="var(--hair,#4A2F1E)" stroke-width="2.8" d="M24.4,12.6 L19.6,37 M27.6,10.4 L24,40 M22,16.4 L17.4,33.4 M30.6,10 L28.6,38.6"/></g>
+<!--/back-->
+<!--front-->
+<path class="hair o" d="M22.6,21 C21.4,12.4 27,7.6 34.2,7.8 C41.2,8 45.8,12 45.4,17 C43.4,15.2 41.2,14.6 39,15.2 C37,13.6 34,13.4 31.6,14.8 C29.6,15.6 28.4,17.4 27.6,19.4 C26.8,21.4 25.4,23.4 24,23.6 C23.2,22.8 22.8,22 22.6,21 Z"/>
+<path class="fold" style="stroke-opacity:.55" d="M27.4,10.6 L26,16.6 M31.4,9 L30.6,14.4 M35.6,8.6 L35.4,13.8 M39.6,9.4 L40,14.6 M43,11.6 L43.6,15.6"/>
+<!--/front-->
+</svg>

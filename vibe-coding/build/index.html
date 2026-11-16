@@ -1,1182 +1,133 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
- <meta charset="UTF-8" />
- <meta name="viewport" content="width=device-width, initial-scale=1.0" />
- <title>Waldo's Savannah - Waldo Stripes Soft Edition</title>
- <style>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Loading · Waldo's Savannah</title>
+<style>
   :root {
-    /* 80% Calm Storybook Base (Waldo Stripes Soft Palette) */
-    --bg-sand: #F6EFE6;
-    --bg-sand-deep: #EDE2D3;
-    --surface-card: #FFFDF9;
-    --border-soft: #E2D3C1;
-    --text-cocoa: #3E2723;
-    --text-muted: #6D5D53;
-    --accent-coral: #FF6F61;
-    --accent-coral-hover: #FF5746;
-
-    /* 5% Whimsical Nickelodeon / Google Storybook Pop */
-    --pop-slime: #00E676;
-    --pop-gold: #FFCA28;
-    --pop-violet: #7C4DFF;
-
-    /* Waldo & Savannah Landmark Tokens */
-    --waldo-red: #E53935;
-    --waldo-blue: #1E88E5;
-    --waldo-cane: #8D6E63;
-
-    /* Typography Scale */
-    --font-display: 'Fraunces', 'Fredoka', 'Cooper Black', 'Georgia', serif;
-    --font-sans: 'Plus Jakarta Sans', 'Quicksand', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-    --font-mono: 'Space Mono', 'JetBrains Mono', 'SFMono-Regular', Consolas, monospace;
+    --bg-sand: #F6EFE6; --bg-sand-deep: #EDE2D3; --surface-card: #FFFDF9; --border-soft: #E2D3C1;
+    --text-cocoa: #3E2723; --text-muted: #6D5D53; --accent-coral: #FF6F61; --accent-coral-hover: #FF5746;
+    --waldo-red: #E53935; --waldo-blue: #1E88E5; --waldo-cane: #8D6E63; --ink: #2B1D16;
+    /* Local font stacks only: no web font requests. */
+    --font-display: 'Cooper Black', 'Georgia', 'Times New Roman', serif;
+    --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    --font-mono: ui-monospace, 'SFMono-Regular', Menlo, Consolas, monospace;
   }
-
-  * {
-    box-sizing: border-box;
-    margin: 0;
-    padding: 0;
-    user-select: none;
-    -webkit-user-select: none;
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; overflow: hidden; background: #F6E7C8; color: var(--text-cocoa); font-family: var(--font-sans); }
+  #scene { position: fixed; inset: 0; width: 100vw; height: 100vh; height: 100dvh; display: block; touch-action: none; cursor: crosshair; outline: none; }
+  #scene.grabbing { cursor: grabbing; }
+  .card { background: var(--surface-card); border: 2px solid var(--ink); border-radius: 14px; box-shadow: 3px 4px 0 rgba(43,29,22,.85); }
+  #hud { position: fixed; top: 12px; left: 12px; display: flex; gap: 12px; align-items: center; padding: 8px 14px 8px 8px; max-width: calc(100vw - 24px); }
+  #portrait { width: 44px; height: 64px; background: var(--bg-sand); border-radius: 10px; border: 1.5px solid var(--border-soft); }
+  #hud h1 { font-family: var(--font-display); font-size: 18px; margin: 0; line-height: 1.1; }
+  #hud .sub { font-size: 12px; color: var(--text-muted); }
+  .stats { display: flex; gap: 14px; margin-top: 4px; font-family: var(--font-mono); font-size: 14px; font-weight: 700; }
+  .stats span small { font-family: var(--font-sans); font-weight: 600; color: var(--text-muted); font-size: 11px; margin-right: 4px; }
+  #controls { position: fixed; right: 12px; bottom: 12px; display: flex; gap: 6px; align-items: center; padding: 6px; }
+  #controls button { width: 44px; height: 44px; border-radius: 10px; border: 2px solid var(--ink); background: var(--bg-sand); font-size: 20px; font-weight: 800; color: var(--text-cocoa); cursor: pointer; }
+  #controls button:hover { background: var(--bg-sand-deep); }
+  #zoomLabel { font-family: var(--font-mono); font-size: 13px; min-width: 42px; text-align: center; }
+  #help { position: fixed; left: 12px; bottom: 12px; padding: 6px 10px; font-size: 12px; color: var(--text-muted); }
+  #seedLabel { position: fixed; right: 12px; top: 12px; padding: 6px 10px; font-family: var(--font-mono); font-size: 12px; }
+  button:focus-visible { outline: 3px solid var(--waldo-blue); outline-offset: 2px; }
+  .overlay { position: fixed; inset: 0; display: grid; place-items: center; background: rgba(43,29,22,.35); padding: 16px; }
+  .overlay[hidden] { display: none; }
+  .dialog { max-width: 420px; width: 100%; padding: 22px; text-align: center; }
+  .dialog h2 { font-family: var(--font-display); margin: 0 0 8px; font-size: 26px; }
+  .dialog p { margin: 6px 0 14px; line-height: 1.45; }
+  .primary { font: 800 16px var(--font-sans); padding: 12px 22px; min-height: 44px; border-radius: 12px; border: 2px solid var(--ink); background: var(--accent-coral); color: #fff; cursor: pointer; box-shadow: 2px 3px 0 var(--ink); }
+  .primary:hover { background: var(--accent-coral-hover); }
+  .traits { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; margin: 8px 0 14px; padding: 0; list-style: none; font-size: 13px; }
+  .traits li { padding: 4px 8px; border-radius: 99px; background: var(--bg-sand); border: 1px solid var(--border-soft); }
+  .bar { height: 10px; border-radius: 99px; background: var(--bg-sand-deep); overflow: hidden; border: 1.5px solid var(--ink); }
+  #loadBar { height: 100%; width: 0; background: var(--accent-coral); transition: width .1s; }
+  #toast { position: fixed; left: 50%; top: 18px; transform: translate(-50%, -80px); padding: 8px 14px; font-weight: 700; transition: transform .2s; pointer-events: none; }
+  #toast.show { transform: translate(-50%, 70px); }
+  .row { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; margin-top: 10px; }
+  .secondary { font: 700 14px var(--font-sans); padding: 10px 16px; min-height: 44px; border-radius: 12px; border: 2px solid var(--ink); background: var(--bg-sand); color: var(--text-cocoa); cursor: pointer; }
+  .secondary:hover { background: var(--bg-sand-deep); }
+  .primary:disabled, .secondary:disabled { opacity: .5; cursor: default; }
+  label.pick { font-size: 13px; color: var(--text-muted); display: inline-flex; flex-direction: column; gap: 4px; text-align: left; }
+  select, input[type=text], textarea { font: 600 15px var(--font-sans); min-height: 44px; padding: 8px 10px; border-radius: 10px; border: 2px solid var(--ink); background: #fff; color: var(--text-cocoa); }
+  #shareBox { width: 100%; font: 12px var(--font-mono); resize: none; height: 44px; }
+  #actions { position: fixed; top: 12px; right: 12px; display: flex; gap: 6px; margin-top: 40px; }
+  #actions button { min-height: 44px; }
+  #hintCount { font-family: var(--font-mono); font-size: 12px; }
+  #board { position: fixed; inset: 0; display: grid; place-items: center; background: rgba(43,29,22,.35); padding: 16px; z-index: 5; }
+  #board[hidden] { display: none; }
+  #boardList { list-style: none; padding: 0; margin: 10px 0; text-align: left; counter-reset: r; max-height: 50vh; overflow: auto; }
+  #boardList li { display: grid; grid-template-columns: 28px 1fr auto; gap: 2px 8px; padding: 6px 4px; border-bottom: 1px solid var(--border-soft); counter-increment: r; }
+  #boardList li::before { content: '#' counter(r); font: 700 13px var(--font-mono); grid-row: span 2; color: var(--text-muted); }
+  #boardList li.mine { background: #FFF1D6; }
+  #boardList .name { font-weight: 800; overflow: hidden; text-overflow: ellipsis; }
+  #boardList .meta { font: 12px var(--font-mono); grid-column: 2; color: var(--text-muted); }
+  #boardList .seed { font: 12px var(--font-mono); grid-row: 1; grid-column: 3; color: var(--text-muted); }
+  @media (max-width: 560px) {
+    #help, #seedLabel, #hud .sub, #zoomLabel { display: none; }
+    #hud { top: 8px; left: 8px; right: 8px; padding: 4px 10px 4px 4px; gap: 8px; }
+    #portrait { width: 28px; height: 40px; border-radius: 7px; }
+    #hud > div { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+    #hud h1 { font-size: 15px; } .stats { margin-top: 0; font-size: 13px; }
+    #actions { top: auto; bottom: 8px; left: 8px; right: auto; margin: 0; }
+    #actions button { padding: 8px 12px; }
+    #controls { right: 8px; bottom: 8px; padding: 0; gap: 4px; background: none; border: 0; box-shadow: none; }
+    #controls button { box-shadow: 2px 2px 0 var(--ink); }
   }
-
-  body {
-    background-color: var(--bg-sand);
-    color: var(--text-cocoa);
-    font-family: var(--font-sans);
-    line-height: 1.55;
-    min-height: 100vh;
-    display: flex;
-    flex-direction: column;
-    overflow-x: hidden;
-  }
-
-  /* Top Storybook Header - Sparse layout with generous breathing room */
-  .storybook-header {
-    max-width: 1240px;
-    width: 100%;
-    margin: 0 auto;
-    padding: 1.5rem 2rem 1rem;
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    justify-content: space-between;
-    gap: 1rem;
-  }
-
-  .brand-group {
-    display: flex;
-    align-items: baseline;
-    gap: 0.85rem;
-    flex-wrap: wrap;
-  }
-
-  .brand-title {
-    font-family: var(--font-display);
-    font-size: clamp(1.5rem, 2.5vw, 2.1rem);
-    font-weight: 800;
-    letter-spacing: -0.02em;
-    color: var(--text-cocoa);
-  }
-
-  .brand-subtitle {
-    font-size: 0.92rem;
-    color: var(--text-muted);
-    background: var(--bg-sand-deep);
-    padding: 0.2rem 0.75rem;
-    border-radius: 9999px;
-    font-weight: 600;
-  }
-
-  /* Telemetry HUD Bar */
-  .hud-bar {
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-    flex-wrap: wrap;
-  }
-
-  .hud-pill {
-    background: var(--surface-card);
-    border: 2px solid var(--border-soft);
-    border-radius: 9999px;
-    padding: 0.45rem 1rem;
-    font-size: 0.9rem;
-    font-weight: 700;
-    display: inline-flex;
-    align-items: center;
-    gap: 0.45rem;
-    color: var(--text-cocoa);
-  }
-
-  .hud-value {
-    font-family: var(--font-mono);
-    font-variant-numeric: tabular-nums;
-    font-weight: 700;
-  }
-
-  /* Rounded Pill Buttons - No heavy shadows */
-  .pill-btn {
-    appearance: none;
-    border: 2px solid var(--text-cocoa);
-    background: var(--accent-coral);
-    color: #FFFDF9;
-    font-family: var(--font-sans);
-    font-size: 0.95rem;
-    font-weight: 800;
-    padding: 0.55rem 1.35rem;
-    border-radius: 9999px;
-    cursor: pointer;
-    transition: transform 0.12s ease, background-color 0.12s ease;
-    text-decoration: none;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: 0.4rem;
-  }
-
-  .pill-btn:hover {
-    background: var(--accent-coral-hover);
-    transform: translateY(-2px);
-  }
-
-  .pill-btn:active {
-    transform: translateY(0);
-  }
-
-  .pill-btn.secondary {
-    background: var(--surface-card);
-    color: var(--text-cocoa);
-    border-color: var(--border-soft);
-  }
-
-  .pill-btn.secondary:hover {
-    border-color: var(--text-cocoa);
-    background: var(--bg-sand-deep);
-  }
-
-  /* Main Workspace Layout */
-  .workspace-grid {
-    max-width: 1240px;
-    width: 100%;
-    margin: 0 auto;
-    padding: 0.5rem 2rem 2.5rem;
-    display: grid;
-    grid-template-columns: 1fr 320px;
-    gap: 1.75rem;
-    flex: 1;
-    align-items: start;
-  }
-
-  @media (max-width: 960px) {
-    .workspace-grid {
-      grid-template-columns: 1fr;
-    }
-  }
-
-  /* 3D Diorama Stage Frame */
-  .stage-container {
-    position: relative;
-    width: 100%;
-    height: clamp(460px, 68vh, 680px);
-    background: #E9DEC9;
-    border: 2px solid var(--border-soft);
-    border-radius: 28px;
-    overflow: hidden;
-  }
-
-  #savannahCanvas {
-    width: 100%;
-    height: 100%;
-    display: block;
-    cursor: grab;
-    touch-action: none;
-  }
-
-  #savannahCanvas:active {
-    cursor: grabbing;
-  }
-
-  /* Floating Landmark Compass & Controls Hint */
-  .stage-footer-pill {
-    position: absolute;
-    bottom: 14px;
-    left: 14px;
-    right: 14px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    pointer-events: none;
-    flex-wrap: wrap;
-    gap: 0.5rem;
-  }
-
-  .control-chip {
-    pointer-events: auto;
-    background: rgba(255, 253, 249, 0.92);
-    border: 1.5px solid var(--border-soft);
-    padding: 0.35rem 0.85rem;
-    border-radius: 9999px;
-    font-size: 0.8rem;
-    font-weight: 600;
-    color: var(--text-muted);
-  }
-
-  /* Whimsical Wrong-Guess Toast */
-  .splat-toast {
-    position: absolute;
-    top: 16px;
-    left: 50%;
-    transform: translateX(-50%) translateY(-20px);
-    background: var(--pop-violet);
-    color: #FFFFFF;
-    padding: 0.45rem 1.1rem;
-    border-radius: 9999px;
-    border: 2px solid var(--text-cocoa);
-    font-size: 0.88rem;
-    font-weight: 700;
-    opacity: 0;
-    pointer-events: none;
-    transition: opacity 0.2s ease, transform 0.2s ease;
-    z-index: 15;
-  }
-
-  .splat-toast.visible {
-    opacity: 1;
-    transform: translateX(-50%) translateY(0);
-  }
-
-  /* Overlay Cards (Intro, Congrats, Fallback) */
-  .overlay-backdrop {
-    position: absolute;
-    inset: 0;
-    background: rgba(246, 239, 230, 0.82);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 1.5rem;
-    z-index: 20;
-  }
-
-  .overlay-backdrop.hidden {
-    display: none;
-  }
-
-  .storybook-card {
-    background: var(--surface-card);
-    border: 2px solid var(--text-cocoa);
-    border-radius: 24px;
-    max-width: 460px;
-    width: 100%;
-    padding: 1.85rem;
-    text-align: left;
-  }
-
-  .storybook-card h2 {
-    font-family: var(--font-display);
-    font-size: 1.55rem;
-    margin-bottom: 0.6rem;
-    color: var(--text-cocoa);
-  }
-
-  .storybook-card p {
-    font-size: 0.95rem;
-    color: var(--text-muted);
-    margin-bottom: 1rem;
-  }
-
-  .trait-badges {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.45rem;
-    margin-bottom: 1.25rem;
-  }
-
-  .trait-badge {
-    font-size: 0.78rem;
-    font-weight: 700;
-    padding: 0.25rem 0.65rem;
-    border-radius: 9999px;
-    background: var(--bg-sand);
-    border: 1.5px solid var(--border-soft);
-    color: var(--text-cocoa);
-  }
-
-  /* Sidebar: Leaderboard & Field Guide */
-  .sidebar-stack {
-    display: flex;
-    flex-direction: column;
-    gap: 1.25rem;
-  }
-
-  .panel-card {
-    background: var(--surface-card);
-    border: 2px solid var(--border-soft);
-    border-radius: 22px;
-    padding: 1.35rem;
-  }
-
-  .panel-card h3 {
-    font-family: var(--font-display);
-    font-size: 1.15rem;
-    margin-bottom: 0.35rem;
-    color: var(--text-cocoa);
-  }
-
-  .panel-sub {
-    font-size: 0.82rem;
-    color: var(--text-muted);
-    margin-bottom: 0.9rem;
-  }
-
-  .leaderboard-list {
-    list-style: none;
-    display: flex;
-    flex-direction: column;
-    gap: 0.45rem;
-    margin-bottom: 1rem;
-  }
-
-  .leaderboard-item {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 0.45rem 0.75rem;
-    border-radius: 9999px;
-    background: var(--bg-sand);
-    font-size: 0.85rem;
-    font-weight: 700;
-  }
-
-  .leaderboard-item.top-rank {
-    background: #FFF3CD;
-    border: 1.5px solid var(--pop-gold);
-  }
-
-  .rank-num {
-    font-family: var(--font-mono);
-    margin-right: 0.4rem;
-    color: var(--accent-coral);
-  }
-
-  .score-input-row {
-    display: flex;
-    gap: 0.5rem;
-    margin-top: 0.75rem;
-    margin-bottom: 0.75rem;
-  }
-
-  .pill-input {
-    flex: 1;
-    border: 2px solid var(--border-soft);
-    border-radius: 9999px;
-    padding: 0.5rem 0.95rem;
-    font-family: var(--font-sans);
-    font-size: 0.9rem;
-    color: var(--text-cocoa);
-    background: var(--bg-sand);
-    outline: none;
-  }
-
-  .pill-input:focus {
-    border-color: var(--accent-coral);
-  }
-
-  .share-box {
-    font-family: var(--font-mono);
-    font-size: 0.75rem;
-    background: var(--bg-sand);
-    padding: 0.5rem 0.8rem;
-    border-radius: 12px;
-    word-break: break-all;
-    margin-bottom: 0.85rem;
-    color: var(--text-muted);
-  }
- </style>
- <link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@800&family=Fredoka:wght@700&family=Plus+Jakarta+Sans:wght@400;700;800&family=Space+Mono:wght@700&display=swap" rel="stylesheet">
+  @media (prefers-reduced-motion: reduce) { #toast, #loadBar { transition: none; } }
+</style>
 </head>
 <body>
+<canvas id="scene" tabindex="0" aria-label="Illustrated Forsyth Park. Drag or use arrow keys to pan, scroll, pinch or use plus and minus to zoom, click a person to guess."></canvas>
 
- <!-- Sparse Storybook Header -->
- <header class="storybook-header">
-  <div class="brand-group">
-   <h1 class="brand-title">Waldo's Savannah</h1>
-   <span class="brand-subtitle">Waldo Stripes Soft &middot; Localhost 3D Edition</span>
+<div id="hud" class="card" role="status" aria-live="polite">
+  <canvas id="portrait" width="88" height="128" aria-label="The person to find"></canvas>
+  <div>
+    <h1>Forsyth Park</h1>
+    <div class="sub">Striped shirt and hat, round glasses, blue trousers, walking stick</div>
+    <div class="stats"><span><small>Time</small><b id="timer">0:00.0</b></span><span><small>Wrong</small><b id="wrong">0</b></span></div>
   </div>
-
-  <div class="hud-bar">
-   <div class="hud-pill" title="Elapsed search time">
-    <span>Timer</span>
-    <span class="hud-value" id="timerDisplay">00:00.0</span>
-   </div>
-   <div class="hud-pill" title="Clicks that missed Waldo">
-    <span>Wrong guesses</span>
-    <span class="hud-value" id="wrongDisplay">0</span>
-   </div>
-   <div class="hud-pill" title="Current deterministic town layout seed">
-    <span>Seed</span>
-    <span class="hud-value" id="seedDisplay">SAV-0000</span>
-   </div>
-   <button class="pill-btn secondary" id="newTownBtn" type="button">New town layout</button>
-  </div>
- </header>
-
- <!-- Main Game + Leaderboard Grid -->
- <main class="workspace-grid">
-  <section class="stage-container" aria-label="3D Savannah Festival Town Viewport">
-   <canvas id="savannahCanvas"></canvas>
-
-   <div class="splat-toast" id="splatToast" role="status" aria-live="polite">
-    Oops! That is a Savannah festival-goer, not Waldo!
-   </div>
-
-   <!-- Intro Card Overlay -->
-    <div class="overlay-backdrop" id="introOverlay">
-      <div class="storybook-card">
-       <h2>Spot Waldo in tiny Savannah!</h2>
-       <p>
-        Welcome to the seaside art festival! Hundreds of tiny animated people are strolling past SCAD's red-brick <b>Poetter Hall</b>, the white <b>Forsyth Park Fountain</b>, and the iron bridges of <b>Factors Walk</b>.
-       </p>
-       <p>
-        Drag to look around, scroll to zoom in, or use your arrow keys. Find and click the <b>one man</b> wearing all five of these things:
-       </p>
-       <div class="trait-badges">
-        <span class="trait-badge">Red &amp; white striped shirt</span>
-        <span class="trait-badge">Striped bobble hat</span>
-        <span class="trait-badge">Round glasses</span>
-        <span class="trait-badge">Blue trousers</span>
-        <span class="trait-badge">Walking stick</span>
-       </div>
-       <div style="display:flex; gap:0.65rem; flex-wrap:wrap;">
-        <button class="pill-btn" id="startRoundBtn" type="button">Start round</button>
-        <button class="pill-btn secondary" id="testFallbackBtn" type="button">Test fallback state</button>
-       </div>
-      </div>
-    </div>
-
-   <!-- Congrats Overlay -->
-   <div class="overlay-backdrop hidden" id="congratsOverlay">
-     <div class="storybook-card">
-      <h2 style="color:#008944;">You found Waldo!</h2>
-      <p id="winSummaryText">
-       You spotted him hiding near Forsyth Park in <b>12.4s</b> with <b>0</b> wrong guesses!
-      </p>
-      <div class="score-input-row">
-       <input type="text" id="usernameInput" class="pill-input" placeholder="Enter your nickname..." maxlength="18" />
-       <button class="pill-btn" id="saveScoreBtn" type="button">Save time</button>
-      </div>
-      <div class="share-box" id="shareUrlBox">http://localhost:8000/?seed=SAV-101</div>
-      <div style="display:flex; gap:0.6rem; flex-wrap:wrap;">
-       <button class="pill-btn secondary" id="copyShareBtn" type="button">Copy share link</button>
-       <button class="pill-btn" id="playAgainBtn" type="button">Play new random town</button>
-     </div>
-    </div>
-   </div>
-
-    <!-- Friendly Fallback Overlay -->
-    <div class="overlay-backdrop hidden" id="fallbackOverlay">
-     <div class="storybook-card">
-      <h2>Our festival tent caught a sea breeze!</h2>
-      <p>
-        The 3D town scene could not be set up on this try (or you clicked the fallback test). No worries at all, everything runs right here on your machine, and we can spin up a fresh Savannah layout immediately.
-      </p>
-      <div style="display:flex; gap:0.6rem; flex-wrap:wrap;">
-        <button class="pill-btn" id="recoverSceneBtn" type="button">Try a new scene</button>
-      </div>
-     </div>
-    </div>
-
-    <div class="stage-footer-pill">
-     <span class="control-chip">Drag to pan &middot; Scroll to zoom &middot; Arrow keys / WASD to roam</span>
-     <span class="control-chip" id="zoneHintChip">Waldo hides in a new spot every refresh</span>
-    </div>
-   </section>
-
-  <!-- Sidebar Leaderboard & Savannah Landmark Guide -->
-  <aside class="sidebar-stack">
-    <div class="panel-card">
-     <h3>Top 10 local leaderboard</h3>
-     <p class="panel-sub">Saved privately on your own machine (localhost).</p>
-     <ul class="leaderboard-list" id="leaderboardList"></ul>
-     <button class="pill-btn secondary" id="clearLeaderboardBtn" type="button" style="width:100%; font-size:0.82rem;">
-      Reset local leaderboard
-     </button>
-    </div>
-
-    <div class="panel-card">
-      <h3>Savannah field guide</h3>
-      <p class="panel-sub">Every refresh scrambles these 4 procedural 3D districts:</p>
-      <div class="trait-badges" style="margin-bottom:0;">
-       <span class="trait-badge">SCAD Poetter Hall (342 Bull St.)</span>
-       <span class="trait-badge">Forsyth Fountain (Cast-Iron White)</span>
-       <span class="trait-badge">Factors Walk (Iron Bridges &amp; Bluff)</span>
-       <span class="trait-badge">Seaside Festival Pier &amp; Squares</span>
-      </div>
-    </div>
-   </aside>
- </main>
-
- <script>
-  /**
-   * WALDO'S SAVANNAH - ZERO-ASSET PROCEDURAL 3D ISOMETRIC ENGINE
-   * Uses Tiny London orthographic projection math (45 deg tilt, 15 deg azimuth)
-   * and Mulberry32 seeded randomization. Runs 100% on localhost with zero
-   * external dependencies.
-   */
-  (function () {
-    const STORAGE_KEY = 'waldos_savannah_leaderboard_v1';
-    const canvas = document.getElementById('savannahCanvas');
-    const ctx = canvas.getContext('2d');
-
-    // UI Elements
-    const timerDisplay = document.getElementById('timerDisplay');
-    const wrongDisplay = document.getElementById('wrongDisplay');
-    const seedDisplay = document.getElementById('seedDisplay');
-    const introOverlay = document.getElementById('introOverlay');
-    const congratsOverlay = document.getElementById('congratsOverlay');
-    const fallbackOverlay = document.getElementById('fallbackOverlay');
-    const splatToast = document.getElementById('splatToast');
-    const leaderboardList = document.getElementById('leaderboardList');
-    const winSummaryText = document.getElementById('winSummaryText');
-    const shareUrlBox = document.getElementById('shareUrlBox');
-    const usernameInput = document.getElementById('usernameInput');
-    const zoneHintChip = document.getElementById('zoneHintChip');
-
-    // Buttons
-    const startRoundBtn = document.getElementById('startRoundBtn');
-    const newTownBtn = document.getElementById('newTownBtn');
-    const saveScoreBtn = document.getElementById('saveScoreBtn');
-    const playAgainBtn = document.getElementById('playAgainBtn');
-    const copyShareBtn = document.getElementById('copyShareBtn');
-    const clearLeaderboardBtn = document.getElementById('clearLeaderboardBtn');
-    const testFallbackBtn = document.getElementById('testFallbackBtn');
-    const recoverSceneBtn = document.getElementById('recoverSceneBtn');
-
-    // Parse URL Query Params
-    const params = new URLSearchParams(window.location.search);
-    let currentSeedStr = params.get('seed') || ('SAV-' + Math.floor(1000 + Math.random() * 9000));
-    const forceFallback = params.get('fallback') === '1';
-    const debugBeacon = params.get('beacon') === '1';
-    const crowdCount = Math.min(10000, Math.max(120, parseInt(params.get('crowd') || '420', 10)));
-
-    // Seeded PRNG (Mulberry32)
-    function hashString(str) {
-      let h = 2166136261 >>> 0;
-      for (let i = 0; i < str.length; i++) {
-        h = Math.imul(h ^ str.charCodeAt(i), 16777619);
-      }
-      return h >>> 0;
-    }
-
-    function createPRNG(seedString) {
-      let a = hashString(seedString);
-      return function () {
-        let t = (a += 0x6D2B79F5);
-        t = Math.imul(t ^ (t >>> 15), t | 1);
-        t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
-        return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-      };
-    }
-
-    // Orthographic Camera State (45 deg elevation, 15 deg azimuth per Tiny London spec)
-    const cam = {
-      panX: 0,
-      panY: 0,
-      zoom: 1.15,
-      azimuth: (15 * Math.PI) / 180,
-      elevation: (45 * Math.PI) / 180,
-      velX: 0,
-      velY: 0
-    };
-
-    // Project 3D world coordinates to 2D screen with depth
-    function project3D(wx, wy, wz) {
-      const cosA = Math.cos(cam.azimuth);
-      const sinA = Math.sin(cam.azimuth);
-      const sinE = Math.sin(cam.elevation);
-      const cosE = Math.cos(cam.elevation);
-
-      const rx = wx * cosA - wz * sinA;
-      const rz = wx * sinA + wz * cosA;
-
-      const sx = canvas.width * 0.5 + (rx * cam.zoom) + cam.panX;
-      const sy = canvas.height * 0.54 + ((rz * sinE - wy * cosE) * cam.zoom) + cam.panY;
-      const depth = rz * cosE + wy * sinE;
-      return { x: sx, y: sy, depth: depth };
-    }
-
-    // Game State
-    let gameState = 'INTRO';
-    let startTime = 0;
-    let elapsedMs = 0;
-    let wrongGuesses = 0;
-    let scoreSavedThisRound = false;
-    let world = { landmarks: [], props: [], people: [], waldo: null };
-
-    // Leaderboard functions
-    function loadLeaderboard() {
-      try {
-        return JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
-      } catch (e) {
-        return [];
-      }
-    }
-
-    function saveLeaderboard(entries) {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(entries.slice(0, 10)));
-    }
-
-    function renderLeaderboard() {
-      const entries = loadLeaderboard();
-      leaderboardList.innerHTML = '';
-      entries.forEach((entry, index) => {
-        const li = document.createElement('li');
-        li.className = index < 3 ? 'leaderboard-item top-rank' : 'leaderboard-item';
-        li.innerHTML = `<span class="rank-num">#${index + 1}</span><span>${entry.username}</span><span style="margin-left:auto;">${(entry.elapsedMs / 1000).toFixed(2)}s (${entry.wrongGuesses} misses)</span>`;
-        leaderboardList.appendChild(li);
-      });
-      if (entries.length === 0) {
-        const li = document.createElement('li');
-        li.style.color = 'var(--text-muted)';
-        li.style.fontStyle = 'italic';
-        li.textContent = 'No times saved yet. Be the first!';
-        leaderboardList.appendChild(li);
-      }
-    }
-
-    // Toast function
-    function showSplatToast(message) {
-      splatToast.textContent = message;
-      splatToast.classList.add('visible');
-      setTimeout(() => {
-        splatToast.classList.remove('visible');
-      }, 2000);
-    }
-
-    // Build Procedural Savannah Scene
-    function generateSavannahScene(seedStr) {
-      try {
-        if (forceFallback && gameState === 'INTRO') {
-          throw new Error('Simulated fallback requested via URL parameter.');
-        }
-        const rand = createPRNG(seedStr);
-        seedDisplay.textContent = seedStr;
-        world = { landmarks: [], props: [], people: [], waldo: null };
-
-        // Randomize which quadrant gets which Savannah landmark on every refresh
-        const quadrants = [
-          { qx: -220, qz: -160, name: 'SCAD Poetter Hall (Madison Square)' },
-          { qx: 220, qz: -160, name: 'Forsyth Park & Cast-Iron Fountain' },
-          { qx: -220, qz: 170, name: 'Factors Walk Iron Bridges' },
-          { qx: 220, qz: 170, name: 'Seaside Festival Pier & Squares' }
-        ];
-        // Fisher-Yates shuffle quadrants
-        for (let i = quadrants.length - 1; i > 0; i--) {
-          const j = Math.floor(rand() * (i + 1));
-          const temp = quadrants[i];
-          quadrants[i] = quadrants[j];
-          quadrants[j] = temp;
-        }
-        world.landmarks = [
-          { type: 'POETTER_HALL', x: quadrants[0].qx + (rand() - 0.5) * 40, z: quadrants[0].qz + (rand() - 0.5) * 30, label: 'SCAD Poetter Hall' },
-          { type: 'FORSYTH_FOUNTAIN', x: quadrants[1].qx + (rand() - 0.5) * 40, z: quadrants[1].qz + (rand() - 0.5) * 30, label: 'Forsyth Fountain' },
-          { type: 'FACTORS_WALK', x: quadrants[2].qx + (rand() - 0.5) * 40, z: quadrants[2].qz + (rand() - 0.5) * 30, label: 'Factors Walk' },
-          { type: 'FESTIVAL_PIER', x: quadrants[3].qx + (rand() - 0.5) * 40, z: quadrants[3].qz + (rand() - 0.5) * 30, label: 'Seaside Festival Pier' }
-        ];
-
-        // Generate Live Oak Trees with Spanish Moss & Festival Tents
-        for (let i = 0; i < 48; i++) {
-          const tx = (rand() - 0.5) * 860;
-          const tz = (rand() - 0.5) * 620;
-          const tooClose = world.landmarks.some(l => Math.hypot(l.x - tx, l.z - tz) < 85);
-          if (!tooClose) {
-            world.props.push({
-              type: i % 4 === 0 ? 'FESTIVAL_TENT' : 'LIVE_OAK',
-              x: tx,
-              z: tz,
-              scale: 0.85 + rand() * 0.4,
-              color: i % 8 === 0 ? '#FFCA28' : '#26A69A'
-            });
-          }
-        }
-
-        // Generate Animated Crowd NPCs (Decoys share at most 1-2 traits)
-        const shirtPalette = ['#FFCA28', '#26A69A', '#AB47BC', '#FFA726', '#66BB6A', '#EC407A', '#5C6BC0', '#8D6E63'];
-        const pantPalette = ['#3E2723', '#5D4037', '#455A64', '#37474F', '#795548'];
-
-        for (let i = 0; i < crowdCount; i++) {
-          const px = (rand() - 0.5) * 840;
-          const pz = (rand() - 0.5) * 600;
-          // Ensure NPCs don't overlap with landmarks
-          const tooCloseToLandmark = world.landmarks.some(l => Math.hypot(l.x - px, l.z - pz) < 85);
-          if (!tooCloseToLandmark) {
-            world.people.push({
-              isWaldo: false,
-              x: px,
-              z: pz,
-              baseX: px,
-              baseZ: pz,
-              phase: rand() * Math.PI * 2,
-              speed: 0.8 + rand() * 1.4,
-              walkRadius: 6 + rand() * 18,
-              shirtColor: shirtPalette[Math.floor(rand() * shirtPalette.length)],
-              pantColor: pantPalette[Math.floor(rand() * pantPalette.length)],
-              hasStripes: rand() < 0.09,
-              stripeColor: '#FFFDF9',
-              hasBobble: rand() < 0.12,
-              hasGlasses: rand() < 0.15,
-              hasStick: false,
-              role: i % 3 === 0 ? 'SCAD Bee Artist' : (i % 3 === 1 ? 'Savannah Tourist' : 'Riverboat Musician')
-            });
-          }
-        }
-
-        // Spawn the ONE true Waldo in a random district
-        const chosenDistrict = world.landmarks[Math.floor(rand() * world.landmarks.length)];
-        const angle = rand() * Math.PI * 2;
-        const dist = 65 + rand() * 95;
-        const wx = Math.max(-400, Math.min(400, chosenDistrict.x + Math.cos(angle) * dist));
-        const wz = Math.max(-280, Math.min(280, chosenDistrict.z + Math.sin(angle) * dist));
-
-        const waldoObj = {
-          isWaldo: true,
-          x: wx,
-          z: wz,
-          baseX: wx,
-          baseZ: wz,
-          phase: rand() * Math.PI * 2,
-          speed: 1.1,
-          walkRadius: 8,
-          shirtColor: '#E53935',
-          stripeColor: '#FFFFFF',
-          pantColor: '#1E88E5',
-          hasStripes: true,
-          hasBobble: true,
-          hasGlasses: true,
-          hasStick: true,
-          districtName: chosenDistrict.label,
-          screenX: 0,
-          screenY: 0
-        };
-        world.waldo = waldoObj;
-        world.people.push(waldoObj);
-        zoneHintChip.textContent = 'Town generated &middot; ' + (crowdCount + 1) + ' animated citizens';
-      } catch (err) {
-        gameState = 'FALLBACK';
-        introOverlay.classList.add('hidden');
-        congratsOverlay.classList.add('hidden');
-        fallbackOverlay.classList.remove('hidden');
-      }
-    }
-
-    // Draw a 3D Isometric Extruded Box
-    function drawIsoBox(wx, wy, wz, w, h, d, topCol, leftCol, rightCol) {
-      const p0 = project3D(wx - w, wy + h, wz - d);
-      const p1 = project3D(wx + w, wy + h, wz - d);
-      const p2 = project3D(wx + w, wy + h, wz + d);
-      const p3 = project3D(wx - w, wy + h, wz + d);
-
-      const b1 = project3D(wx + w, wy, wz - d);
-      const b2 = project3D(wx + w, wy, wz + d);
-      const b3 = project3D(wx - w, wy, wz + d);
-
-      // Left Front Face
-      ctx.fillStyle = leftCol;
-      ctx.beginPath();
-      ctx.moveTo(p3.x, p3.y);
-      ctx.lineTo(p2.x, p2.y);
-      ctx.lineTo(b2.x, b2.y);
-      ctx.lineTo(b3.x, b3.y);
-      ctx.closePath();
-      ctx.fill();
-
-      // Right Side Face
-      ctx.fillStyle = rightCol;
-      ctx.beginPath();
-      ctx.moveTo(p2.x, p2.y);
-      ctx.lineTo(p1.x, p1.y);
-      ctx.lineTo(b1.x, b1.y);
-      ctx.lineTo(b2.x, b2.y);
-      ctx.closePath();
-      ctx.fill();
-
-      // Top Roof Face
-      ctx.fillStyle = topCol;
-      ctx.beginPath();
-      ctx.moveTo(p0.x, p0.y);
-      ctx.lineTo(p1.x, p1.y);
-      ctx.lineTo(p2.x, p2.y);
-      ctx.lineTo(p3.x, p3.y);
-      ctx.closePath();
-      ctx.fill();
-    }
-
-    // Render Frame Loop
-    function renderScene(now) {
-      const t = now * 0.001;
-      if (gameState === 'PLAYING') {
-        elapsedMs = now - startTime;
-        timerDisplay.textContent = (elapsedMs / 1000).toFixed(1) + 's';
-      }
-
-      // Smooth keyboard panning
-      cam.panX += cam.velX;
-      cam.panY += cam.velY;
-      cam.velX *= 0.85;
-      cam.velY *= 0.85;
-
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-      // 1. Draw Warm Savannah Ground & Riverfront Water Plane
-      ctx.fillStyle = '#EFE5D4';
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-      // Savannah River strip along the northern bluff
-      const rivL = project3D(-600, 0, -370);
-      const rivR = project3D(600, 0, -370);
-      const rivB = project3D(600, 0, -290);
-      const rivBL = project3D(-600, 0, -290);
-      ctx.fillStyle = '#7BA7BC';
-      ctx.beginPath();
-      ctx.moveTo(rivL.x, rivL.y);
-      ctx.lineTo(rivR.x, rivR.y);
-      ctx.lineTo(rivB.x, rivB.y);
-      ctx.lineTo(rivBL.x, rivBL.y);
-      ctx.closePath();
-      ctx.fill();
-
-      // Collect all drawable 3D items for painter's depth sorting
-      const renderQueue = [];
-
-      // Add Landmarks
-      world.landmarks.forEach(lm => {
-        const proj = project3D(lm.x, 0, lm.z);
-        renderQueue.push({ kind: 'LANDMARK', data: lm, depth: proj.depth });
-      });
-
-      // Add Props (Live Oaks & Festival Tents)
-      world.props.forEach(pr => {
-        const proj = project3D(pr.x, 0, pr.z);
-        renderQueue.push({ kind: 'PROP', data: pr, depth: proj.depth });
-      });
-
-      // Update & Add Animated People
-      world.people.forEach(p => {
-        p.x = p.baseX + Math.cos(t * p.speed + p.phase) * p.walkRadius;
-        p.z = p.baseZ + Math.sin(t * p.speed * 0.8 + p.phase) * (p.walkRadius * 0.6);
-        const bob = Math.abs(Math.sin(t * 5.5 + p.phase)) * 3.5;
-        const proj = project3D(p.x, bob, p.z);
-        p.screenX = proj.x;
-        p.screenY = proj.y;
-        renderQueue.push({ kind: 'PERSON', data: p, depth: proj.depth, bob: bob });
-      });
-
-      // Sort back-to-front by orthographic depth
-      renderQueue.sort((a, b) => a.depth - b.depth);
-
-      // Draw Sorted 3D Entities
-      renderQueue.forEach(item => {
-        const z = cam.zoom;
-        if (item.kind === 'LANDMARK') {
-          const lm = item.data;
-          if (lm.type === 'POETTER_HALL') {
-            // Richardsonian Romanesque Terracotta Armory + SCAD Bee Gold Flag
-            drawIsoBox(lm.x, 0, lm.z, 46, 42, 34, '#E08266', '#C86D51', '#A85239');
-            drawIsoBox(lm.x - 36, 0, lm.z + 24, 12, 56, 12, '#E08266', '#B85D43', '#96442C');
-            const flagP = project3D(lm.x - 36, 66, lm.z + 24);
-            ctx.fillStyle = '#FFCA28';
-            ctx.fillRect(flagP.x - 9 * z, flagP.y - 6 * z, 18 * z, 9 * z);
-          } else if (lm.type === 'FORSYTH_FOUNTAIN') {
-            // 30-Foot Cast-Iron White Fountain + Green Park Square
-            drawIsoBox(lm.x, 0, lm.z, 55, 3, 55, '#81C995', '#689F77', '#558763');
-            drawIsoBox(lm.x, 3, lm.z, 26, 8, 26, '#D0F0FD', '#F4F6F7', '#CFD8DC');
-            drawIsoBox(lm.x, 11, lm.z, 10, 22, 10, '#FFFFFF', '#ECEFF1', '#B0BEC5');
-            const sp = project3D(lm.x, 36, lm.z);
-            ctx.fillStyle = debugBeacon ? '#00E676' : '#008944';
-            ctx.beginPath();
-            ctx.arc(sp.x, sp.y, 6 * z, 0, Math.PI * 2);
-            ctx.fill();
-          } else if (lm.type === 'FACTORS_WALK') {
-            // Cotton Warehouses + Wrought-Iron Bridge
-            drawIsoBox(lm.x - 32, 0, lm.z, 22, 38, 24, '#C58B71', '#A96E54', '#8A543C');
-            drawIsoBox(lm.x + 32, 0, lm.z, 22, 38, 24, '#C58B71', '#A96E54', '#8A543C');
-            drawIsoBox(lm.x, 22, lm.z, 18, 5, 8, '#607D8B', '#4A5559', '#37474F');
-          } else if (lm.type === 'FESTIVAL_PIER') {
-            // Seaside Festival Pier Beacon
-            drawIsoBox(lm.x, 0, lm.z, 16, 28, 16, '#F4F6F7', '#E53935', '#B71C1C');
-            drawIsoBox(lm.x, 28, lm.z, 12, 26, 12, '#FFFFFF', '#F4F6F7', '#CFD8DC');
-          }
-        } else if (item.kind === 'PROP') {
-          const pr = item.data;
-          const p = project3D(pr.x, 0, pr.z);
-          if (pr.type === 'LIVE_OAK') {
-            // Tree trunk
-            ctx.fillStyle = '#6D4C41';
-            ctx.fillRect(p.x - 2.5 * z, p.y - 16 * z, 5 * z, 16 * z);
-            // Canopy
-            ctx.fillStyle = '#689F77';
-            ctx.beginPath();
-            ctx.arc(p.x, p.y - 20 * z, 14 * pr.scale * z, 0, Math.PI * 2);
-            ctx.fill();
-            // Spanish moss
-            ctx.fillStyle = '#A5D6A7';
-            ctx.fillRect(p.x - 8 * z, p.y - 16 * z, 2.2 * z, 9 * z);
-            ctx.fillRect(p.x + 6 * z, p.y - 15 * z, 2.2 * z, 8 * z);
-          } else {
-            // Festival Tent
-            drawIsoBox(pr.x, 0, pr.z, 14, 14, 14, pr.color, '#FFFDF9', '#E2D3C1');
-          }
-        } else if (item.kind === 'PERSON') {
-          const p = item.data;
-          const sx = p.screenX;
-          const sy = p.screenY;
-
-          // Shadow
-          ctx.fillStyle = 'rgba(62, 39, 35, 0.18)';
-          ctx.beginPath();
-          ctx.ellipse(sx, sy + 2 * z, 4.5 * z, 2.2 * z, 0, 0, Math.PI * 2);
-          ctx.fill();
-
-          // Blue Trousers / Legs
-          ctx.fillStyle = p.pantColor;
-          ctx.fillRect(sx - 3 * z, sy - 6 * z, 2.6 * z, 6 * z);
-          ctx.fillRect(sx + 0.4 * z, sy - 6 * z, 2.6 * z, 6 * z);
-
-          // Torso (with horizontal stripes for Waldo)
-          ctx.fillStyle = p.shirtColor;
-          ctx.fillRect(sx - 3.8 * z, sy - 15 * z, 7.6 * z, 9 * z);
-          if (p.hasStripes) {
-            ctx.fillStyle = p.stripeColor;
-            ctx.fillRect(sx - 3.8 * z, sy - 13.2 * z, 7.6 * z, 1.8 * z);
-            ctx.fillRect(sx - 3.8 * z, sy - 9.6 * z, 7.6 * z, 1.8 * z);
-          }
-
-          // Head
-          ctx.fillStyle = '#FFE0B2';
-          ctx.beginPath();
-          ctx.arc(sx, sy - 18.5 * z, 3.6 * z, 0, Math.PI * 2);
-          ctx.fill();
-
-          // Round Glasses (Waldo signature)
-          if (p.hasGlasses) {
-            ctx.strokeStyle = '#3E2723';
-            ctx.lineWidth = Math.max(1, 1.1 * z);
-            ctx.beginPath();
-            ctx.arc(sx - 1.3 * z, sy - 18.7 * z, 1.2 * z, 0, Math.PI * 2);
-            ctx.arc(sx + 1.3 * z, sy - 18.7 * z, 1.2 * z, 0, Math.PI * 2);
-            ctx.stroke();
-          }
-
-          // Striped Bobble Hat
-          if (p.hasBobble) {
-            ctx.fillStyle = p.shirtColor;
-            ctx.beginPath();
-            ctx.arc(sx, sy - 20.5 * z, 3.6 * z, Math.PI, 0);
-            ctx.fill();
-            ctx.fillStyle = '#FFFFFF';
-            ctx.beginPath();
-            ctx.arc(sx, sy - 24.5 * z, 1.8 * z, 0, Math.PI * 2);
-            ctx.fill();
-          }
-
-          // Walking Stick (Waldo signature)
-          if (p.hasStick) {
-            ctx.strokeStyle = '#8D6E63';
-            ctx.lineWidth = Math.max(1.5, 1.6 * z);
-            ctx.beginPath();
-            ctx.moveTo(sx + 4.5 * z, sy - 12 * z);
-            ctx.lineTo(sx + 6.5 * z, sy);
-            ctx.stroke();
-          }
-
-          // Optional Grader Beacon or Victory Halo
-          if (p.isWaldo && (debugBeacon || gameState === 'WON')) {
-            ctx.strokeStyle = '#00E676';
-            ctx.lineWidth = 3;
-            ctx.beginPath();
-            ctx.arc(sx, sy - 12 * z, 18 * z, 0, Math.PI * 2);
-            ctx.stroke();
-          }
-        }
-      });
-
-      requestAnimationFrame(renderScene);
-    }
-
-    // Resize Canvas
-    function resizeCanvas() {
-      const rect = canvas.parentElement.getBoundingClientRect();
-      canvas.width = rect.width;
-      canvas.height = rect.height;
-    }
-    window.addEventListener('resize', resizeCanvas);
-    resizeCanvas();
-
-    // Pointer Drag vs. Click Disambiguation (Fixes FAIL-01: < 6px threshold)
-    let isDragging = false;
-    let downX = 0, downY = 0;
-    let lastX = 0, lastY = 0;
-
-    canvas.addEventListener('pointerdown', e => {
-      isDragging = true;
-      downX = lastX = e.clientX;
-      downY = lastY = e.clientY;
-      canvas.setPointerCapture(e.pointerId);
-    });
-
-    canvas.addEventListener('pointermove', e => {
-      if (!isDragging) return;
-      const dx = e.clientX - lastX;
-      const dy = e.clientY - lastY;
-      cam.panX += dx;
-      cam.panY += dy;
-      lastX = e.clientX;
-      lastY = e.clientY;
-    });
-
-    canvas.addEventListener('pointerup', e => {
-      if (!isDragging) return;
-      isDragging = false;
-      canvas.releasePointerCapture(e.pointerId);
-      const moveDist = Math.hypot(e.clientX - downX, e.clientY - downY);
-      if (moveDist < 6 && gameState === 'PLAYING' && world.waldo) {
-        const rect = canvas.getBoundingClientRect();
-        const clickX = e.clientX - rect.left;
-        const clickY = e.clientY - rect.top;
-
-        const z = cam.zoom;
-        const distToWaldo = Math.hypot(clickX - world.waldo.screenX, clickY - (world.waldo.screenY - 12 * z));
-
-        if (distToWaldo <= Math.max(18, 16 * z)) {
-          gameState = 'WON';
-          scoreSavedThisRound = false;
-          const sec = (elapsedMs / 1000).toFixed(2);
-          winSummaryText.innerHTML = 'You spotted Waldo near <b>' + world.waldo.districtName + '</b> in <b>' + sec + 's</b> with <b>' + wrongGuesses + '</b> wrong guesses!';
-          const shareUrl = window.location.origin + window.location.pathname + '?seed=' + encodeURIComponent(currentSeedStr);
-          shareUrlBox.textContent = shareUrl;
-          congratsOverlay.classList.remove('hidden');
-        } else {
-          wrongGuesses++;
-          wrongDisplay.textContent = String(wrongGuesses);
-          showSplatToast('Oops! That is a Savannah festival-goer, not Waldo!');
-        }
-      }
-    });
-
-    // Scroll Wheel Zoom
-    canvas.addEventListener('wheel', e => {
-      e.preventDefault();
-      const factor = e.deltaY < 0 ? 1.12 : 0.9;
-      cam.zoom = Math.max(0.6, Math.min(3.5, cam.zoom * factor));
-    }, { passive: false });
-
-    // Arrow Keys & WASD Navigation
-    window.addEventListener('keydown', e => {
-      if (document.activeElement === usernameInput) return;
-      const speed = 9;
-      if (e.key === 'ArrowLeft' || e.key === 'a') cam.velX = speed;
-      if (e.key === 'ArrowRight' || e.key === 'd') cam.velX = -speed;
-      if (e.key === 'ArrowUp' || e.key === 'w') cam.velY = -speed;
-      if (e.key === 'ArrowDown' || e.key === 's') cam.velY = speed;
-    });
-
-    window.addEventListener('keyup', e => {
-      if (e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'ArrowRight' || e.key === 'd') cam.velX = 0;
-      if (e.key === 'ArrowUp' || e.key === 'w' || e.key === 'ArrowDown' || e.key === 's') cam.velY = 0;
-    });
-
-    // Button Event Handlers
-    startRoundBtn.addEventListener('click', () => {
-      gameState = 'PLAYING';
-      startTime = performance.now();
-      elapsedMs = 0;
-      wrongGuesses = 0;
-      wrongDisplay.textContent = '0';
-      timerDisplay.textContent = '00:00.0';
-      introOverlay.classList.add('hidden');
-      congratsOverlay.classList.add('hidden');
-      fallbackOverlay.classList.add('hidden');
-      generateSavannahScene(currentSeedStr);
-    });
-
-    newTownBtn.addEventListener('click', () => {
-      currentSeedStr = 'SAV-' + Math.floor(1000 + Math.random() * 9000);
-      if (gameState === 'PLAYING') {
-        generateSavannahScene(currentSeedStr);
-      } else {
-        startRoundBtn.click();
-      }
-    });
-
-    saveScoreBtn.addEventListener('click', () => {
-      if (usernameInput.value.trim() && !scoreSavedThisRound) {
-        const entries = loadLeaderboard();
-        entries.push({
-          username: usernameInput.value.trim(),
-          elapsedMs: elapsedMs,
-          wrongGuesses: wrongGuesses,
-          seed: currentSeedStr
-        });
-        // Sort by elapsedMs ascending, then wrongGuesses ascending
-        entries.sort((a, b) => a.elapsedMs - b.elapsedMs || a.wrongGuesses - b.wrongGuesses);
-        saveLeaderboard(entries);
-        renderLeaderboard();
-        scoreSavedThisRound = true;
-      }
-    });
-
-    playAgainBtn.addEventListener('click', () => {
-      currentSeedStr = 'SAV-' + Math.floor(1000 + Math.random() * 9000);
-      gameState = 'INTRO';
-      introOverlay.classList.remove('hidden');
-      congratsOverlay.classList.add('hidden');
-      fallbackOverlay.classList.add('hidden');
-    });
-
-    copyShareBtn.addEventListener('click', () => {
-      navigator.clipboard.writeText(shareUrlBox.textContent);
-    });
-
-    clearLeaderboardBtn.addEventListener('click', () => {
-      localStorage.removeItem(STORAGE_KEY);
-      renderLeaderboard();
-    });
-
-    testFallbackBtn.addEventListener('click', () => {
-      gameState = 'FALLBACK';
-      introOverlay.classList.add('hidden');
-      congratsOverlay.classList.add('hidden');
-      fallbackOverlay.classList.remove('hidden');
-    });
-
-    recoverSceneBtn.addEventListener('click', () => {
-      gameState = 'INTRO';
-      introOverlay.classList.remove('hidden');
-      congratsOverlay.classList.add('hidden');
-      fallbackOverlay.classList.add('hidden');
-      currentSeedStr = 'SAV-' + Math.floor(1000 + Math.random() * 9000);
-    });
-
-    // Initialize
-    renderLeaderboard();
-    
-    // Start with Intro state
-    gameState = 'INTRO';
-    introOverlay.classList.remove('hidden');
-    congratsOverlay.classList.add('hidden');
-    fallbackOverlay.classList.add('hidden');
-
-    // If fallback is forced, show fallback immediately
-    if (forceFallback) {
-      gameState = 'FALLBACK';
-      introOverlay.classList.add('hidden');
-      congratsOverlay.classList.add('hidden');
-      fallbackOverlay.classList.remove('hidden');
-    }
-
-    // Start render loop
-    requestAnimationFrame(renderScene);
-  })();
- </script>
+</div>
+<div id="seedLabel" class="card" title="Replay seed and difficulty"></div>
+<div id="actions"><button id="hintBtn" class="secondary" aria-label="Get a hint">Hint <span id="hintCount"></span></button><button id="boardBtn" class="secondary">Scores</button></div>
+<div id="help" class="card">Drag to pan · scroll or pinch to zoom · click to guess · keys: arrows/WASD, + −, 0</div>
+<div id="controls" class="card">
+  <button id="zoomOut" aria-label="Zoom out">−</button>
+  <span id="zoomLabel" aria-live="off">1.0x</span>
+  <button id="zoomIn" aria-label="Zoom in">+</button>
+  <button id="zoomReset" aria-label="Reset view" style="font-size:15px">⟲</button>
+</div>
+<div id="board" hidden><div class="dialog card" role="dialog" aria-labelledby="boardTitle">
+  <h2 id="boardTitle">Top 10 on this device</h2><p style="font-size:13px;color:var(--text-muted);margin:0">Saved only in this browser. Nothing is sent anywhere.</p>
+  <ol id="boardList"></ol><p id="boardEmpty">No times saved yet.</p>
+  <div class="row"><button id="boardClear" class="secondary">Clear</button><button id="boardClose" class="primary">Close</button></div>
+</div></div>
+<div id="toast" class="card" role="status" aria-live="assertive"></div>
+
+<div id="loading" class="overlay"><div class="dialog card" role="dialog" aria-label="Loading">
+  <h2>Drawing Forsyth Park…</h2><p>Unpacking the illustrated crowd.</p><div class="bar"><div id="loadBar"></div></div>
+</div></div>
+<div id="intro" class="overlay" hidden><div class="dialog card" role="dialog" aria-labelledby="introTitle">
+  <h2 id="introTitle">Find the walker</h2>
+  <p>Somewhere in Forsyth Park, one person wears all five of these at once. Others may share one or two.</p>
+  <ul class="traits"><li>Red-and-white striped shirt</li><li>Striped bobble hat</li><li>Round glasses</li><li>Blue trousers</li><li>Brown walking stick</li></ul>
+  <div class="row"><label class="pick">Difficulty<select id="difficulty"><option value="easy">Easy</option><option value="normal">Normal</option><option value="hard">Hard</option></select></label>
+  <label class="pick">Crowd<select id="density"><option value="low">Light (180)</option><option value="standard">Busy (360)</option><option value="dense">Packed (600)</option></select></label></div>
+  <div class="row"><button id="startBtn" class="primary">Start searching</button><button id="testFallbackBtn" class="secondary">Test fallback state</button></div>
+</div></div>
+<div id="won" class="overlay" hidden><div class="dialog card" role="dialog" aria-labelledby="wonTitle">
+  <h2 id="wonTitle">Found him!</h2><p id="winText"></p><p id="winSpot" style="color:var(--text-muted);font-size:14px"></p>
+  <div class="row"><input type="text" id="nameInput" maxlength="18" placeholder="Your name" aria-label="Your name for the leaderboard" autocomplete="nickname"><button id="saveBtn" class="primary">Save time</button></div>
+  <p style="margin:12px 0 4px;font-size:13px;color:var(--text-muted)">Share this exact park:</p>
+  <textarea id="shareBox" readonly aria-label="Share link"></textarea>
+  <div class="row"><button id="copyBtn" class="secondary">Copy link</button><button id="againBtn" class="secondary">New round</button></div>
+</div></div>
+<div id="failed" class="overlay" hidden><div class="dialog card" role="alertdialog" aria-labelledby="failTitle">
+  <h2 id="failTitle">A sea breeze knocked the easel over</h2><p>The park could not be drawn this time. Nothing left your computer; a fresh layout usually works.</p><p id="failText" style="font:12px var(--font-mono);color:var(--text-muted)"></p><button id="recoverBtn" class="primary">Try a new scene</button>
+</div></div>
+
+<script src="js/assets.bundle.js"></script>
+<script src="js/game.js"></script>
 </body>
 </html>
