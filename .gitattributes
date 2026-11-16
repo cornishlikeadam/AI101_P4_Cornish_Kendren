@@ -1,0 +1,9 @@
+# Show only HTML in GitHub's repository Languages bar (single-file HTML submission rule).
+*.ts linguist-detectable=false
+*.tsx linguist-detectable=false
+*.js linguist-detectable=false
+*.mjs linguist-detectable=false
+*.cjs linguist-detectable=false
+*.py linguist-detectable=false
+*.css linguist-detectable=false
+*.svg linguist-detectable=false

@@ -91,7 +91,7 @@ Agent 1 owns pointer, wheel and keyboard handling on the canvas. A tap or click 
 
 ## Build
 
-Sources in `vibe-coding/src/` are classic scripts that attach to `window.WS`. `node vibe-coding/tools/build.mjs` packs the assets and joins the sources, in a fixed order, into `build/js/game.js`. There is no bundler and there are no ES modules, so the page runs from `file://`. Since checkpoint 3 the illustrated game is `build/index.html`. Version 1 is archived, unchanged, at `vibe-coding/docs/history/index-v1.html`.
+Sources in `vibe-coding/src/` are classic scripts that attach to `window.WS`. `node vibe-coding/tools/build.mjs` packs the assets and joins the sources inline, in a fixed order, into a single self-contained `build/index.html`. There is no bundler and there are no ES modules, so the page runs from `file://`. Version 1 is archived, unchanged, at `vibe-coding/docs/history/index-v1.html`.
 
 ## URL parameters
 

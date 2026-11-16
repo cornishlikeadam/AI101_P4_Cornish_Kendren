@@ -8,8 +8,8 @@ Operating contract for every agent and human working on the build. Decisions: [A
 |---|---|
 | `vibe-coding/assets/` | Original SVG source art: `characters/`, `environments/`, `props/`, `effects/`, `ui/` |
 | `vibe-coding/src/` | Engine, scenes, characters, gameplay, ui, utilities (authoring sources) |
-| `vibe-coding/tools/` | `build.mjs` (packs assets, joins `src/` into `build/js/game.js`), `pack-assets.mjs`, author-time helpers in `author/` |
-| `vibe-coding/build/` | The deployable folder. `index.html` (the illustrated game) plus `js/game.js` and `js/assets.bundle.js`; must open from disk and over HTTP |
+| `vibe-coding/tools/` | `build.mjs` (packs assets and joins `src/` inline into `build/index.html`), `pack-assets.mjs`, author-time helpers in `author/` |
+| `vibe-coding/build/` | The deployable folder: single self-contained `index.html`; must open from disk and over HTTP |
 | `vibe-coding/tests/` | Playwright flows: `illustrated.test.mjs`, `perf.mjs` (need `playwright-core`; see the file headers) |
 | `vibe-coding/build-record/` | Logs, `visual-qa/` screenshots, `performance.md` |
 | `vibe-coding/docs/` | Audit, engine review, scene blueprints, archived v1 docs |

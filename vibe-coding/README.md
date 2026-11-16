@@ -33,8 +33,8 @@ A link like `?seed=SAV-1234` replays the same city. There are also testing links
 ## Rebuild and test
 
 ```bash
-node vibe-coding/tools/build.mjs              # rebuilds build/js from src/ and assets/
+node vibe-coding/tools/build.mjs              # rebuilds single-file build/index.html from src/ and assets/
 node vibe-coding/tests/illustrated.test.mjs   # Playwright checks; see the file header
 ```
 
-Don't edit `build/js/*.js` by hand. Change `src/` or `assets/` and rebuild.
+Don't edit the generated scripts inside `build/index.html` by hand. Change `src/` or `assets/` and rebuild.

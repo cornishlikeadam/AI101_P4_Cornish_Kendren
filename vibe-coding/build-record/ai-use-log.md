@@ -34,6 +34,6 @@ Short record of consequential AI sessions. Prompt descriptions are summarized wh
 
 **Date:** 2026-11-16
 **AI tool:** AI coding agents + `playwright-core` + Vercel CLI
-**Prompt (summary):** Shorten the submission docs to match the course templates, fix the reload test flake and 404, speed up loading and panning, and sync the Obsidian folder.
-**Result:** Shortened docs and ADRs, cut asset size to ~2.9 MB and startup load to ~0.6 s, cleared all 29/29 tests, redeployed Vercel, and synced Obsidian.
-**My contribution:** Reviewed the docs and Obsidian folder, caught overly long technical text in the ADRs and logs, and asked to keep the submission concise and faithful to the course format (with `reflection.md` left for me to write).
+**Prompt (summary):** Shorten the submission docs to match the course templates, inline all JS/assets into a single `build/index.html` with 100% HTML repo language settings, strip `Co-Authored-By:` git trailers, speed up loading and panning, and sync the Obsidian folder.
+**Result:** Shortened docs and ADRs, packed all assets and game scripts inline into `build/index.html`, set `.gitattributes` for HTML-only repo language detection, cleared all 29/29 tests, redeployed Vercel, cleaned git history, and synced Obsidian.
+**My contribution:** Reviewed the docs, GitHub sidebar, and Obsidian folder, caught overly long technical text, enforced the single-file HTML rule and contributor settings, and kept `reflection.md` human-written.
