@@ -8,11 +8,11 @@
 
 ## Cycle 1 (first illustrated build, 2026-11-15)
 
-Automated browser checks live in `tests/illustrated.test.mjs`. Screenshots are in `build-record/visual-qa/`.
+Automated browser checks live in `tests/illustrated.test.mjs`. Key screenshots are saved in `build-record/tests/` (and full visual QA sets in `build-record/visual-qa/`).
 
-- **Main path:** Pressed Play, found Waldo with `?beacon=1`, and tapped him. Timer stopped and the win screen appeared (23/23 automated checks passed; `build-record/visual-qa/checkpoint-3/won-saved.png`).
+- **Main path:** Pressed Play, found Waldo with `?beacon=1`, and tapped him. Timer stopped and the win screen appeared (23/23 automated checks passed; `build-record/tests/c1-main-won.png`).
 - **Edge case:** Zoomed all the way out and panned to corners at laptop and phone sizes.
-  - **Problem:** Blank background showed past the edge of the city because minimum zoom was a fixed number and panning wasn't clamped (`build-record/visual-qa/overhaul/before/minzoom-*.png`).
+  - **Problem:** Blank background showed past the edge of the city because minimum zoom was a fixed number and panning wasn't clamped (`build-record/tests/c1-edge-minzoom-1440x900.png`).
 - **Unexpected input:** Dragged across Waldo and released. Counted as a pan, never a wrong guess.
 - **Out-of-scope request:** Checked for sign-in, scores sent online, or external requests while loading from `file://`. None; zero outside requests.
 - **Visual note:** Two crowd silhouettes looked almost identical, making the crowd feel repetitive.
@@ -21,8 +21,8 @@ Automated browser checks live in `tests/illustrated.test.mjs`. Screenshots are i
 
 Re-ran the same four checks after the camera, city, and speed fixes:
 
-- **Main path — unchanged:** Winning works with the updated celebration screen (`visual-qa/overhaul/after/won-1440.png`, `won-390.png`).
-- **Edge case — improved (ADR-003):** **Fix:** Tied minimum zoom to the window size and kept panning inside the world. **Result:** City covers the screen at all five tested viewports and on rotation (`visual-qa/overhaul/before-after-camera.png`).
+- **Main path — unchanged:** Winning works with the updated celebration screen (`build-record/tests/c2-main-won.png`).
+- **Edge case — improved (ADR-003):** **Fix:** Tied minimum zoom to the window size and kept panning inside the world. **Result:** City covers the screen at all five tested viewports and on rotation (`build-record/tests/c2-edge-before-after-camera.png`).
 - **Unexpected input — improved (ADR-002):** Dragging still never guesses, and two-finger pinching never triggers a guess.
 - **Out-of-scope request — unchanged (ADR-002):** Still zero outside requests and no accounts.
 
