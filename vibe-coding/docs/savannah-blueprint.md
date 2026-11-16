@@ -1,15 +1,16 @@
-# Savannah city blueprint (checkpoint 4)
+# Savannah city blueprint (checkpoint 4, revised 2026-11-16)
 
-One continuous world, 3200 × 6700 units, north at the top. The target can hide in any district; players scroll and zoom to search. Geography is fixed; the replay identity varies looks, the crowd and the hiding spot. This replaces the earlier plan of four separate scenes (the "Scene D" question in `audit.md` is resolved: Festival Pier is part of the River Street district).
+One continuous world, 3200 × 7600 units, north at the top, joined by **Bull Street** (x 1515–1685), which runs from Bay Street past City Hall to the Forsyth Park north gate, as it does in the real city. Distances are compressed and some blocks are left out (Broughton Street; Wright, Chippewa and Madison Squares), but the order is the real order. Geography is fixed; the replay identity varies looks, the crowd and the hiding spot.
 
 | y | District | Contents | Source |
 |---|---|---|---|
-| 0–1500 | River Street and Festival Pier | Savannah River with a paddle-wheeler and a tug; riverwalk with lamps, benches and the Waving Girl statue; plank pier with eight festival tents; cobbled River Street; cotton warehouse row; Factors Walk and Bay Street | `src/scenes/riverfront.js` |
-| 1500–2950 | City Market | Shopfront row with the City Market gate; brick plaza with stalls, café tables, planters; Congress Street with a carriage and trolley | `src/scenes/market.js` |
-| 2950–4300 | Two Oglethorpe squares | Italianate townhouse row with a twin-spired church; an obelisk square and a fountain square with oaks, benches and azaleas; streets either side | `src/scenes/squares.js` |
-| 4300–6700 | Forsyth Park | Unchanged from checkpoints 2 and 3, moved south | `src/scenes/forsyth.js` |
+| 0–1500 | River Street and Festival Pier | River with a paddle-wheeler and a tug; riverwalk with the Waving Girl; plank pier with festival tents; cobbled River Street; cotton warehouse row with City Hall's gold dome at the head of Bull Street; Bay Street traffic | `src/scenes/riverfront.js` |
+| 1500–2950 | City Market and Johnson Square | City Market west of Bull (brick plaza, stalls, café tables, performers); Johnson Square east of Bull with the Greene Monument obelisk; Congress Street | `src/scenes/market.js` |
+| 2950–4300 | Pulaski and Lafayette Squares | Harris Street townhouses with the twin-spired cathedral over Lafayette Square (fountain); Pulaski Square (oaks); Charlton Street | `src/scenes/squares.js` |
+| 4300–5200 | Jones Street and Monterey Square | Jones Street houses with SCAD Poetter Hall at Bull; Monterey Square with the Pulaski Monument, Mercer House to the west and Temple Mickve Israel to the east | `src/scenes/monterey.js` |
+| 5200–7600 | Forsyth Park | Unchanged park, moved south; Bull Street reaches its gate between the Gaston Street houses | `src/scenes/forsyth.js` |
 
-Ground: `assets/environments/savannah/ground.svg` from `tools/author/savannah-ground.mjs` (embeds the Forsyth ground). Crowd budgets: low 450, standard 900, dense 1,500.
+Ground: `assets/environments/savannah/ground.svg` from `tools/author/savannah-ground.mjs`. Street furniture shared by all districts (traffic, parked cars, Bull Street oaks and lamps, signs, hydrants): `src/scenes/streets.js`. Crowd budgets: low 450, standard 900, dense 1,500.
 
 ## New stories (22, on top of Forsyth's 25)
 

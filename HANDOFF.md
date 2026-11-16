@@ -72,10 +72,10 @@ Written by `tools/pack-assets.mjs` from the `data-*` attributes on each root `<s
 
 | Provider | Function | Contract |
 |---|---|---|
-| 1 | `engine.pick(clientX, clientY) → entity \| null` | Front-to-back alpha test in world space, with a 4 CSS px near-miss allowance |
+| 1 | `engine.pick(clientX, clientY, { touch }) → entity \| null` | Front-to-back alpha test in world space. If that is not a person, the nearest person within 4 CSS px (mouse) or 12 CSS px (touch) wins |
 | 1 | `engine.validateTarget(entity) → { ok, visibleShare, headShare, samples }` | Rejects spawns below the thresholds in ADR-002 §7 |
 | 1 | `engine.placeTarget() → { ok, spot, visibleShare, headShare, tries }` | Walks `world.candidates` in seeded order until one passes; easy wants ≥ 92% visible, normal ≥ 70%, hard 50–86% |
-| 1 | `engine.camera.{panBy, zoomAt, centerOn, reset, fit, toWorld, toScreen}` | World coordinates are never changed by the camera. Zoom 1.0x = 0.4 CSS px per world unit; range 0.6x to 3.5x |
+| 1 | `engine.camera.{panBy, zoomAt, zoomSmooth, centerOn, reset, fit, visible, toWorld, toScreen, minZoom, maxZoom}` | World coordinates are never changed by the camera. Zoom 1.0x = 0.4 CSS px per world unit. The minimum is the viewport-cover zoom, `max(vw / worldW, vh / worldH)` (never below 0.5x); the maximum is 5x. The visible rectangle always stays inside the world, so no blank edge shows. `reset()` goes to the scene's `home` view |
 | 1 | `engine.onFrame(fn)` | Called once per frame with `{ t, dt }`; return true to request a redraw |
 | 1 | `engine.tryTarget(x, y, flip)` | Test hook: moves the target and returns the validator result |
 | 2 | `WS.scenes.{savannah,forsyth}.build(identity) → world` | Deterministic for a given identity. Built by `WS.buildScene` from districts (`WS.districts.*`, each `{ id, name, y0, h, geography, stories, zones, blocked, spots, area }`). `world = { w, h, ground, districts, area(x, y), entities, target, candidates, identity, people, stories }` |
@@ -87,7 +87,7 @@ Written by `tools/pack-assets.mjs` from the `data-*` attributes on each root `<s
 
 ## Input
 
-Agent 1 owns pointer, wheel and keyboard handling on the canvas. A tap or click counts only if the pointer travelled under 6 CSS px, only one pointer was down, and it was not cancelled. Pinch and drags never count. Keyboard: arrows and WASD pan, `+` and `-` zoom, `0` resets.
+Agent 1 owns pointer, wheel and keyboard handling on the canvas. A tap or click counts only if the pointer travelled under 6 CSS px (10 for a finger), only one pointer was down, and it was not cancelled. Pinch and drags never count. The wheel zooms smoothly toward the pointer; a trackpad swipe pans; a trackpad pinch zooms. Keyboard: arrows and WASD pan, `+` and `-` zoom, `0` resets.
 
 ## Build
 
@@ -98,7 +98,7 @@ Sources in `vibe-coding/src/` are classic scripts that attach to `window.WS`. `n
 | Param | Meaning |
 |---|---|
 | `seed` | Replay seed; random `SAV-XXXX` if absent |
-| `scene` | `savannah` (default: River Street, City Market, two squares and Forsyth Park in one 3200 × 6700 world) or `forsyth` (Forsyth alone, used by older tests) |
+| `scene` | `savannah` (default: one 3200 × 7600 city joined by Bull Street: River Street and City Hall, City Market and Johnson Square, Pulaski and Lafayette Squares, Jones Street and Monterey Square, Forsyth Park) or `forsyth` (Forsyth alone, used by older tests) |
 | `difficulty` | `easy`, `normal` (default), `hard` |
 | `density` | `low`, `standard` (default), `dense` |
 | `crowd` | Stress override, 20 to 10,000; marks the round as a stress test |

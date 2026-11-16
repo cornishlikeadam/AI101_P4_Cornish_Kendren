@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 -8 64 112" width="64" height="112" data-anchor="32 100" data-asset="characters/bodies/books" data-slots="skin hair top top2 bottom shoe acc" data-head="0 0 1" data-author="original, hand-authored SVG, Waldo's Savannah 2026-11-16">
+<style>
+.o{stroke:#2B1D16;stroke-width:1.5;stroke-linejoin:round;stroke-linecap:round}
+.l{fill:none;stroke:#2B1D16;stroke-width:1;stroke-linecap:round;stroke-linejoin:round}
+.fold{fill:none;stroke:#2B1D16;stroke-opacity:.4;stroke-width:.8;stroke-linecap:round}
+.sh{fill:#2B1D16;opacity:.15}.ink{fill:#2B1D16}.wht{fill:#FFFFFF}
+.skin{fill:var(--skin,#E0A97E)}.hair{fill:var(--hair,#4A2F1E)}
+.top{fill:var(--top,#4F6CC4)}.top2{fill:var(--top2,#F5F0E6)}.bottom{fill:var(--bottom,#3B3A48)}
+.hat{fill:var(--hat,#3E8E7E)}.hat2{fill:var(--hat2,#F5F0E6)}.acc{fill:var(--acc,#F2D55C)}.shoe{fill:var(--shoe,#5A3A28)}
+</style>
+<ellipse cx="32" cy="100" rx="13" ry="3" class="sh"/>
+<path class="acc o" d="M22.4,39 C15.4,40 12.6,46 12.8,54 C13,60 14.4,64 17,66 L24,66 L24.4,40 Z"/>
+<path class="sh" d="M13,56 C13.4,61 14.6,64 17,66 L24,66 L24,60 Z"/>
+<path class="l" d="M15,50 h8 M15.4,57 h8"/>
+<path class="skin o" d="M25.6,76 L25.2,93.6 L30.4,93.6 L30.8,76 Z"/>
+<path class="skin o" d="M33.4,76 L33.8,93.6 L39,93.6 L38.6,76 Z"/>
+<path class="shoe o" d="M23.8,93 L30.8,93 C32.6,93.4 33,96.4 32,98.4 L23,98.4 C22.4,96.4 22.6,94 23.8,93 Z"/>
+<path class="shoe o" d="M33,93 L40,93 C41.8,93.4 42.2,96.4 41.2,98.4 L32.2,98.4 C31.6,96.4 31.8,94 33,93 Z"/>
+<path class="bottom o" d="M22,59.6 L42.4,59.6 L47.6,78.4 C38.6,81.6 25.6,81.6 16.6,78.4 Z"/>
+<path class="sh" d="M37,59.6 L42.4,59.6 L47.6,78.4 C45,79.4 42.6,80 40.4,80.4 Z"/>
+<path class="fold" d="M28,66 l-3,11 M34,66 l1,13"/>
+<path class="top o" d="M22,40.6 C22,36.4 25.8,34.4 32,34.4 C38.4,34.4 42.4,36.4 42.8,40.6 L42.8,61.6 C36,63.4 28.4,63.4 21.6,61.6 Z"/>
+<path class="sh" d="M38,35 C41.6,36.4 42.8,38.4 42.8,40.6 L42.8,61.6 C41,62.2 39.6,62.5 38,62.7 C39.4,53 39.4,44 38,35 Z"/>
+<path d="M24.4,37.4 L22.6,58" stroke="#2B1D16" stroke-width="2.6" stroke-linecap="round"/><path d="M24.4,37.4 L22.6,58" fill="none" style="stroke:var(--acc,#F2D55C)" stroke-width="1.2" stroke-linecap="round"/>
+<path class="top o" d="M24.4,40 C21.6,46 24,51.6 31,53 L31.6,49 C27.6,48 26.4,45.4 28,41.6 Z"/>
+<rect x="29.6" y="43" width="17" height="5" rx="1" fill="#C73E3A" class="o"/>
+<rect x="30.6" y="48" width="16" height="4.6" rx="1" fill="#2F7FA8" class="o"/>
+<rect x="29.2" y="52.6" width="17.6" height="5" rx="1" fill="#F2D55C" class="o"/>
+<path d="M44,44.2 h2 M44.4,49.2 h2 M44,53.8 h2.4" stroke="#FFFFFF" stroke-width=".8"/>
+<path class="top o" d="M38.6,38.8 C42.6,43 43.6,48 41.6,53.6 L37.4,52.4 C38.8,48.4 38.4,45 36,42 Z"/>
+<circle class="skin o" cx="38.4" cy="53.4" r="2.8"/>
+<circle class="skin o" cx="31.6" cy="51" r="2.6"/>
+<path class="skin o" d="M28.4,30 L36.2,30 L36.6,36.4 Q32.4,38.6 28,36.4 Z"/>
+<path class="top2 o" d="M27.2,35 Q32.4,39.4 37.6,35 L38.4,36.4 Q32.4,41.4 26.4,36.4 Z"/>
+<!--HEAD-->
+</svg>

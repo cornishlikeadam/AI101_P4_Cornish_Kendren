@@ -1,143 +1,61 @@
-# Waldo's Savannah: Multi-Agent Vibe-Coding Project
+# Waldo's Savannah
 
-This repository contains **Project 4: Waldo's Savannah** — a complete, self-contained zero-asset 3D crowd-search game built using a multi-agent harness approach.
+A search-and-find game in an illustrated Savannah, Georgia. Somewhere in a crowded city that runs from the river down Bull Street to Forsyth Park, one person wears a red-and-white striped shirt, a striped bobble hat, round glasses, blue trousers and carries a walking stick. Find him.
 
-## Project Overview
+Play online: https://waldo-savannah.vercel.app/
 
-Waldo's Savannah is a procedurally generated 3D hidden-object game set across the Savannah College of Art and Design (SCAD) campus and historic Savannah waterfront. Players search for Waldo among animated crowds in a warm, storybook-style interface, while the underlying engineering demonstrates graduate-level architectural rigor.
+## Run it
 
-### Key Features
+Open `vibe-coding/build/index.html` in a browser. That's all; it works offline from the file. Or serve the folder:
 
-- **100% Procedural Generation**: All buildings, trees, props, and animated characters generated mathematically at runtime
-- **Zero External Dependencies**: No image assets, 3D models, or network requests required
-- **Localhost-First**: Runs completely offline in any modern browser
-- **60 FPS Performance**: Supports up to 10,000 animated NPCs
-- **Deterministic Replay**: Seeded randomization allows sharing exact game layouts
-- **Friendly Fallback**: Graceful error handling with recovery options
-
-## Quick Start
-
-### Option 1: Direct File Open
-Simply open `vibe-coding/build/index.html` in any modern browser.
-
-### Option 2: Local HTTP Server (Recommended)
 ```bash
-cd /path/to/this/repository
-python3 -m http.server 8000 --directory vibe-coding/build
-# Then open http://localhost:8000
+python3 -m http.server 8000 --directory vibe-coding/build   # then open http://localhost:8000
 ```
 
-## Repository Structure
+## How to play
 
-```
-.
-├── README.md                          # This file
-├── HARNESS.md                         # Multi-agent engineering rules
-├── HANDOFF.md                         # Atomic state & interface contracts
-├── AGENTS.md                          # Agent roles and execution workflow
-├── CLAUDE.md → AGENTS.md              # Symlink for Claude Code
-└── GEMINI.md → AGENTS.md              # Symlink for Gemini CLI
+- **Play!** starts the timer.
+- **Drag** (or one finger) to look around. **Scroll** or **pinch** to zoom. Arrow keys and WASD work too.
+- **Tap** the person you think is Waldo. Wrong taps add to the ✗ counter.
+- **💡 Hint** up to three times: the area, then a landmark near him, then a circle he is inside.
+- The little map at the bottom left shows where you are; tap it to jump.
+- **☰** holds the level, crowd size, top scores and a new city.
 
-vibe-coding/
-├── START-HERE.md                      # Project orientation guide
-├── README.md                          # Quick-start and feature summary
-├── CHECKLIST.md                       # Submission verification checklist
-├── plan.md                            # Five-line execution plan
-├── prd.md                             # Product Requirements Document
-├── reflection.md                      # Project reflection
-├── disclosure.md                      # AI contribution disclosure
-├── build/
-│   └── index.html                      # Complete self-contained game
-├── sources/
-│   └── source-index.md                 # Research dossier
-├── decisions/
-│   ├── ADR-001-template.md             # ADR template
-│   └── ADR-001.md                      # Zero-asset procedural 3D decision
-└── build-record/
-    ├── ai-use-log.md                   # AI usage documentation
-    ├── testing-and-failure-log.md     # Testing and failure documentation
-    └── tests/
-        └── README.md                   # Test parameters and instructions
+Links can replay the same city: `?seed=SAV-1234`. Other options: `?difficulty=easy|normal|hard`, `?density=low|standard|dense`, `?scene=forsyth` (the park only), `?crowd=2000` (stress test), `?beacon=1` (marks Waldo, for testing), `?fallback=1` (shows the error screen).
+
+## Where things are
+
+| Path | What |
+|---|---|
+| `vibe-coding/build/` | The game: `index.html`, plus `js/game.js` and `js/assets.bundle.js` (generated) |
+| `vibe-coding/src/engine/` | Camera, drawing, picking, input |
+| `vibe-coding/src/scenes/` | The city: one file per district, `streets.js` for traffic and Bull Street |
+| `vibe-coding/src/characters/` | Builds people from body drawings and head parts |
+| `vibe-coding/src/main.js`, `src/gameplay/` | Screens, timer, hints, scores |
+| `vibe-coding/assets/` | The original SVG drawings (listed with their origin in `vibe-coding/sources/asset-register.md`) |
+| `vibe-coding/tools/` | `build.mjs` rebuilds the game; `author/` holds the scripts that wrote the drawings |
+| `vibe-coding/tests/` | Playwright checks (`illustrated.test.mjs`) and a frame-rate tour (`perf.mjs`) |
+
+## Rebuild
+
+```bash
+node vibe-coding/tools/build.mjs            # packs assets/ and joins src/ into build/js/
+node vibe-coding/tests/illustrated.test.mjs # needs playwright-core and Chrome; see the file header
 ```
 
-## How to Play
+Never edit `build/js/*.js` by hand. Change `src/` or `assets/` and rebuild. Some drawings come from the scripts in `tools/author/`, so re-run the relevant script after editing it.
 
-1. **Start**: Click "Start round" to begin the timer
-2. **Explore**: Drag to pan, scroll to zoom, use arrow keys/WASD to navigate
-3. **Find Waldo**: Search for the one person with all five traits:
-   - Red & white striped shirt
-   - Striped bobble hat with white pom-pom
-   - Round glasses
-   - Blue trousers
-   - Walking stick
-4. **Click Waldo**: Victory! Save your time to the local leaderboard
-5. **Share**: Copy the URL with `?seed=` to challenge friends
+## What changed in the latest overhaul (2026-11-16)
 
-## Testing & Verification
+- **The screen is always full of city.** The camera cannot zoom out or pan past the edge of the world at any window size, including after rotating a phone. Zoom is smooth and stays anchored under the mouse or between your fingers.
+- **One connected Savannah.** Bull Street now runs from City Hall on Bay Street through City Market and Johnson Square, between Pulaski and Lafayette Squares, past SCAD Poetter Hall and Monterey Square, to the Forsyth Park gate. There are street signs, crosswalks, and parked and moving cars.
+- **New drawings:** City Hall, Poetter Hall, the Jones Street houses, Mercer House, Temple Mickve Israel, the Pulaski Monument, three new crowd bodies (an umbrella, a student with books, a waving person), cars, street furniture and new mini-stories.
+- **Simpler for kids:** a picture of Waldo and **Play!**, a small in-game bar, three gentle hints, playful wrong-guess reactions, a celebration when you find him, and an optional score save.
 
-Use these URL parameters for testing:
+Screenshots before and after: `vibe-coding/build-record/visual-qa/overhaul/`. Measurements: `vibe-coding/build-record/performance.md`.
 
-| Parameter | Example | Purpose |
-|-----------|---------|---------|
-| `?seed=SAVANNAH2026` | Lock town layout for reproducible testing |
-| `?fallback=1` | Force fallback state for error testing |
-| `?beacon=1` | Show verification halo around Waldo |
-| `?crowd=10000` | Set crowd density (max: 10,000) |
+## For the class
 
-Example: `http://localhost:8000/?seed=TEST123&beacon=1`
+Project documents stay where they were: `vibe-coding/prd.md`, `plan.md`, `decisions/` (ADR-001, ADR-002), `HARNESS.md`, `HANDOFF.md`, `AGENTS.md`, `vibe-coding/build-record/` (AI-use log, testing log) and `vibe-coding/disclosure.md`. The original version 1 READMEs are archived in `vibe-coding/docs/history/`.
 
-## Technical Architecture
-
-### 3D Engine
-- **Projection**: Orthographic 45° elevation, 15° azimuth (Tiny London spec)
-- **PRNG**: Mulberry32 seeded pseudo-random number generator
-- **Rendering**: HTML5 Canvas 2D with painter's algorithm depth sorting
-- **Geometry**: Procedural generation of Savannah landmarks (Poetter Hall, Forsyth Fountain, Factors Walk, Festival Pier)
-
-### Design System
-- **80/15/5 Color Rule**: 80% calm storybook, 15% historic tokens, 5% whimsical pop
-- **Typography**: Fraunces/Fredoka (display), Plus Jakarta Sans (body), Space Mono (mono)
-- **UI**: Pill buttons, storybook cards, no heavy shadows
-
-### Privacy & Compliance
-- **Zero external requests**: No analytics, no tracking, no CDN
-- **localStorage only**: Leaderboard persists on user's machine
-- **Offline-first**: Works without internet connection
-
-## Multi-Agent Workflow
-
-The project was built using a **three-agent tandem approach**:
-
-1. **Agent 1** (Procedural 3D World & Math Architect): Built the 3D orthographic engine, PRNG, landmarks, crowd animation
-2. **Agent 2** (Cognitive UX, Storybook UI & Copy Engineer): Built the CSS design system, HUD, overlays, leaderboard
-3. **Agent 3** (Harness QA, Unslop Auditor & REA Verifier): Verified quality, ran audits, documented failures
-
-See `AGENTS.md`, `HARNESS.md`, and `HANDOFF.md` for complete details.
-
-## File Count
-
-- **Total Files**: 19
-- **Markdown Files**: 16
-- **HTML Files**: 1
-- **Symlinks**: 2 (CLAUDE.md, GEMINI.md)
-
-## Submission
-
-For course submission:
-1. Rename folder to `AI101_P4_[Last]_[First]`
-2. Verify all CHECKLIST.md items
-3. Push to GitHub repository shared with instructor
-
-Due: Sunday, November 22, 2026 at 11:59 p.m.
-
-## License
-
-All code and documentation are provided for educational purposes. See `vibe-coding/disclosure.md` for AI contribution details.
-
----
-
-**Project**: Waldo's Savannah  
-**Course**: AI101 Project 4  
-**Status**: Complete  
-**Version**: 1.0  
-**Last Updated**: 2026-11-15
+All art is original. No tracking, no accounts, no network requests: scores stay in your browser.

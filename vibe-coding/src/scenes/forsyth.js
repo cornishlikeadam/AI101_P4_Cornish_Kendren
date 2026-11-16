@@ -112,6 +112,16 @@
       s('picnics', 'props/food/picnic-blanket', x, y, 0, { k: 1.05 });
       for (const [a, dx, dy, f] of group) s('picnics', a, x + dx, y + dy, f);
     }
+    // 26 a dog racing after a runaway sun hat, its owner hurrying behind and a girl pointing
+    s('hat-chase', 'props/street/lost-hat', 2880, 880, 0, { k: 1.1 });
+    s('hat-chase', 'props/animals/dog-dachshund', 2810, 892, 0, { k: 0.9 });
+    s('hat-chase', B + 'walk', 2730, 886, 0); s('hat-chase', B + 'wave', 2960, 930, 1);
+    // 27 a painter who has just knocked over the easel and dropped every brush
+    s('dropped-brushes', C + 'painter', 600, 840, 1); s('dropped-brushes', 'props/furniture/dropped-brushes', 650, 862, 0, { k: 1.1 });
+    s('dropped-brushes', 'props/furniture/easel-fountain-painting', 540, 846, 1, { k: 0.85 }); s('dropped-brushes', B + 'books', 700, 850, 1);
+    // 28 a tourist family lining up for a group photograph, one of them still waving at someone
+    s('group-photo', C + 'tourist-photographer', 1360, 1010, 1);
+    for (const [a, dx, dy, f] of [[B + 'wave', -170, -6, 0], [B + 'dress', -140, 2, 0], [B + 'child', -118, 10, 0], [B + 'umbrella', -96, -2, 1], [B + 'walk', -70, 4, 1]]) s('group-photo', a, 1360 + dx, 1010 + dy, f);
     return st;
   }
 
@@ -161,7 +171,19 @@
     const sh = (o) => Object.assign({}, o, { y: o.y + OY });
     return {
       id: 'forsyth', name: 'Forsyth Park', y0: OY, h: H,
-      geography: () => geography().map(sh),
+      // In the city, Bull Street reaches the park gate between the two halves of the Gaston Street row,
+      // and Gaston Street carries traffic.
+      geography: () => {
+        const g = geography().map(sh);
+        if (OY > 0 && WS.streets) {
+          for (const e of g) if (e.asset === 'environments/forsyth/gaston-street-houses') e.x = e.flip ? 3285 : -85;
+          const add = (asset, x, y, k = 1, flip = 0, extra = {}) => g.push(Object.assign({ asset, x, y, k, flip }, extra));
+          WS.streets.street(add, OY + 270, 72, { parked: [] });
+          WS.streets.bull(add, OY, OY + 270, { noTrees: true });
+          add('props/street/sign-gaston', 1715, OY + 368, 0.9);
+        }
+        return g;
+      },
       stories: () => stories().map(sh),
       zones: ZONES.map((z) => Object.assign({}, z, { pt: (r) => { const [x, y] = z.pt(r); return [x, y + OY]; } })),
       blocked: (x, y) => blocked(x, y - OY),
@@ -182,5 +204,5 @@
     };
   }
   WS.districts = Object.assign(WS.districts || {}, { forsyth: district });
-  WS.scenes = Object.assign(WS.scenes || {}, { forsyth: { build: (identity) => WS.buildScene(identity, { id: 'forsyth', name: 'Forsyth Park', w: W, h: H, ground: 'environments/forsyth/ground', districts: [district(0)], budget: { low: 180, standard: 360, dense: 600 } }) } });
+  WS.scenes = Object.assign(WS.scenes || {}, { forsyth: { build: (identity) => WS.buildScene(identity, { id: 'forsyth', name: 'Forsyth Park', w: W, h: H, ground: 'environments/forsyth/ground', districts: [district(0)], budget: { low: 180, standard: 360, dense: 600 }, home: { x: 1600, y: 830, zoom: 1.3 } }) } });
 })();

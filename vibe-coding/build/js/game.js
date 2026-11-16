@@ -261,8 +261,8 @@
     };
     const fill = Math.max(0, total - people.length);
     const spacing = total > 3000 ? 8 : total > 1600 ? 18 : 30;
-    const POOL_PATH = [[B + 'walk', 20], [B + 'dress', 13], [B + 'tote', 10], [B + 'phone', 7], [B + 'cane', 5], [B + 'child', 6], [C + 'jogger', 7], [C + 'tourist-photographer', 5], [C + 'scad-student-portfolio', 4], [C + 'dog-walker', 3], [C + 'parent-stroller', 3], [C + 'cyclist', 2]];
-    const POOL_STAND = [[B + 'coffee', 14], [B + 'phone', 12], [B + 'walk', 10], [B + 'dress', 10], [B + 'tote', 8], [B + 'child', 7], [B + 'cane', 4], [C + 'tourist-photographer', 5], [C + 'scad-student-portfolio', 3]];
+    const POOL_PATH = [[B + 'walk', 12], [B + 'dress', 11], [B + 'tote', 6], [B + 'umbrella', 7], [B + 'books', 7], [B + 'phone', 7], [B + 'cane', 5], [B + 'child', 6], [C + 'jogger', 7], [C + 'tourist-photographer', 5], [C + 'scad-student-portfolio', 4], [C + 'dog-walker', 3], [C + 'parent-stroller', 3], [C + 'cyclist', 2]];
+    const POOL_STAND = [[B + 'coffee', 12], [B + 'phone', 10], [B + 'wave', 9], [B + 'books', 6], [B + 'walk', 6], [B + 'dress', 9], [B + 'tote', 4], [B + 'umbrella', 3], [B + 'child', 7], [B + 'cane', 4], [C + 'tourist-photographer', 5], [C + 'scad-student-portfolio', 3]];
     const zonePairs = districts.flatMap((d) => d.zones.map((z) => [z, z.w]));
     for (let placed = 0, tries = 0; placed < fill && tries < fill * 60; tries++) {
       const z = rng.weighted(zonePairs);
@@ -293,10 +293,53 @@
     const target = push({ id: 'target', asset: C + 'target-walker', x: candidates[0].x, y: candidates[0].y, flip: candidates[0].flip, kind: 'person', isTarget: true, colours: null, traits: ['stripes', 'bobble', 'glasses', 'blue', 'stick'], spot: candidates[0].spot });
 
     const area = (x, y) => { for (const d of districts) { const a = d.area(x, y); if (a) return a; } return 'somewhere in Savannah'; };
-    return { blocked, id: scene.id, name: scene.name, w: scene.w, h: scene.h, ground: scene.ground, background: '#F6E7C8', fountains: districts.flatMap((d) => d.fountains || (d.fountain ? [d.fountain] : [])), districts: districts.map((d) => ({ id: d.id, name: d.name, y0: d.y0, h: d.h })), area, entities, target, candidates, identity, people: people.length + 1, stories: new Set(allStories.map((s) => s.story)).size };
+    return { blocked, id: scene.id, name: scene.name, w: scene.w, h: scene.h, home: scene.home || null, ground: scene.ground, background: '#F6E7C8', fountains: districts.flatMap((d) => d.fountains || (d.fountain ? [d.fountain] : [])), districts: districts.map((d) => ({ id: d.id, name: d.name, y0: d.y0, h: d.h })), area, entities, target, candidates, identity, people: people.length + 1, stories: new Set(allStories.map((s) => s.story)).size };
   }
 
   WS.buildScene = buildScene;
+})();
+
+/* ---- src/scenes/streets.js ---- */
+/* Street furniture shared by every district (Agent 2): traffic and parked cars on the east-west streets,
+   and the trees, lamps, signs and hydrants of Bull Street, the north-south spine that joins the districts
+   from Bay Street to the Forsyth Park gate. Positions are fixed (no randomness), so geography never depends
+   on the seed. Mirrors tools/author/savannah-ground.mjs (Bull Street sidewalks at x 1515-1545 and 1655-1685). */
+(function () {
+  const WS = (window.WS = window.WS || {});
+  const BULL = { x0: 1545, x1: 1655, s0: 1515, s1: 1685 };
+  const CAR_COLOURS = ['#C73E3A', '#2F7FA8', '#F2D55C', '#3E8E7E', '#F5F0E6', '#3D4F6E', '#E07A3F', '#7D5BA6', '#2B2B2B', '#8DBA5A'];
+  let ci = 0;
+  const car = (add, x, y, flip, extra = {}) => add(ci % 3 === 2 ? 'props/vehicles/car-small' : 'props/vehicles/car', x, y, 0.72, flip, Object.assign({ tint: { car: CAR_COLOURS[ci++ % CAR_COLOURS.length], car2: '#F5F0E6' } }, extra));
+
+  // An east-west street from y to y + h: parked cars along the south curb (never on the Bull crossing),
+  // and moving traffic in both directions. Westbound keeps to the north half, eastbound to the south half.
+  function street(add, y, h, opts = {}) {
+    const parked = opts.parked || [], moving = opts.moving == null ? 2 : opts.moving;
+    for (const x of parked) if (x < BULL.s0 - 90 || x > BULL.s1 + 90) car(add, x, y + h - 3, (x / 100) % 2 > 1 ? 1 : 0, { parked: true });
+    for (let i = 0; i < moving; i++) {
+      car(add, 400 + i * 1500 + (y % 300), y + h * 0.5 - 2, 1, { drive: 46 + ((y + i * 17) % 22) });
+      car(add, 1100 + i * 1500 - (y % 260), y + h * 0.78, 0, { drive: 50 + ((y + i * 29) % 18) });
+    }
+  }
+  // Bull Street between two cross streets: an oak in every tree pit (alternating sides), lamps between.
+  function bull(add, y0, y1, opts = {}) {
+    let side = 0;
+    for (let y = y0 + 90; y < y1 - 60; y += 170, side++) {
+      const x = side % 2 ? BULL.s1 - 15 : BULL.s0 + 15;
+      if (!opts.noTrees) add(side % 3 === 2 ? 'props/vegetation/live-oak-lean' : 'props/vegetation/live-oak', x, y + 4, 0.42, side % 2);
+      add('props/furniture/lamp-post', side % 2 ? BULL.s0 + 12 : BULL.s1 - 12, y + 70, 0.8);
+    }
+  }
+  // The corner of Bull and a cross street: the street sign, a hydrant and a litter bin.
+  function corner(add, name, y) {
+    add('props/street/sign-' + name, BULL.s1 + 22, y, 0.9);
+    add('props/street/hydrant', BULL.s0 - 30, y - 4, 0.9);
+    add('props/street/bin', BULL.s1 + 60, y - 2, 0.9);
+  }
+  // Pedestrians keep off the asphalt of Bull Street.
+  const onBullRoad = (x, y, y0, y1) => x > BULL.x0 - 4 && x < BULL.x1 + 4 && y > y0 && y < y1;
+  const bullWalk = (y0, y1) => ({ id: 'bull-walk', w: 4, path: true, pt: (r) => [r() < 0.5 ? BULL.s0 + 4 + r() * 22 : BULL.x1 + 4 + r() * 22, y0 + 40 + r() * (y1 - y0 - 80)] });
+  WS.streets = { BULL, street, bull, corner, onBullRoad, bullWalk };
 })();
 
 /* ---- src/scenes/forsyth.js ---- */
@@ -414,6 +457,16 @@
       s('picnics', 'props/food/picnic-blanket', x, y, 0, { k: 1.05 });
       for (const [a, dx, dy, f] of group) s('picnics', a, x + dx, y + dy, f);
     }
+    // 26 a dog racing after a runaway sun hat, its owner hurrying behind and a girl pointing
+    s('hat-chase', 'props/street/lost-hat', 2880, 880, 0, { k: 1.1 });
+    s('hat-chase', 'props/animals/dog-dachshund', 2810, 892, 0, { k: 0.9 });
+    s('hat-chase', B + 'walk', 2730, 886, 0); s('hat-chase', B + 'wave', 2960, 930, 1);
+    // 27 a painter who has just knocked over the easel and dropped every brush
+    s('dropped-brushes', C + 'painter', 600, 840, 1); s('dropped-brushes', 'props/furniture/dropped-brushes', 650, 862, 0, { k: 1.1 });
+    s('dropped-brushes', 'props/furniture/easel-fountain-painting', 540, 846, 1, { k: 0.85 }); s('dropped-brushes', B + 'books', 700, 850, 1);
+    // 28 a tourist family lining up for a group photograph, one of them still waving at someone
+    s('group-photo', C + 'tourist-photographer', 1360, 1010, 1);
+    for (const [a, dx, dy, f] of [[B + 'wave', -170, -6, 0], [B + 'dress', -140, 2, 0], [B + 'child', -118, 10, 0], [B + 'umbrella', -96, -2, 1], [B + 'walk', -70, 4, 1]]) s('group-photo', a, 1360 + dx, 1010 + dy, f);
     return st;
   }
 
@@ -463,7 +516,19 @@
     const sh = (o) => Object.assign({}, o, { y: o.y + OY });
     return {
       id: 'forsyth', name: 'Forsyth Park', y0: OY, h: H,
-      geography: () => geography().map(sh),
+      // In the city, Bull Street reaches the park gate between the two halves of the Gaston Street row,
+      // and Gaston Street carries traffic.
+      geography: () => {
+        const g = geography().map(sh);
+        if (OY > 0 && WS.streets) {
+          for (const e of g) if (e.asset === 'environments/forsyth/gaston-street-houses') e.x = e.flip ? 3285 : -85;
+          const add = (asset, x, y, k = 1, flip = 0, extra = {}) => g.push(Object.assign({ asset, x, y, k, flip }, extra));
+          WS.streets.street(add, OY + 270, 72, { parked: [] });
+          WS.streets.bull(add, OY, OY + 270, { noTrees: true });
+          add('props/street/sign-gaston', 1715, OY + 368, 0.9);
+        }
+        return g;
+      },
       stories: () => stories().map(sh),
       zones: ZONES.map((z) => Object.assign({}, z, { pt: (r) => { const [x, y] = z.pt(r); return [x, y + OY]; } })),
       blocked: (x, y) => blocked(x, y - OY),
@@ -484,7 +549,7 @@
     };
   }
   WS.districts = Object.assign(WS.districts || {}, { forsyth: district });
-  WS.scenes = Object.assign(WS.scenes || {}, { forsyth: { build: (identity) => WS.buildScene(identity, { id: 'forsyth', name: 'Forsyth Park', w: W, h: H, ground: 'environments/forsyth/ground', districts: [district(0)], budget: { low: 180, standard: 360, dense: 600 } }) } });
+  WS.scenes = Object.assign(WS.scenes || {}, { forsyth: { build: (identity) => WS.buildScene(identity, { id: 'forsyth', name: 'Forsyth Park', w: W, h: H, ground: 'environments/forsyth/ground', districts: [district(0)], budget: { low: 180, standard: 360, dense: 600 }, home: { x: 1600, y: 830, zoom: 1.3 } }) } });
 })();
 
 /* ---- src/scenes/riverfront.js ---- */
@@ -507,8 +572,10 @@
     for (let x = 120; x < 3200; x += 260) add('props/furniture/lamp-post', x, 452, 0.95);
     for (const x of [260, 760, 1300, 1760]) add('props/furniture/park-bench', x, 470, 0.9);
     for (let x = 80; x < 3200; x += 380) add('props/furniture/lamp-post', x, 1046, 0.9);
-    add('props/vehicles/trolley', 1200, 1470, 0.95);
-    add('props/vehicles/carriage', 2500, 1460, 0.95, 1);
+    add('props/vehicles/trolley', 1200, 1474, 0.95, 0, { drive: 30 });
+    add('props/landmarks/city-hall-dome', 1600, 1350, 1);
+    add('props/vehicles/carriage', 2500, 1440, 0.95, 1, { drive: 24 });
+    if (WS.streets) WS.streets.street(add, 1400, 80, { parked: [], moving: 1 });
     add('props/vehicles/carriage', 700, 1030, 0.95);
     return g;
   }
@@ -547,6 +614,7 @@
   ];
   function area(x, y) {
     if (y < 0 || y >= 1500) return null;
+    if (y >= 1350 && x > 1430 && x < 1770) return 'on Bay Street, in front of City Hall';
     if (x > 2000 && y < 640) return 'on the Festival Pier';
     if (y < 900) return x < 900 ? 'on the riverwalk by the Waving Girl' : 'on the riverwalk along the Savannah River';
     if (y < 1100) return 'on cobbled River Street';
@@ -556,15 +624,20 @@
 })();
 
 /* ---- src/scenes/market.js ---- */
-/* Bay Street to City Market (Agent 2): world y 1500-2950. Shopfront row with the City Market gate,
-   a brick plaza with stalls, café tables, planters and street performers, then Congress Street. */
+/* Bay Street to Congress Street (Agent 2): world y 1500-2950. As in the real city, City Market lies west of
+   Bull Street (its brick plaza, stalls, café tables and street performers) and Johnson Square lies east of it,
+   with the Greene Monument obelisk at its centre. Congress Street closes the block at y 2700-2780.
+   Mirrors tools/author/savannah-ground.mjs. */
 (function () {
   const WS = (window.WS = window.WS || {});
   const C = 'characters/archetypes/', B = 'characters/bodies/';
   const inRect = (x, y, r) => x >= r[0] && x <= r[2] && y >= r[1] && y <= r[3];
-  const STALLS = [[500, 2060], [700, 2060], [900, 2060], [2300, 2060], [2500, 2060], [2700, 2060], [1100, 2520], [2100, 2520], [400, 2560], [2800, 2560]];
-  const TENTS = [[700, 2250], [900, 2250], [2300, 2250], [2500, 2250]];
-  const TABLES = [[1350, 2160], [1520, 2180], [1700, 2160], [1860, 2180], [1440, 2320], [1780, 2330]];
+  const ST = () => WS.streets;
+  const JS = { cx: 2450, cy: 2265, hw: 650, hh: 385 };          // Johnson Square lawn
+  const STALLS = [[200, 2060], [400, 2060], [600, 2060], [940, 2060], [1140, 2060], [1340, 2060], [300, 2590], [700, 2590], [1100, 2590], [1400, 2590]];
+  const TENTS = [[300, 2280], [540, 2280], [1180, 2280], [1410, 2280]];
+  const TABLES = [[760, 2220], [920, 2240], [1060, 2220], [720, 2400], [890, 2420], [1060, 2400]];
+  const PLANTERS = [380, 1300];
   function geography() {
     const g = [], add = (asset, x, y, k = 1, flip = 0, extra = {}) => g.push(Object.assign({ asset, x, y, k, flip }, extra));
     add('environments/market/market-row', 0, 1830, 1, 0, { layer: 'far' });
@@ -572,66 +645,93 @@
     STALLS.forEach(([x, y], i) => add('props/market/stall-' + kinds[i % 3], x, y, 1.05, 0, { tint: { awn: awn[i % 6], awn2: '#F5F0E6', cloth: ['#F2D55C', '#F5F0E6', '#F4A3B5'][i % 3] } }));
     const tc = ['#C73E3A', '#2F7FA8', '#3E8E7E', '#E07A3F'];
     TENTS.forEach(([x, y], i) => add('props/festival/tent', x, y, 1, i % 2, { tint: { tent: tc[i], tent2: '#F5F0E6', cloth: ['#F4A3B5', '#F2D55C', '#9EC3B5', '#F5F0E6'][i] } }));
-    for (const x of [1300, 1900]) add('props/vegetation/azalea-bush', x, 2600, 0.9, x > 1600 ? 1 : 0);
     TABLES.forEach(([x, y], i) => add('props/furniture/cafe-table', x, y, 0.9, i % 2, { tint: { umb: ['#2F5D50', '#C73E3A', '#2F7FA8', '#E8C872', '#7D5BA6', '#E07A3F'][i], umb2: '#F5F0E6' } }));
-    for (const x of [500, 1100, 2100, 2700]) { add('props/vegetation/azalea-bush', x - 40, 2386, 0.85); add('props/vegetation/azalea-bush', x + 40, 2392, 0.85, 1); add('props/vegetation/palmetto', x, 2372, 0.7); }
-    for (let x = 200; x < 3200; x += 400) add('props/furniture/lamp-post', x, 1850, 0.95);
-    add('props/vehicles/carriage', 900, 2770, 0.95); add('props/vehicles/trolley', 2300, 2776, 0.95);
+    for (const x of PLANTERS) { add('props/vegetation/azalea-bush', x - 40, 2446, 0.85); add('props/vegetation/azalea-bush', x + 40, 2452, 0.85, 1); add('props/vegetation/palmetto', x, 2432, 0.7); }
+    for (let x = 200; x < 1500; x += 400) add('props/furniture/lamp-post', x, 1850, 0.95);
+    add('props/street/bike-rack', 1440, 1870, 0.9);
+    // Johnson Square: oaks at the corners, benches along the paths, the obelisk in the middle
+    const OAK = ['props/vegetation/live-oak', 'props/vegetation/live-oak-tall', 'props/vegetation/live-oak-lean'];
+    [[-480, -230], [480, -230], [-480, 280], [480, 280], [-180, 300], [200, -250]].forEach(([dx, dy], i) => add(OAK[i % 3], JS.cx + dx, JS.cy + dy, 0.66, i % 2));
+    add('props/landmarks/obelisk', JS.cx, JS.cy + 30, 0.95);
+    for (const [dx, dy] of [[-300, -40], [300, -40], [-300, 70], [300, 70], [-120, 220], [120, 220]]) add('props/furniture/park-bench', JS.cx + dx, JS.cy + dy, 0.85);
+    for (const dx of [-230, 230]) add('props/furniture/lamp-post', JS.cx + dx, JS.cy - 80, 0.9);
+    for (const [dx, dy] of [[-520, 40], [520, 40]]) add('props/vegetation/azalea-bush', JS.cx + dx, JS.cy + dy, 0.9);
+    for (let x = 1760; x < 3200; x += 360) add('props/furniture/lamp-post', x, 1850, 0.95);
+    add('props/street/bus-stop', 2000, 1872, 0.85);
+    // Bull Street, Bay and Congress corners, Congress Street traffic
+    ST().bull(add, 1480, 2700);
+    ST().corner(add, 'bay', 1520); ST().corner(add, 'congress', 2800);
+    ST().street(add, 2700, 80, { parked: [260, 520, 900, 1280, 1980, 2340, 2760, 3020] });
+    add('props/vehicles/carriage', 1100, 2750, 0.95, 1, { drive: 26 }); add('props/vehicles/trolley', 2600, 2774, 0.95, 0, { drive: 32 });
     add('props/vegetation/live-oak-tall', 150, 2920, 0.8); add('props/vegetation/live-oak', 3060, 2930, 0.8, 1);
     return g;
   }
   function stories() {
     const st = [], s = (story, asset, x, y, flip = 0, extra = {}) => st.push(Object.assign({ story, asset, x, y, flip }, extra));
     s('market-painter', C + 'painter', 1200, 1960); s('market-painter', 'props/furniture/easel-fountain-painting', 1258, 1962, 0, { k: 0.85 });
-    s('market-busker', C + 'saxophonist', 2000, 1960, 1); s('market-busker', 'props/furniture/tip-hat', 1950, 1968, 0, { k: 0.9 });
-    for (const [x, f] of [[1900, 0], [1940, 1], [2060, 1]]) s('market-busker', B + 'coffee', x, 1990, f);
-    s('market-dance', C + 'dancer', 1600, 2470); s('market-dance', B + 'phone', 1660, 2480, 1); s('market-dance', B + 'child', 1550, 2490);
+    s('market-busker', C + 'saxophonist', 2450, 2150, 1); s('market-busker', 'props/furniture/tip-hat', 2400, 2158, 0, { k: 0.9 });
+    for (const [x, f] of [[2350, 0], [2390, 1], [2510, 1], [2540, 0]]) s('market-busker', B + 'coffee', x, 2182, f);
+    s('market-dance', C + 'dancer', 600, 2480); s('market-dance', B + 'phone', 660, 2490, 1); s('market-dance', B + 'child', 550, 2500);
     for (const [x, y, both] of TABLES.map(([x, y], i) => [x, y, i % 2])) { s('market-cafe', B + 'seated', x - 24, y + 3); if (both) s('market-cafe', B + 'seated', x + 26, y + 4, 1); }
-    s('market-chess', C + 'chess-players', 2700, 2300); s('market-chess', B + 'cane', 2760, 2270, 1);
+    s('market-chess', C + 'chess-players', 2820, 2420); s('market-chess', B + 'cane', 2880, 2392, 1);
     s('carriage-ride', C + 'bride', 960, 2800); s('carriage-ride', C + 'groom', 1010, 2802, 1);
     for (const [i, [x, y]] of STALLS.entries()) s('market-vendors', [B + 'coffee', B + 'dress', B + 'walk'][i % 3], x + 20, y - 14, i % 2);
-    // shoppers at the tents, a flower buyer with a toddler, a juggler drawing kids, students sketching
     for (const [i, [x, y]] of TENTS.entries()) for (const [dx, a, f] of [[-40, B + 'tote', 0], [10, B + 'dress', 1], [50, [B + 'coffee', B + 'phone', B + 'cane', B + 'walk'][i], 1]]) s('market-tents', a, x + dx, y + 30, f);
-    s('market-juggler', C + 'juggler', 1600, 2620); for (const [x, y, f] of [[1550, 2650, 0], [1650, 2655, 1], [1600, 2668, 0], [1520, 2620, 0]]) s('market-juggler', B + 'child', x, y, f);
-    s('market-sketch', C + 'scad-student-portfolio', 1250, 2440); s('market-sketch', C + 'scad-student-portfolio', 1300, 2450, 1); s('market-sketch', C + 'painter', 1960, 2440, 1);
-    s('market-balloon', C + 'kid-balloon', 2380, 2400); s('market-balloon', C + 'parent-stroller', 2300, 2410);
-    s('market-pigeons', C + 'elder-pigeon-feeder', 820, 2440); for (const [x, y, f] of [[880, 2448, 0], [900, 2462, 1], [860, 2470, 1]]) s('market-pigeons', 'props/animals/pigeon', x, y, f, { k: 0.9 });
+    s('market-juggler', C + 'juggler', 950, 2560); for (const [x, y, f] of [[900, 2590, 0], [1000, 2595, 1], [950, 2608, 0], [870, 2560, 0]]) s('market-juggler', B + 'child', x, y, f);
+    s('market-sketch', C + 'scad-student-portfolio', 2150, 2380); s('market-sketch', C + 'scad-student-portfolio', 2200, 2390, 1); s('market-sketch', C + 'painter', 2060, 2370, 1);
+    s('market-balloon', C + 'kid-balloon', 2700, 2040); s('market-balloon', C + 'parent-stroller', 2620, 2050);
+    s('market-pigeons', C + 'elder-pigeon-feeder', 2300, 2320); for (const [x, y, f] of [[2360, 2328, 0], [2380, 2342, 1], [2340, 2350, 1]]) s('market-pigeons', 'props/animals/pigeon', x, y, f, { k: 0.9 });
+    s('johnson-tour', C + 'tour-guide', 2200, 2230); for (const [x, y, f] of [[2140, 2250, 0], [2170, 2268, 1], [2120, 2276, 0], [2240, 2262, 1]]) s('johnson-tour', [B + 'walk', C + 'tourist-photographer', B + 'dress', B + 'phone'][x % 4], x, y, f);
     return st;
   }
   const ZONES = [
-    { id: 'market-plaza', w: 46, path: false, pt: (r) => [80 + r() * 3040, 1880 + r() * 780] },
+    { id: 'market-plaza', w: 30, path: false, pt: (r) => [80 + r() * 1400, 1880 + r() * 780] },
+    { id: 'johnson-paths', w: 14, path: true, pt: (r) => (r() < 0.5 ? [JS.cx - 600 + r() * 1200, JS.cy - 20 + r() * 40] : [JS.cx - 20 + r() * 40, JS.cy - 360 + r() * 720]) },
+    { id: 'johnson-lawn', w: 8, path: false, pt: (r) => [JS.cx - 620 + r() * 1240, JS.cy - 360 + r() * 720] },
     { id: 'market-front', w: 10, path: true, pt: (r) => [40 + r() * 3120, 1840 + r() * 34] },
     { id: 'congress-walk', w: 8, path: true, pt: (r) => [40 + r() * 3120, 2790 + r() * 150] },
+    ST().bullWalk(1480, 2700),
   ];
-  const blocked = (x, y) => y < 1836 || (y > 2696 && y < 2786) || STALLS.some(([sx, sy]) => inRect(x, y, [sx - 62, sy - 26, sx + 62, sy + 4])) || TENTS.some(([tx, ty]) => inRect(x, y, [tx - 66, ty - 10, tx + 66, ty + 2])) || TABLES.some(([tx, ty]) => inRect(x, y, [tx - 40, ty - 12, tx + 40, ty + 6])) || [500, 1100, 2100, 2700].some((px) => ((x - px) / 92) ** 2 + ((y - 2380) / 38) ** 2 < 1);
+  const blocked = (x, y) => y < 1836 || (y > 2696 && y < 2786) || ST().onBullRoad(x, y, 1480, 2700)
+    || STALLS.some(([sx, sy]) => inRect(x, y, [sx - 62, sy - 26, sx + 62, sy + 4])) || TENTS.some(([tx, ty]) => inRect(x, y, [tx - 66, ty - 10, tx + 66, ty + 2]))
+    || TABLES.some(([tx, ty]) => inRect(x, y, [tx - 40, ty - 12, tx + 40, ty + 6])) || PLANTERS.some((px) => ((x - px) / 92) ** 2 + ((y - 2440) / 38) ** 2 < 1)
+    || ((x - JS.cx) / 60) ** 2 + ((y - JS.cy - 30) / 26) ** 2 < 1;
   const SPOTS = [
-    { id: 'market-gate', x: 1600, y: 1900, r: 160, d: ['easy', 'normal'] },
-    { id: 'market-stalls', x: 800, y: 2090, r: 200, d: ['normal', 'hard'] },
-    { id: 'market-tents', x: 1600, y: 2280, r: 900, d: ['hard', 'normal'] },
-    { id: 'market-cafe-tables', x: 1600, y: 2260, r: 260, d: ['hard'] },
-    { id: 'busker-ring', x: 1980, y: 1990, r: 80, d: ['normal'] },
+    { id: 'market-gate', x: 760, y: 1900, r: 160, d: ['easy', 'normal'] },
+    { id: 'market-stalls', x: 600, y: 2090, r: 200, d: ['normal', 'hard'] },
+    { id: 'market-tents', x: 900, y: 2300, r: 500, d: ['hard', 'normal'] },
+    { id: 'market-cafe-tables', x: 900, y: 2320, r: 200, d: ['hard'] },
+    { id: 'busker-ring', x: 2450, y: 2180, r: 90, d: ['normal'] },
+    { id: 'johnson-square', x: 2450, y: 2265, r: 520, d: ['easy', 'normal'] },
+    { id: 'johnson-tour', x: 2180, y: 2260, r: 70, d: ['hard'] },
     { id: 'congress-street', x: 1600, y: 2860, r: 1200, d: ['easy'] },
   ];
   function area(x, y) {
     if (y < 1500 || y >= 2950) return null;
-    if (y < 1880) return 'along the City Market shopfronts';
-    if (y > 2690) return 'on Congress Street below the market';
-    return 'in the City Market plaza';
+    if (y < 1880) return x < 1600 ? 'along the City Market shopfronts' : 'on the Bay Street side of Johnson Square';
+    if (y > 2690) return 'on Congress Street';
+    if (x > 1500 && x < 1700) return 'on Bull Street, between City Market and Johnson Square';
+    return x < 1600 ? 'in the City Market plaza' : 'in Johnson Square, by the Greene Monument';
   }
-  WS.districts = Object.assign(WS.districts || {}, { market: () => ({ id: 'market', name: 'City Market', y0: 1500, h: 1450, geography, stories, zones: ZONES, blocked, spots: SPOTS, area }) });
+  WS.districts = Object.assign(WS.districts || {}, { market: () => ({ id: 'market', name: 'City Market & Johnson Square', y0: 1500, h: 1450, geography, stories, zones: ZONES, blocked, spots: SPOTS, area }) });
 })();
 
 /* ---- src/scenes/squares.js ---- */
-/* Two Oglethorpe squares (Agent 2): world y 2950-4300. Townhouse rows, an obelisk square and a fountain
-   square, with oaks, benches and tour traffic. Mirrors tools/author/savannah-ground.mjs. */
+/* Harris Street (Agent 2): world y 2950-4300. Bull Street runs between Pulaski Square (west, live oaks and
+   benches) and Lafayette Square (east, its fountain, with the twin-spired cathedral on the Harris Street row).
+   Both are real squares on the Harris-Charlton row; the space between them is simplified. Charlton Street
+   closes the block at y 4040-4110. Mirrors tools/author/savannah-ground.mjs. */
 (function () {
   const WS = (window.WS = window.WS || {});
   const C = 'characters/archetypes/', B = 'characters/bodies/';
   const SQ = [[900, 3655], [2300, 3655]];
+  const ST = () => WS.streets;
   function geography() {
     const g = [], add = (asset, x, y, k = 1, flip = 0, extra = {}) => g.push(Object.assign({ asset, x, y, k, flip }, extra));
     add('environments/squares/row-houses', 0, 3220, 1, 0, { layer: 'far' });
-    add('props/landmarks/obelisk', 900, 3690, 0.95);
+    // Pulaski Square has no monument: a ring of benches and azaleas round a lamp
+    for (const [dx, dy] of [[-90, -40], [90, -40], [-90, 40], [90, 40]]) add('props/vegetation/azalea-bush', 900 + dx, 3655 + dy, 0.8, dx > 0 ? 1 : 0);
+    add('props/furniture/lamp-post', 900, 3672, 0.95);
     add('environments/forsyth/fountain', 2300, 3700, 0.5);
     const OAK = ['props/vegetation/live-oak', 'props/vegetation/live-oak-tall', 'props/vegetation/live-oak-lean'];
     SQ.forEach(([cx, cy], q) => {
@@ -640,7 +740,12 @@
       for (const [dx, dy] of [[-260, -10], [260, -10]]) add('props/vegetation/azalea-bush', cx + dx, cy + dy, 0.9, dx > 0 ? 1 : 0);
       for (const dx of [-220, 220]) add('props/furniture/lamp-post', cx + dx, cy - 60, 0.9);
     });
-    add('props/vehicles/trolley', 1600, 3276, 0.95); add('props/vehicles/carriage', 400, 4096, 0.95, 1);
+    ST().bull(add, 2780, 3220); ST().bull(add, 3290, 4040, { noTrees: true }); ST().bull(add, 4110, 4300);
+    ST().corner(add, 'harris', 3310); ST().corner(add, 'charlton', 4130);
+    ST().street(add, 3220, 70, { parked: [220, 480, 760, 1040, 1300, 1900, 2160, 2700, 2960] });
+    ST().street(add, 4040, 70, { parked: [300, 620, 980, 1240, 1980, 2380, 2620, 2900] });
+    add('props/vehicles/trolley', 2400, 3286, 0.95, 0, { drive: 30 }); add('props/vehicles/carriage', 400, 4096, 0.95, 0, { drive: 24 });
+    add('props/street/bus-stop', 2600, 4140, 0.85); add('props/street/bike-rack', 1300, 4136, 0.9);
     return g;
   }
   function stories() {
@@ -656,9 +761,9 @@
     { id: 'square-paths', w: 20, path: true, pt: (r) => { const [cx, cy] = SQ[r() < 0.5 ? 0 : 1]; return r() < 0.5 ? [cx - 500 + r() * 1000, cy - 20 + r() * 40] : [cx - 20 + r() * 40, cy - 310 + r() * 620]; } },
     { id: 'square-lawns', w: 14, path: false, pt: (r) => { const [cx, cy] = SQ[r() < 0.5 ? 0 : 1]; return [cx - 500 + r() * 1000, cy - 300 + r() * 600]; } },
     { id: 'square-sidewalks', w: 10, path: true, pt: (r) => [40 + r() * 3120, r() < 0.5 ? 3300 + r() * 26 : 4120 + r() * 160] },
-    { id: 'between-squares', w: 6, path: true, pt: (r) => [1440 + r() * 320, 3320 + r() * 700] },
+    ST().bullWalk(3290, 4040),
   ];
-  const blocked = (x, y) => y < 3296 || (y > 4036 && y < 4116) || ((x - 900) / 40) ** 2 + ((y - 3680) / 26) ** 2 < 1 || ((x - 2300) / 150) ** 2 + ((y - 3650) / 60) ** 2 < 1;
+  const blocked = (x, y) => y < 3296 || (y > 4036 && y < 4116) || ST().onBullRoad(x, y, 3290, 4300) || ((x - 900) / 110) ** 2 + ((y - 3655) / 50) ** 2 < 1 || ((x - 2300) / 150) ** 2 + ((y - 3650) / 60) ** 2 < 1;
   const SPOTS = [
     { id: 'square-west-paths', x: 900, y: 3655, r: 420, d: ['easy', 'normal'] },
     { id: 'square-east-oaks', x: 2300, y: 3655, r: 480, d: ['hard', 'normal'] },
@@ -667,24 +772,109 @@
   ];
   function area(x, y) {
     if (y < 2950 || y >= 4300) return null;
-    if (y < 3300) return 'on the street below the squares\' townhouses';
-    if (y > 4030) return 'on the street between the squares and Forsyth Park';
-    return x < 1600 ? 'in the obelisk square' : 'in the fountain square';
+    if (y < 3300) return 'on Harris Street, below the cathedral';
+    if (y > 4030) return 'on Charlton Street';
+    if (x > 1500 && x < 1700) return 'on Bull Street, between the squares';
+    return x < 1600 ? 'in Pulaski Square' : 'in Lafayette Square, by the fountain';
   }
-  WS.districts = Object.assign(WS.districts || {}, { squares: () => ({ id: 'squares', name: 'The squares', y0: 2950, h: 1350, geography, stories, zones: ZONES, blocked, spots: SPOTS, area }) });
+  WS.districts = Object.assign(WS.districts || {}, { squares: () => ({ id: 'squares', name: 'Pulaski & Lafayette Squares', y0: 2950, h: 1350, geography, stories, zones: ZONES, blocked, spots: SPOTS, area }) });
+})();
+
+/* ---- src/scenes/monterey.js ---- */
+/* Jones Street and Monterey Square (Agent 2): world y 4300-5200, the last blocks of Bull Street before
+   Forsyth Park. The Jones Street row (Victorian, Italianate and Second Empire houses, with SCAD's Poetter Hall
+   at the Bull Street corner), then Monterey Square on Bull with the Pulaski Monument, Mercer House on its
+   west side and Temple Mickve Israel on its east. Distances are compressed; the order matches the real city.
+   Mirrors tools/author/savannah-ground.mjs. */
+(function () {
+  const WS = (window.WS = window.WS || {});
+  const C = 'characters/archetypes/', B = 'characters/bodies/';
+  const ST = () => WS.streets;
+  const Y0 = 4300, H = 900;
+  const SQ = { cx: 1600, cy: 4910, hw: 450, hh: 170 };       // the square's lawn; a paved ring road surrounds it
+  const RING = [1080, 4680, 2120, 5140];
+  function geography() {
+    const g = [], add = (asset, x, y, k = 1, flip = 0, extra = {}) => g.push(Object.assign({ asset, x, y, k, flip }, extra));
+    add('environments/monterey/jones-row', 0, 4560, 1, 0, { layer: 'far' });
+    ST().street(add, 4560, 80, { parked: [200, 470, 760, 1020, 1300, 1960, 2240, 2520, 2800, 3060] });
+    ST().corner(add, 'jones', 4660); ST().bull(add, 4110, 4560, { noTrees: true });
+    // Monterey Square
+    add('props/landmarks/pulaski-monument', SQ.cx, SQ.cy + 40, 0.82);
+    const OAK = ['props/vegetation/live-oak', 'props/vegetation/live-oak-tall', 'props/vegetation/live-oak-lean'];
+    [[-360, -100], [360, -100], [-360, 150], [360, 150]].forEach(([dx, dy], i) => add(OAK[i % 3], SQ.cx + dx, SQ.cy + dy, 0.6, i % 2));
+    for (const [dx, dy] of [[-200, -60], [200, -60], [-200, 70], [200, 70]]) add('props/furniture/park-bench', SQ.cx + dx, SQ.cy + dy, 0.85);
+    for (const dx of [-150, 150]) add('props/furniture/lamp-post', SQ.cx + dx, SQ.cy - 40, 0.9);
+    for (const dx of [-260, 260]) add('props/vegetation/azalea-bush', SQ.cx + dx, SQ.cy + 6, 0.85, dx > 0 ? 1 : 0);
+    // the houses facing the square, behind their front gardens
+    add('environments/monterey/mercer-house', 560, 4930, 1);
+    add('environments/monterey/temple', 2640, 4930, 1);
+    for (const x of [180, 980, 2230, 3020]) add('props/vegetation/live-oak-tall', x, 4980, 0.6, x > 1600 ? 1 : 0);
+    for (const x of [130, 300, 840, 1000, 2200, 2400, 2880, 3070]) add('props/vegetation/azalea-bush', x, 4986, 0.8, x % 2);
+    for (const x of [140, 560, 980, 2240, 2640, 3060]) add('props/furniture/lamp-post', x, 5010, 0.92);
+    add('props/street/bike-rack', 860, 5020, 0.9); add('props/street/bin', 1060, 5014, 0.9);
+    // traffic round the square, and Bull Street's last block to the Forsyth gate
+    add('props/vehicles/car', 1250, 4718, 0.7, 0, { tint: { car: '#2F7FA8', car2: '#F5F0E6' }, parked: true });
+    add('props/vehicles/car-small', 1950, 5136, 0.7, 1, { tint: { car: '#F2D55C', car2: '#F5F0E6' }, parked: true });
+    add('props/vehicles/carriage', 1350, 5130, 0.9, 1);
+    ST().corner(add, 'gordon', 5180);
+    return g;
+  }
+  function stories() {
+    const st = [], s = (story, asset, x, y, flip = 0, extra = {}) => st.push(Object.assign({ story, asset, x, y, flip }, extra));
+    // SCAD students hauling an enormous sculpture out of Poetter Hall toward Bull Street
+    s('scad-sculpture', 'props/street/sculpture-haul', 1830, 4692);
+    s('scad-sculpture', C + 'scad-student-portfolio', 1960, 4700, 1); s('scad-sculpture', B + 'books', 2010, 4690);
+    // a ghost-tour guide at the Mercer House gate with a group listening
+    s('mercer-tour', C + 'historian', 760, 5040, 1); for (const [x, f] of [[690, 0], [830, 1], [870, 1], [650, 0]]) s('mercer-tour', [B + 'walk', C + 'tourist-photographer', B + 'dress', B + 'umbrella'][x % 4], x, 5070 + (x % 3) * 6, f);
+    // tourists photographing the monument
+    s('monument-photo', C + 'tourist-photographer', 1690, 5010, 1); for (const [x, f] of [[1560, 0], [1600, 1], [1640, 0]]) s('monument-photo', [B + 'wave', B + 'dress', B + 'walk'][x % 3], x, 4990, f);
+    // a painter at an easel on the square, and a reader on a bench
+    s('square-easel', C + 'painter', 1360, 4870); s('square-easel', 'props/furniture/easel-fountain-painting', 1412, 4872, 0, { k: 0.85 });
+    s('square-reader', C + 'reader-seated', 1800, 4855, 1);
+    return st;
+  }
+  const ZONES = [
+    { id: 'jones-walk', w: 12, path: true, pt: (r) => [40 + r() * 3120, 4646 + r() * 28] },
+    { id: 'monterey-paths', w: 10, path: true, pt: (r) => (r() < 0.5 ? [SQ.cx - 420 + r() * 840, SQ.cy - 16 + r() * 32] : [SQ.cx - 16 + r() * 32, SQ.cy - 150 + r() * 300]) },
+    { id: 'monterey-sidewalks', w: 10, path: true, pt: (r) => [40 + r() * 3120, 5020 + r() * 160] },
+    ST().bullWalk(4110, 4560),
+  ];
+  const inRing = (x, y) => x > RING[0] && x < RING[2] && y > RING[1] && y < RING[3] && !(Math.abs(x - SQ.cx) < SQ.hw && Math.abs(y - SQ.cy) < SQ.hh);
+  const blocked = (x, y) => y < 4644 || (y > 4556 && y < 4644) || inRing(x, y) || ST().onBullRoad(x, y, 4110, 4680) || ST().onBullRoad(x, y, 5140, 5200)
+    || (y > 4688 && y < 4990 && (x < 1070 || x > 2130))                          // the houses' front gardens and fences
+    || ((x - SQ.cx) / 54) ** 2 + ((y - SQ.cy - 40) / 22) ** 2 < 1;
+  const SPOTS = [
+    { id: 'monterey-square', x: SQ.cx, y: SQ.cy, r: 380, d: ['easy', 'normal'] },
+    { id: 'jones-street', x: 1600, y: 4660, r: 1300, d: ['easy', 'normal'] },
+    { id: 'mercer-tour', x: 760, y: 5060, r: 120, d: ['hard', 'normal'] },
+    { id: 'monument-crowd', x: 1620, y: 5000, r: 90, d: ['hard'] },
+    { id: 'monterey-sidewalk', x: 1600, y: 5100, r: 1300, d: ['easy'] },
+  ];
+  function area(x, y) {
+    if (y < Y0 || y >= Y0 + H) return null;
+    if (y < 4560) return x > 1500 && x < 1700 ? 'on Bull Street by Poetter Hall' : 'below the Jones Street houses';
+    if (y < 4690) return 'on Jones Street';
+    if (Math.abs(x - SQ.cx) < SQ.hw + 60 && y < 5140) return 'in Monterey Square';
+    if (y > 5000) return 'on the sidewalk south of Monterey Square';
+    return x < 1600 ? 'by Mercer House' : 'by the temple on Monterey Square';
+  }
+  WS.districts = Object.assign(WS.districts || {}, { monterey: () => ({ id: 'monterey', name: 'Jones Street & Monterey Square', y0: Y0, h: H, geography, stories, zones: ZONES, blocked, spots: SPOTS, area }) });
 })();
 
 /* ---- src/scenes/savannah.js ---- */
-/* The whole city in one world (Agent 2): River Street, City Market, two squares and Forsyth Park from north
-   to south. The target can be in any district. */
+/* The whole city in one world (Agent 2), joined by Bull Street from Bay Street to the Forsyth Park gate:
+   River Street, City Market and Johnson Square, Pulaski and Lafayette Squares, Jones Street and Monterey
+   Square, then Forsyth Park, north to south. The target can be in any district. */
 (function () {
   const WS = (window.WS = window.WS || {});
   function build(identity) {
     const D = WS.districts;
     return WS.buildScene(identity, {
-      id: 'savannah', name: 'Savannah', w: 3200, h: 6700, ground: 'environments/savannah/ground',
-      districts: [D.riverfront(), D.market(), D.squares(), D.forsyth(4300)],
+      id: 'savannah', name: 'Savannah', w: 3200, h: 7600, ground: 'environments/savannah/ground',
+      districts: [D.riverfront(), D.market(), D.squares(), D.monterey(), D.forsyth(5200)],
       budget: { low: 450, standard: 900, dense: 1500 },
+      // The camera opens on the Forsyth fountain plaza: the busiest, most finished view in the city.
+      home: { x: 1600, y: 5200 + 830, zoom: 1.3 },
     });
   }
   WS.scenes = Object.assign(WS.scenes || {}, { savannah: { build } });
@@ -815,7 +1005,11 @@
   const WS = (window.WS = window.WS || {});
   const S = () => WS.sprites;
   const ZOOM_BASE = 0.4;                 // 1.0x zoom = 0.4 CSS px per world unit (an adult is about 30 px tall)
-  const ZOOM_MIN = 0.6, ZOOM_MAX = 3.5;  // the directive's 0.6x to 3.5x range
+  // Zoom limits depend on the viewport: the minimum is whatever keeps the whole screen covered by the
+  // illustrated world (never below 0.5x, where people are still recognisable shapes); the maximum shows a
+  // face about 60 px across, which the sprite and ground tiers render sharply.
+  const ZOOM_FLOOR = 0.5, ZOOM_MAX = 5;
+  const ZOOM_EASE_MS = 90;               // smooth zoom: time constant of the exponential approach
   const GROUND_TILE = 256;
   const GROUND_TIERS = [0.5, 1, 2, 3, 5];
   const SMOOTH = 'low';               // bilinear; sprite tiers are chosen near the target scale so this stays crisp
@@ -824,7 +1018,12 @@
     const ctx = canvas.getContext('2d');
     const queue = S().makeQueue();
     const frameFns = [];
-    const cam = { x: world.w / 2, y: world.h / 2, zoom: 1 };   // zoom is the 0.6x..3.5x multiplier
+    const cam = { x: world.w / 2, y: world.h / 2, zoom: 1 };   // zoom multiplies ZOOM_BASE
+    // The illustrated area the camera may show: the world minus a thin margin so no sprite edge or
+    // half-drawn tile ever reaches the screen border.
+    const EDGE = 6;
+    const bounds = { x0: EDGE, y0: EDGE, x1: world.w - EDGE, y1: world.h - EDGE };
+    let ease = null;                     // { target, sx, sy } while a smooth zoom is in flight
     let vw = 0, vh = 0, dpr = 1, dirty = true, beacon = !!opts.beacon, effects = [], lastT = 0;
     const perf = { frames: 0, times: [] };
 
@@ -849,14 +1048,14 @@
     // ---------- motion ----------
     // Procedural motion, not drawn frames: walkers bounce in step, standers breathe, kites sway, bubbles rise,
     // the fountain sparkles. Offsets never change placement, and prefers-reduced-motion freezes everything.
-    const WALKERS = /bodies\/(walk|dress|tote|cane|child)$|archetypes\/(jogger|tourist-photographer|scad-student-portfolio|dog-walker|parent-stroller|tour-guide|target-walker|cyclist)$/;
+    const WALKERS = /bodies\/(walk|dress|tote|cane|child|umbrella|books)$|archetypes\/(jogger|tourist-photographer|scad-student-portfolio|dog-walker|parent-stroller|tour-guide|target-walker|cyclist)$/;
     const reduced = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     let motionOn = !reduced && opts.motion !== false;
     function assignMotion() {
       for (const e of world.entities) {
         const h = WS.rng.fnv1a(e.id) / 4294967296;
         e.phase = h * Math.PI * 2;
-        e.motion = e.kind === 'person' ? (WALKERS.test(e.asset) ? (e.asset.endsWith('jogger') ? 'jog' : 'walk') : 'idle')
+        e.motion = e.kind === 'person' ? (WALKERS.test(e.asset) ? (e.asset.endsWith('jogger') ? 'jog' : 'walk') : e.asset.endsWith('bodies/wave') ? 'wave' : 'idle')
           : e.asset === 'effects/kite' ? 'kite' : e.asset === 'effects/bubbles' ? 'rise' : e.asset.includes('animals') ? 'idle' : null;
         e.speed = 0.85 + h * 0.35;
         assignTravel(e, h);
@@ -868,10 +1067,12 @@
     // pauses on lawns and plazas. Story characters stay at their story; the target paces a few steps
     // around his validated hiding spot. Dogs on leads follow their walkers.
     const H_LANES = new Set(['north-walk', 'cross-walk', 'south-walk', 'riverwalk', 'river-street', 'factors-walk', 'market-front', 'congress-walk', 'square-sidewalks']);
-    const V_LANES = new Set(['promenade', 'side-walks', 'between-squares']);
+    const V_LANES = new Set(['promenade', 'side-walks', 'between-squares', 'bull-walk']);
     const SPEED = (a) => /cyclist/.test(a) ? 85 : /jogger/.test(a) ? 55 : /child|cane/.test(a) ? 14 : /stroller/.test(a) ? 16 : 22;
     function assignTravel(e, h) {
       e.travel = null;
+      // cars, carriages and trolleys drive along their street and come round again at the far edge
+      if (e.drive) { e.travel = { kind: 'drive', v: e.drive }; return; }
       if (e.kind !== 'person' || e.motion !== 'walk' && e.motion !== 'jog') return;
       const r = WS.rng.mulberry32(WS.rng.fnv1a(e.id + '#walk'));
       const v = SPEED(e.asset) * (0.85 + r() * 0.3);
@@ -894,6 +1095,12 @@
         const T = e.travel;
         if (!T) continue;
         e.moving = true;
+        if (T.kind === 'drive') {
+          e.x += (e.flip ? -1 : 1) * T.v * dt;
+          if (e.x > world.w + 160) e.x = -160; else if (e.x < -160) e.x = world.w + 160;
+          e.rect = rectOf(e);
+          continue;
+        }
         if (T.kind === 'h') {
           const dir = e.flip ? -1 : 1, nx = e.x + dir * T.v * dt;
           if (nx < 70 || nx > world.w - 70 || blockedAt(nx, e.y)) e.flip = e.flip ? 0 : 1; else e.x = nx;
@@ -941,6 +1148,7 @@
         }
         else if (e.motion === 'jog') e.oy = -Math.abs(Math.sin(p * 1.4)) * 3.2;
         else if (e.motion === 'idle') e.oy = Math.sin(p * 0.25) * 0.5;
+        else if (e.motion === 'wave') { e.oy = Math.sin(p * 0.25) * 0.5; if (e.sprite1) e.sprite = Math.sin(p * 1.6) > 0 ? e.sprite1 : e.sprite0; }
         else if (e.motion === 'kite') { e.oy = Math.sin(p * 0.35) * 6; e.rot = Math.sin(p * 0.27) * 0.08; }
         else if (e.motion === 'rise') e.oy = -((s * 6 + e.phase * 4) % 14);
       }
@@ -987,33 +1195,67 @@
     }
 
     // ---------- camera ----------
+    // cam.x/cam.y is the world point at the centre of the screen. The visible world rectangle is
+    // [cam.x ± vw/2/scale] × [cam.y ± vh/2/scale]; it must stay inside `bounds`, which forces
+    // scale ≥ max(vw / boundsWidth, vh / boundsHeight) — the viewport-cover zoom.
     const scale = () => cam.zoom * ZOOM_BASE;            // CSS px per world unit
+    const minZoom = () => {
+      if (!vw || !vh) return ZOOM_FLOOR;
+      const cover = Math.max(vw / (bounds.x1 - bounds.x0), vh / (bounds.y1 - bounds.y0)) / ZOOM_BASE;
+      return Math.max(ZOOM_FLOOR, cover * 1.0005);
+    };
+    const maxZoom = () => Math.max(ZOOM_MAX, minZoom() * 2);
     function clamp() {
-      cam.zoom = Math.max(ZOOM_MIN, Math.min(ZOOM_MAX, cam.zoom));
+      cam.zoom = Math.max(minZoom(), Math.min(maxZoom(), cam.zoom));
       const hw = vw / 2 / scale(), hh = vh / 2 / scale();
-      cam.x = hw * 2 >= world.w ? world.w / 2 : Math.max(hw, Math.min(world.w - hw, cam.x));
-      cam.y = hh * 2 >= world.h ? world.h / 2 : Math.max(hh, Math.min(world.h - hh, cam.y));
+      cam.x = Math.max(bounds.x0 + hw, Math.min(bounds.x1 - hw, cam.x));
+      cam.y = Math.max(bounds.y0 + hh, Math.min(bounds.y1 - hh, cam.y));
       dirty = true;
     }
     const toWorld = (sx, sy) => [cam.x + (sx - vw / 2) / scale(), cam.y + (sy - vh / 2) / scale()];
     const toScreen = (wx, wy) => [(wx - cam.x) * scale() + vw / 2, (wy - cam.y) * scale() + vh / 2];
+    // Zoom so that the world point under screen point (sx, sy) stays under it.
+    function zoomAround(z, sx, sy) {
+      const [wx, wy] = toWorld(sx, sy);
+      cam.zoom = Math.max(minZoom(), Math.min(maxZoom(), z));
+      cam.x = wx - (sx - vw / 2) / scale(); cam.y = wy - (sy - vh / 2) / scale();
+      clamp();
+    }
+    // One step of the smooth zoom, frame-rate independent: move a fraction 1 - e^(-dt/τ) of the way in log space.
+    function stepEase(dt) {
+      if (!ease) return;
+      const k = 1 - Math.exp(-Math.max(0, dt) / ZOOM_EASE_MS);
+      const z = Math.exp(Math.log(cam.zoom) + (Math.log(ease.target) - Math.log(cam.zoom)) * k);
+      zoomAround(z, ease.sx, ease.sy);
+      if (Math.abs(Math.log(cam.zoom / ease.target)) < 0.002) { zoomAround(ease.target, ease.sx, ease.sy); ease = null; }
+    }
+    const home = () => world.home || { x: world.w / 2, y: world.h / 2, zoom: 1.2 };
     const camera = {
       get zoom() { return cam.zoom; }, get x() { return cam.x; }, get y() { return cam.y; },
-      ZOOM_MIN, ZOOM_MAX, ZOOM_BASE,
+      get minZoom() { return minZoom(); }, get maxZoom() { return maxZoom(); },
+      get ZOOM_MIN() { return minZoom(); }, get ZOOM_MAX() { return maxZoom(); }, ZOOM_BASE,
+      get bounds() { return Object.assign({}, bounds); },
+      /** The world rectangle currently on screen: [x0, y0, x1, y1]. */
+      visible() { return [...toWorld(0, 0), ...toWorld(vw, vh)]; },
       panBy(dxCss, dyCss) { cam.x -= dxCss / scale(); cam.y -= dyCss / scale(); clamp(); },
-      zoomAt(factor, sx = vw / 2, sy = vh / 2) {
-        const [wx, wy] = toWorld(sx, sy);
-        cam.zoom *= factor; clamp();
-        const [nx, ny] = toWorld(sx, sy);
-        cam.x += wx - nx; cam.y += wy - ny; clamp();
+      zoomAt(factor, sx = vw / 2, sy = vh / 2) { ease = null; zoomAround(cam.zoom * factor, sx, sy); },
+      /** Smooth zoom toward the pointer; repeated calls (wheel ticks) accumulate into one target. */
+      zoomSmooth(factor, sx = vw / 2, sy = vh / 2) {
+        const base = ease ? ease.target : cam.zoom;
+        ease = { target: Math.max(minZoom(), Math.min(maxZoom(), base * factor)), sx, sy };
+        dirty = true;
       },
-      centerOn(wx, wy, zoom) { if (zoom) cam.zoom = zoom; cam.x = wx; cam.y = wy; clamp(); },
-      reset() { cam.zoom = 1; cam.x = world.w / 2; cam.y = world.h / 2; clamp(); },
-      fit() { cam.zoom = Math.max(ZOOM_MIN, Math.min(vw / world.w, vh / world.h) / ZOOM_BASE); cam.x = world.w / 2; cam.y = world.h / 2; clamp(); },
+      get easing() { return !!ease; },
+      centerOn(wx, wy, zoom) { ease = null; if (zoom) cam.zoom = zoom; clamp(); cam.x = wx; cam.y = wy; clamp(); },
+      reset() { const h = home(); ease = null; cam.zoom = h.zoom; clamp(); cam.x = h.x; cam.y = h.y; clamp(); },
+      fit() { ease = null; cam.zoom = minZoom(); cam.x = world.w / 2; cam.y = world.h / 2; clamp(); },
       toWorld, toScreen,
     };
+    // Keeps the same world point at the centre of the screen across resizes and rotations; the zoom
+    // floor and pan limits are recomputed for the new aspect ratio by clamp().
     function resize() {
       const r = canvas.getBoundingClientRect();
+      if (!r.width || !r.height) return;
       vw = r.width; vh = r.height; dpr = Math.min(window.devicePixelRatio || 1, 2);
       canvas.width = Math.round(vw * dpr); canvas.height = Math.round(vh * dpr);
       clamp();
@@ -1102,6 +1344,7 @@
     function loop(t) {
       const dt = lastT ? t - lastT : 16;
       lastT = t;
+      stepEase(dt);
       for (const fn of frameFns) if (fn({ t, dt })) dirty = true;
       if (motionOn) { animate(t); dirty = true; }
       const worked = queue.size ? queue.run(6) : false;
@@ -1126,14 +1369,21 @@
       }
       return null;
     }
-    function pick(clientX, clientY) {
+    // A tap picks what is drawn under it. If that is not a person, the nearest person within a small screen
+    // radius wins instead (4 CSS px with a mouse, 12 with a finger), so tiny figures at low zoom are still
+    // fair to tap. Rings are tested from the inside out, so a closer person always beats a farther one.
+    function pick(clientX, clientY, opts = {}) {
       const r = canvas.getBoundingClientRect();
       const sx = clientX - r.left, sy = clientY - r.top;
       const [wx, wy] = toWorld(sx, sy);
-      let hit = pickWorld(wx, wy);
-      if (!hit) {                                   // forgive a near miss of up to 4 CSS px
-        const d = 4 / scale();
-        for (const [ox, oy] of [[d, 0], [-d, 0], [0, d], [0, -d], [d, d], [-d, -d], [d, -d], [-d, d]]) { hit = pickWorld(wx + ox, wy + oy); if (hit) break; }
+      const hit = pickWorld(wx, wy);
+      if (hit && hit.kind === 'person') return hit;
+      const R = opts.touch ? 12 : 4, px = 1 / scale();
+      for (let rr = 1; rr <= R; rr += 1) {                 // rings one CSS px apart: the nearest person wins
+        for (let i = 0; i < 16; i++) {
+          const a = (i / 16) * Math.PI * 2, p = pickWorld(wx + Math.cos(a) * rr * px, wy + Math.sin(a) * rr * px);
+          if (p && p.kind === 'person') return p;
+        }
       }
       return hit;
     }
@@ -1219,29 +1469,36 @@
       renderNow() { return render(true); },
       get pendingWork() { return queue.size; },
       get viewport() { return { vw, vh, dpr }; },
+      /** A small raster of the whole ground, for the minimap. */
+      get groundImage() { return ground.base; },
     };
   }
   WS.engine = { create };
 })();
 
 /* ---- src/engine/input.js ---- */
-/* Input (Agent 1). Drag and pinch pan and zoom; a tap counts only if one pointer travelled under 6 CSS px
-   and was not cancelled. Wheel zooms toward the pointer. Arrows/WASD pan, + and - zoom, 0 resets. */
+/* Input (Agent 1). One finger or the mouse drags the world; two fingers pinch-zoom around their midpoint.
+   A tap counts only if a single pointer travelled under CLICK_PX (6 CSS px for a mouse, 10 for a finger)
+   and the gesture was never multi-touch or cancelled. The wheel zooms smoothly toward the pointer;
+   a trackpad two-finger swipe pans and a trackpad pinch (ctrl+wheel) zooms. Arrows/WASD pan, + and - zoom,
+   0 resets to the home view. */
 (function () {
   const WS = (window.WS = window.WS || {});
-  const CLICK_PX = 6;
+  const CLICK_PX = 6, TOUCH_CLICK_PX = 10;
   function attach(canvas, engine, onTap) {
     const cam = engine.camera;
     const pts = new Map();
-    let gesture = null;   // { start: {x,y}, moved, multi, lastMid, lastDist }
+    let gesture = null;   // { start, moved, multi, lastMid, lastDist, touch }
     const mid = () => { const a = [...pts.values()]; return a.length === 1 ? a[0] : { x: (a[0].x + a[1].x) / 2, y: (a[0].y + a[1].y) / 2 }; };
     const dist = () => { const a = [...pts.values()]; return a.length < 2 ? 0 : Math.hypot(a[0].x - a[1].x, a[0].y - a[1].y); };
     const local = (e) => { const r = canvas.getBoundingClientRect(); return { x: e.clientX - r.left, y: e.clientY - r.top }; };
+    const slop = () => (gesture && gesture.touch ? TOUCH_CLICK_PX : CLICK_PX);
 
     canvas.addEventListener('pointerdown', (e) => {
+      if (pts.size >= 2) return;                       // a third finger is ignored rather than jumping the view
       canvas.setPointerCapture(e.pointerId);
       pts.set(e.pointerId, local(e));
-      if (pts.size === 1) gesture = { start: local(e), moved: 0, multi: false, lastMid: mid(), lastDist: 0 };
+      if (pts.size === 1) gesture = { start: local(e), moved: 0, multi: false, lastMid: mid(), lastDist: 0, touch: e.pointerType === 'touch' };
       else if (gesture) { gesture.multi = true; gesture.lastMid = mid(); gesture.lastDist = dist(); }
       canvas.classList.add('grabbing');
     });
@@ -1252,10 +1509,11 @@
       if (pts.size === 1) {
         const p = pts.get(e.pointerId);
         gesture.moved = Math.max(gesture.moved, Math.hypot(p.x - gesture.start.x, p.y - gesture.start.y));
-        if (gesture.moved >= CLICK_PX || gesture.multi) cam.panBy(m.x - gesture.lastMid.x, m.y - gesture.lastMid.y);
+        if (gesture.moved >= slop() || gesture.multi) cam.panBy(m.x - gesture.lastMid.x, m.y - gesture.lastMid.y);
       } else {
+        // pinch: scale about the midpoint, then follow the midpoint so the pinched spot stays under the fingers
         const d = dist();
-        if (gesture.lastDist > 0) cam.zoomAt(d / gesture.lastDist, m.x, m.y);
+        if (gesture.lastDist > 0 && d > 0) cam.zoomAt(d / gesture.lastDist, gesture.lastMid.x, gesture.lastMid.y);
         cam.panBy(m.x - gesture.lastMid.x, m.y - gesture.lastMid.y);
         gesture.lastDist = d;
       }
@@ -1268,33 +1526,49 @@
       if (pts.size === 0) {
         canvas.classList.remove('grabbing');
         const g = gesture; gesture = null;
-        if (g && !cancelled && !g.multi && g.moved < CLICK_PX && Math.hypot(p.x - g.start.x, p.y - g.start.y) < CLICK_PX) onTap(e.clientX, e.clientY);
-      } else if (gesture) { gesture.lastMid = mid(); gesture.lastDist = dist(); }
+        const s = g && g.touch ? TOUCH_CLICK_PX : CLICK_PX;
+        if (g && !cancelled && !g.multi && g.moved < s && Math.hypot(p.x - g.start.x, p.y - g.start.y) < s) onTap(e.clientX, e.clientY, { touch: g.touch });
+      } else if (gesture) { gesture.lastMid = mid(); gesture.lastDist = dist(); }   // 2 -> 1 finger: no jump
     };
     canvas.addEventListener('pointerup', (e) => end(e, false));
     canvas.addEventListener('pointercancel', (e) => end(e, true));
     canvas.addEventListener('lostpointercapture', (e) => end(e, true));
+
+    // Wheel: normalise lines and pages to pixels and cap each event, so a fast mouse wheel never jumps
+    // several zoom levels at once. Smooth zoom (engine.camera.zoomSmooth) animates toward the target.
     canvas.addEventListener('wheel', (e) => {
       e.preventDefault();
       const p = local(e);
-      const dy = e.deltaMode === 1 ? e.deltaY * 16 : e.deltaY;
-      cam.zoomAt(Math.exp(-dy * 0.0016), p.x, p.y);
+      const unit = e.deltaMode === 1 ? 16 : e.deltaMode === 2 ? canvas.clientHeight : 1;
+      let dx = e.deltaX * unit, dy = e.deltaY * unit;
+      if (e.ctrlKey) {                                   // trackpad pinch (and ctrl+wheel): fine-grained zoom
+        cam.zoomSmooth(Math.exp(-Math.max(-60, Math.min(60, dy)) * 0.012), p.x, p.y);
+      } else if (e.deltaMode === 0 && Math.abs(dx) > 1.5) { // trackpad two-finger swipe: pan
+        cam.panBy(-dx, -dy);
+      } else {
+        dy = Math.max(-120, Math.min(120, dy));
+        cam.zoomSmooth(Math.exp(-dy * 0.0028), p.x, p.y);
+      }
     }, { passive: false });
+    // Stop the page itself from scrolling or rubber-banding on touch devices.
+    for (const ev of ['touchmove', 'gesturestart']) canvas.addEventListener(ev, (e) => e.preventDefault(), { passive: false });
+
     window.addEventListener('keydown', (e) => {
       if (e.target && /input|textarea|select/i.test(e.target.tagName)) return;
-      const step = 80, k = e.key;
+      if (e.metaKey || e.ctrlKey || e.altKey) return;
+      const step = 90, k = e.key;
       if (k === 'ArrowLeft' || k === 'a' || k === 'A') cam.panBy(step, 0);
       else if (k === 'ArrowRight' || k === 'd' || k === 'D') cam.panBy(-step, 0);
       else if (k === 'ArrowUp' || k === 'w' || k === 'W') cam.panBy(0, step);
       else if (k === 'ArrowDown' || k === 's' || k === 'S') cam.panBy(0, -step);
-      else if (k === '+' || k === '=') cam.zoomAt(1.25);
-      else if (k === '-' || k === '_') cam.zoomAt(1 / 1.25);
+      else if (k === '+' || k === '=') cam.zoomSmooth(1.35);
+      else if (k === '-' || k === '_') cam.zoomSmooth(1 / 1.35);
       else if (k === '0') cam.reset();
       else return;
       e.preventDefault();
     });
   }
-  WS.input = { attach, CLICK_PX };
+  WS.input = { attach, CLICK_PX, TOUCH_CLICK_PX };
 })();
 
 /* ---- src/gameplay/round.js ---- */
@@ -1364,23 +1638,37 @@
 /* ---- src/main.js ---- */
 /* Page glue (Agent 3): INIT -> INTRO -> PLAYING -> WON, with FALLBACK from INIT, INTRO and PLAYING.
    Builds the world from the URL identity, loads sprites, places the target through the validator, and wires
-   the timer, wrong guesses, hints, leaderboard and share links. DOM only; the canvas belongs to the engine. */
+   the timer, wrong guesses, hints, leaderboard and share links. DOM only; the canvas belongs to the engine.
+   The player-facing text is short on purpose: the game is played by children. */
 (function () {
   const WS = window.WS;
   const $ = (id) => document.getElementById(id);
   const fmt = (ms) => { const s = ms / 1000; return Math.floor(s / 60) + ':' + (s % 60).toFixed(1).padStart(4, '0'); };
+  const reduced = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   let round = null;
 
-  function toast(text) {
+  function toast(text, ms = 2200) {
     const t = $('toast');
     t.textContent = text; t.classList.add('show');
-    clearTimeout(toast.h); toast.h = setTimeout(() => t.classList.remove('show'), 1600);
+    clearTimeout(toast.h); toast.h = setTimeout(() => t.classList.remove('show'), ms);
   }
-  function show(id) { for (const el of document.querySelectorAll('.overlay')) el.hidden = el.id !== id; }
+  // A short word that floats up from where the player tapped.
+  function pop(text, cx, cy, colour) {
+    const el = document.createElement('div');
+    el.className = 'pop'; el.textContent = text; el.style.left = cx + 'px'; el.style.top = cy + 'px';
+    if (colour) el.style.background = colour;
+    document.body.appendChild(el);
+    setTimeout(() => el.remove(), 950);
+  }
+  function show(id) {
+    for (const el of document.querySelectorAll('.overlay')) el.hidden = el.id !== id;
+    document.body.classList.toggle('playing', !id || id === 'won');
+  }
   function fallback(reason) {
     if (round) round.state = 'FALLBACK';
     if (reason) console.warn('fallback:', reason);
-    $('failText').textContent = reason && !/requested/.test(reason) ? 'Details: ' + reason : '';
+    $('failText').textContent = reason && !/requested/.test(reason) ? reason : '';
+    $('menu').hidden = true;
     show('failed');
     $('recoverBtn').focus();
   }
@@ -1408,16 +1696,31 @@
       ol.appendChild(li);
     });
   }
+  function drawPortrait(canvas, sprite) {
+    const ctx = canvas.getContext('2d'), h = canvas.height, w = (sprite.vb[2] / sprite.vb[3]) * h;
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.drawImage(sprite.img, (canvas.width - w) / 2, 0, w, h);
+  }
+
+  // Landmarks the second hint can point to, by asset.
+  const LANDMARKS = {
+    'environments/forsyth/fountain': 'the fountain', 'props/landmarks/obelisk': 'the tall obelisk', 'props/landmarks/pulaski-monument': 'the Pulaski Monument',
+    'props/landmarks/city-hall-dome': 'City Hall\'s gold dome', 'props/landmarks/waving-girl': 'the Waving Girl statue', 'environments/monterey/temple': 'the temple',
+    'environments/monterey/mercer-house': 'Mercer House', 'props/festival/tent': 'the festival tents', 'props/market/stall-peaches': 'the market stalls',
+    'props/furniture/cafe-table': 'the café tables', 'props/river/riverboat': 'the riverboat', 'props/vehicles/trolley': 'a trolley', 'props/street/bus-stop': 'the bus stop',
+    'props/furniture/park-bench': 'a park bench', 'props/vegetation/live-oak': 'a big oak tree', 'props/vegetation/live-oak-tall': 'a big oak tree',
+  };
 
   async function main() {
     const t0 = performance.now();
     const identity = WS.gameplay.readIdentity(location.search);
     round = WS.gameplay.createRound();
     WS.game = { identity, round, timings: {} };
-    $('seedLabel').textContent = identity.seed + ' · ' + identity.difficulty + (identity.crowd ? ' · stress ' + identity.crowd : '');
-    $('difficulty').value = identity.difficulty;
+    $('seedLabel').textContent = 'Seed ' + identity.seed + (identity.crowd ? ' · crowd ' + identity.crowd : '');
+    $('difficulty').value = identity.difficulty; $('introDifficulty').value = identity.difficulty;
     $('density').value = identity.density;
     renderBoard();
+    wireMenu();
     if (identity.fallback) throw new Error('fallback requested by URL');
 
     const world = WS.scenes[identity.scene].build(identity);
@@ -1425,32 +1728,54 @@
     const engine = WS.engine.create(canvas, world, { beacon: identity.beacon });
     Object.assign(WS.game, { world, engine });
     engine.resize();
-    window.addEventListener('resize', () => engine.resize());
+    // Rotation, window resizes and mobile toolbars showing or hiding all change the viewport; the camera
+    // keeps its centre and recomputes its zoom floor and pan limits.
+    const onResize = () => { engine.resize(); drawMinimap(); };
+    window.addEventListener('resize', onResize);
+    window.addEventListener('orientationchange', () => setTimeout(onResize, 150));
+    if (window.visualViewport) window.visualViewport.addEventListener('resize', onResize);
+    if (window.ResizeObserver) new ResizeObserver(onResize).observe(canvas);
 
     const info = await engine.load((p) => { $('loadBar').style.width = Math.round(p * 100) + '%'; });
     WS.game.placement = engine.placeTarget();
     WS.game.timings.loadMs = performance.now() - t0;
     WS.game.timings.sprites = info.sprites;
-
-    const pc = $('portrait'), s = world.target.sprite, pctx = pc.getContext('2d');
-    const ph = pc.height, pw = (s.vb[2] / s.vb[3]) * ph;
-    pctx.drawImage(s.img, (pc.width - pw) / 2, 0, pw, ph);
+    drawPortrait($('portrait'), world.target.sprite);
+    drawPortrait($('bigPortrait'), world.target.sprite);
 
     engine.camera.reset();
     engine.renderNow();
     WS.game.timings.firstFrameMs = performance.now() - t0;
     engine.start();
     document.title = world.name + ' · Waldo\'s Savannah';
-    $('sceneName').textContent = world.name;
     round.state = 'INTRO';
     show('intro');
     $('startBtn').focus();
 
+    // ---------- minimap: the whole city, with the view as a box; tap to jump ----------
+    const mm = $('minimap'), mctx = mm.getContext('2d');
+    function drawMinimap() {
+      const g = engine.groundImage; if (!g) return;
+      const W = mm.width, H = mm.height, sx = W / world.w, sy = H / world.h;
+      mctx.drawImage(g, 0, 0, W, H);
+      const [x0, y0, x1, y1] = engine.camera.visible();
+      mctx.strokeStyle = '#FF6F61'; mctx.lineWidth = 3; mctx.strokeRect(x0 * sx, y0 * sy, (x1 - x0) * sx, (y1 - y0) * sy);
+    }
+    const jump = (e) => { const r = mm.getBoundingClientRect(); engine.camera.centerOn((e.clientX - r.left) / r.width * world.w, (e.clientY - r.top) / r.height * world.h); };
+    mm.addEventListener('pointerdown', (e) => { mm.setPointerCapture(e.pointerId); jump(e); });
+    mm.addEventListener('pointermove', (e) => { if (e.buttons) jump(e); });
+    mm.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); engine.camera.reset(); } });
+
+    let lastCam = '';
     engine.onFrame(() => {
       if (round.state === 'PLAYING') $('timer').textContent = fmt(round.elapsed());
-      $('zoomLabel').textContent = engine.camera.zoom.toFixed(1) + 'x';
-      const here = world.districts.find((d) => engine.camera.y >= d.y0 && engine.camera.y < d.y0 + d.h);
-      if (here && $('hereLabel').textContent !== here.name) $('hereLabel').textContent = here.name;
+      const c = engine.camera, key = c.x.toFixed(0) + ',' + c.y.toFixed(0) + ',' + c.zoom.toFixed(3);
+      if (key !== lastCam) {
+        lastCam = key; drawMinimap();
+        const here = world.districts.find((d) => c.y >= d.y0 && c.y < d.y0 + d.h);
+        const label = here ? '📍 ' + here.name : '';
+        if ($('hereLabel').textContent !== label) $('hereLabel').textContent = label;
+      }
       return false;
     });
 
@@ -1460,48 +1785,66 @@
       show(null);
       canvas.focus();
     });
-    $('zoomIn').addEventListener('click', () => engine.camera.zoomAt(1.3));
-    $('zoomOut').addEventListener('click', () => engine.camera.zoomAt(1 / 1.3));
+    $('introDifficulty').addEventListener('change', (e) => go({ difficulty: e.target.value }));
+    $('zoomIn').addEventListener('click', () => engine.camera.zoomSmooth(1.4));
+    $('zoomOut').addEventListener('click', () => engine.camera.zoomSmooth(1 / 1.4));
     $('zoomReset').addEventListener('click', () => engine.camera.reset());
 
-    // Hints: the first names the area, the second pans there and rings a wide circle (never the exact spot).
+    // ---------- hints: a district, then a landmark near him, then a pulsing circle round the area ----------
     let hintFx = null;
+    const MAX_HINTS = 3;
     $('hintBtn').addEventListener('click', () => {
       if (round.state !== 'PLAYING') return;
       const t = world.target, rng = WS.rng.make(WS.rng.identityKey(identity) + '#hint');
+      const district = world.districts.find((d) => t.y >= d.y0 && t.y < d.y0 + d.h);
       if (round.hints === 0) {
         round.hints = 1;
-        toast('Hint: he is ' + world.area(t.x, t.y) + '.');
+        toast('Hint: he is ' + world.area(t.x, t.y) + '.', 3200);
+        if (district && !(engine.camera.y >= district.y0 && engine.camera.y < district.y0 + district.h)) engine.camera.centerOn(engine.camera.x, district.y0 + district.h / 2);
       } else if (round.hints === 1) {
         round.hints = 2;
-        const a = rng() * Math.PI * 2, d = 80 + rng() * 120, cx = t.x + Math.cos(a) * d, cy = t.y - 40 + Math.sin(a) * d * 0.6, r = 300;
+        // the nearest named landmark that is not right on top of him
+        let best = null;
+        for (const e of world.entities) {
+          const name = LANDMARKS[e.asset]; if (!name) continue;
+          const d = Math.hypot(e.x - t.x, (e.y - t.y) * 1.6);
+          if (d < 60 || d > 900) continue;
+          if (!best || d < best.d) best = { e, d, name };
+        }
+        const a = rng() * Math.PI * 2, d = 80 + rng() * 120, cx = t.x + Math.cos(a) * d, cy = t.y - 40 + Math.sin(a) * d * 0.6;
         engine.camera.centerOn(cx, cy, Math.max(engine.camera.zoom, 1.6));
+        toast(best ? 'Hint: look near ' + best.name + '.' : 'Hint: he is close to here.', 3200);
+      } else if (round.hints === 2) {
+        round.hints = 3;
+        // a dashed ring that contains him but is not centred on him, pulsing for a few seconds
+        const a = rng() * Math.PI * 2, d = 60 + rng() * 90, cx = t.x + Math.cos(a) * d, cy = t.y - 40 + Math.sin(a) * d * 0.6, r = 260, born = performance.now();
+        engine.camera.centerOn(cx, cy, Math.max(engine.camera.zoom, 1.8));
         if (hintFx) engine.removeEffect(hintFx);
-        hintFx = (ctx, z) => { ctx.save(); ctx.strokeStyle = 'rgba(255,111,97,.9)'; ctx.lineWidth = 3 / z; ctx.setLineDash([12 / z, 8 / z]); ctx.beginPath(); ctx.ellipse(cx, cy, r, r * 0.65, 0, 0, Math.PI * 2); ctx.stroke(); ctx.restore(); };
+        hintFx = (ctx, z) => {
+          const age = (performance.now() - born) / 1000;
+          if (age > 8) { engine.removeEffect(hintFx); hintFx = null; return; }
+          const pulse = reduced ? 1 : 1 + Math.sin(age * 5) * 0.04;
+          ctx.save(); ctx.globalAlpha = age > 6 ? 1 - (age - 6) / 2 : 1;
+          ctx.strokeStyle = 'rgba(255,111,97,.95)'; ctx.lineWidth = 4 / z; ctx.setLineDash([14 / z, 9 / z]);
+          ctx.beginPath(); ctx.ellipse(cx, cy, r * pulse, r * 0.65 * pulse, 0, 0, Math.PI * 2); ctx.stroke(); ctx.restore();
+          engine.invalidate();
+        };
         engine.addEffect(hintFx);
-        toast('Hint: look inside the dashed circle.');
-      } else { toast('No more hints this round.'); return; }
-      $('hintCount').textContent = round.hints + '/2';
+        toast('Hint: he is inside the circle!', 3200);
+      } else { toast('No more hints. You can do it!'); return; }
+      $('hintCount').textContent = round.hints + '/' + MAX_HINTS;
     });
 
-    $('boardBtn').addEventListener('click', () => { renderBoard(); $('board').hidden = false; $('boardClose').focus(); });
-    $('boardClose').addEventListener('click', () => { $('board').hidden = true; });
-    $('boardClear').addEventListener('click', () => { WS.leaderboard.clear(); renderBoard(); toast('Leaderboard cleared.'); });
-
-    $('difficulty').addEventListener('change', (e) => go({ difficulty: e.target.value }));
-    $('density').addEventListener('change', (e) => go({ density: e.target.value }));
-    $('testFallbackBtn').addEventListener('click', () => fallback('requested by the test button'));
     $('againBtn').addEventListener('click', () => go({ seed: WS.gameplay.newSeed() }));
-
     $('saveBtn').addEventListener('click', () => {
       if (round.saved) return;
       const name = $('nameInput').value.trim();
       if (!name) { $('nameInput').focus(); toast('Type a name first.'); return; }
       const res = WS.leaderboard.save({ username: name, elapsedMs: Math.round(round.elapsed()), wrongGuesses: round.wrong, seed: identity.seed, scene: identity.scene, difficulty: identity.difficulty, hints: round.hints, artVersion: identity.artVersion });
-      if (!res.ok) { toast(res.list.length ? 'Not saved: storage is unavailable.' : 'Not saved.'); return; }
+      if (!res.ok) { toast(res.list.length ? 'Not saved: storage is off.' : 'Not saved.'); return; }
       round.saved = true;
       $('saveBtn').disabled = true; $('nameInput').disabled = true;
-      toast(res.rank ? 'Saved: #' + res.rank + ' on this device.' : 'Saved, but not in the top ' + WS.leaderboard.MAX + '.');
+      toast(res.rank ? 'Saved! You are #' + res.rank + '.' : 'Saved.');
       renderBoard(res.rank);
     });
     $('nameInput').addEventListener('keydown', (e) => { if (e.key === 'Enter') $('saveBtn').click(); });
@@ -1511,6 +1854,7 @@
       catch (e) { $('shareBox').select(); toast('Select the link and copy it.'); }
     });
 
+    // ---------- feedback on the canvas ----------
     function marker(wx, wy, ok) {
       const born = performance.now();
       const fx = (ctx, z) => {
@@ -1519,35 +1863,79 @@
         ctx.strokeStyle = ok ? 'rgba(0,200,110,' + a + ')' : 'rgba(229,57,53,' + a + ')';
         ctx.lineWidth = 3 / z;
         ctx.beginPath(); ctx.arc(wx, wy, (14 + (1 - a) * 16) / z, 0, Math.PI * 2); ctx.stroke();
+        engine.invalidate();
       };
       engine.addEffect(fx);
     }
+    // Confetti over the winner for two seconds (skipped with reduced motion).
+    function confetti(wx, wy) {
+      if (reduced) return;
+      const born = performance.now(), cols = ['#FF6F61', '#FFCA28', '#1E88E5', '#1FA971', '#7C4DFF', '#FFFFFF'];
+      const bits = Array.from({ length: 70 }, (_, i) => ({ a: (i / 70) * Math.PI * 2 + Math.random() * 0.3, v: 120 + Math.random() * 220, c: cols[i % cols.length], s: 3 + Math.random() * 4, r: Math.random() * 6 }));
+      const fx = (ctx, z) => {
+        const t = (performance.now() - born) / 1000;
+        if (t > 2.2) { engine.removeEffect(fx); return; }
+        ctx.save(); ctx.globalAlpha = Math.min(1, 2.2 - t);
+        for (const b of bits) {
+          const x = wx + Math.cos(b.a) * b.v * t, y = wy - 60 + Math.sin(b.a) * b.v * t * 0.7 + 260 * t * t;
+          ctx.fillStyle = b.c; ctx.save(); ctx.translate(x, y); ctx.rotate(b.r + t * 8); ctx.fillRect(-b.s / z / 2, -b.s / z / 4, b.s / z, b.s / z / 2); ctx.restore();
+        }
+        ctx.restore(); engine.invalidate();
+      };
+      engine.addEffect(fx);
+    }
+    const MISS = ['Not Waldo!', 'Nope!', 'Try again!', 'So close!', 'Keep looking!'];
 
-    WS.input.attach(canvas, engine, (cx, cy) => {
+    WS.input.attach(canvas, engine, (cx, cy, opts) => {
       if (round.state !== 'PLAYING') return;
-      const hit = engine.pick(cx, cy);
+      const hit = engine.pick(cx, cy, opts);
       const r = canvas.getBoundingClientRect();
       const [wx, wy] = engine.camera.toWorld(cx - r.left, cy - r.top);
       if (hit && hit.isTarget) {
         round.state = 'WON'; round.endedAt = performance.now();
-        marker(wx, wy, true);
         if (hintFx) engine.removeEffect(hintFx);
+        marker(wx, wy, true);
+        const t = world.target;
+        // frame him in the upper part of the screen, above the win card
+        const zw = Math.max(engine.camera.zoom, 2.2), vh = canvas.getBoundingClientRect().height;
+        engine.camera.centerOn(t.x, t.y - 40 + vh * 0.22 / (zw * engine.camera.ZOOM_BASE), zw);
+        engine.setBeacon(true);
+        confetti(t.x, t.y);
+        pop('Found him!', cx, cy, '#1FA971');
         const pts = WS.leaderboard.points({ elapsedMs: round.elapsed(), wrongGuesses: round.wrong, hints: round.hints, difficulty: identity.difficulty });
-        $('winPoints').textContent = pts.toLocaleString() + ' points' + (identity.difficulty !== 'easy' ? ' (×' + WS.leaderboard.MULT[identity.difficulty] + ' for ' + identity.difficulty + ')' : '');
-        $('winText').textContent = 'You found him in ' + fmt(round.elapsed()) + ' with ' + round.wrong + ' wrong guess' + (round.wrong === 1 ? '' : 'es') + (round.hints ? ' and ' + round.hints + ' hint' + (round.hints > 1 ? 's' : '') : '') + '.';
-        $('winSpot').textContent = 'He was ' + world.area(world.target.x, world.target.y) + '.';
+        const secs = round.elapsed() / 1000;
+        $('winStars').textContent = '⭐'.repeat(round.wrong + round.hints === 0 && secs < 120 ? 3 : round.wrong + round.hints <= 2 ? 2 : 1);
+        $('winTime').textContent = fmt(round.elapsed());
+        $('winPoints').textContent = pts.toLocaleString() + ' points';
+        $('winText').textContent = round.wrong + ' wrong guess' + (round.wrong === 1 ? '' : 'es') + (round.hints ? ' · ' + round.hints + ' hint' + (round.hints > 1 ? 's' : '') : '');
+        $('winSpot').textContent = 'He was ' + world.area(t.x, t.y) + '.';
         $('shareBox').value = WS.gameplay.shareUrl(identity, location.href);
         $('saveBtn').disabled = false; $('nameInput').disabled = false;
-        engine.setBeacon(true);
-        show('won');
-        $('nameInput').focus();
+        // let the player see him first, then celebrate
+        setTimeout(() => { show('won'); $('againBtn').focus(); }, reduced ? 200 : 1100);
       } else {
         round.wrong++;
         $('wrong').textContent = String(round.wrong);
+        const s = $('wrongStat'); s.classList.remove('bump'); void s.offsetWidth; s.classList.add('bump');
         marker(wx, wy, false);
-        toast(hit && hit.kind === 'person' ? 'Not him. Keep looking.' : 'Nobody there.');
+        pop(hit && hit.kind === 'person' ? MISS[round.wrong % MISS.length] : 'Nobody there!', cx, cy);
       }
     });
+  }
+
+  function wireMenu() {
+    const menu = $('menu'), btn = $('menuBtn');
+    const set = (open) => { menu.hidden = !open; btn.setAttribute('aria-expanded', String(open)); };
+    btn.addEventListener('click', () => set(menu.hidden));
+    document.addEventListener('pointerdown', (e) => { if (!menu.hidden && !menu.contains(e.target) && e.target !== btn) set(false); });
+    document.addEventListener('keydown', (e) => { if (e.key === 'Escape') { set(false); $('board').hidden = true; } });
+    $('boardBtn').addEventListener('click', () => { set(false); renderBoard(); $('board').hidden = false; $('boardClose').focus(); });
+    $('boardClose').addEventListener('click', () => { $('board').hidden = true; });
+    $('boardClear').addEventListener('click', () => { WS.leaderboard.clear(); renderBoard(); toast('Scores cleared.'); });
+    $('newRoundBtn').addEventListener('click', () => go({ seed: WS.gameplay.newSeed() }));
+    $('difficulty').addEventListener('change', (e) => go({ difficulty: e.target.value }));
+    $('density').addEventListener('change', (e) => go({ density: e.target.value }));
+    $('testFallbackBtn').addEventListener('click', () => fallback('requested by the test button'));
   }
 
   document.addEventListener('DOMContentLoaded', () => {

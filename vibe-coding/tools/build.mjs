@@ -11,7 +11,7 @@ execFileSync(process.execPath, [join(root, 'tools', 'pack-assets.mjs')], { stdio
 const ORDER = [
   'utilities/rng.js',
   'characters/compose.js', 'characters/make.js',
-  'scenes/build.js', 'scenes/forsyth.js', 'scenes/riverfront.js', 'scenes/market.js', 'scenes/squares.js', 'scenes/savannah.js',
+  'scenes/build.js', 'scenes/streets.js', 'scenes/forsyth.js', 'scenes/riverfront.js', 'scenes/market.js', 'scenes/squares.js', 'scenes/monterey.js', 'scenes/savannah.js',
   'engine/sprites.js', 'engine/engine.js', 'engine/input.js',
   'gameplay/round.js', 'gameplay/leaderboard.js',
   'main.js',

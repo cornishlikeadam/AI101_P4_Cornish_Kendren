@@ -164,22 +164,40 @@ await test('a drag across the target pans and never counts as a guess', async ()
   await page.close();
 });
 
-await test('zoom stays within 0.6x..3.5x; keys pan, zoom and reset', async () => {
+await test('zoom stays between the cover zoom and the maximum; keys pan, zoom and reset', async () => {
   const { page } = await open('?seed=ZOOM-1');
   await page.click('#startBtn');
-  for (let i = 0; i < 30; i++) await page.mouse.wheel(0, -400);
-  assert.equal(await page.evaluate(() => WS.game.engine.camera.zoom), 3.5);
-  for (let i = 0; i < 40; i++) await page.mouse.wheel(0, 400);
-  assert.ok(Math.abs((await page.evaluate(() => WS.game.engine.camera.zoom)) - 0.6) < 1e-9);
+  const lim = await page.evaluate(() => ({ min: WS.game.engine.camera.minZoom, max: WS.game.engine.camera.maxZoom }));
+  for (let i = 0; i < 40; i++) await page.mouse.wheel(0, -400);
+  await page.waitForFunction(() => !WS.game.engine.camera.easing);
+  assert.ok(Math.abs((await page.evaluate(() => WS.game.engine.camera.zoom)) - lim.max) < 1e-6, 'wheel reaches the maximum');
+  for (let i = 0; i < 60; i++) await page.mouse.wheel(0, 400);
+  await page.waitForFunction(() => !WS.game.engine.camera.easing);
+  assert.ok(Math.abs((await page.evaluate(() => WS.game.engine.camera.zoom)) - lim.min) < 1e-6, 'wheel reaches the cover zoom');
   await page.keyboard.press('0');
-  assert.equal(await page.evaluate(() => WS.game.engine.camera.zoom), 1);
+  assert.equal(await page.evaluate(() => WS.game.engine.camera.zoom), 1.3, 'reset returns to the home view');
   await page.keyboard.press('+');
-  assert.ok((await page.evaluate(() => WS.game.engine.camera.zoom)) > 1.2);
+  await page.waitForFunction(() => !WS.game.engine.camera.easing);
+  assert.ok((await page.evaluate(() => WS.game.engine.camera.zoom)) > 1.6);
   const x0 = await page.evaluate(() => WS.game.engine.camera.x);
   await page.keyboard.press('d');
   assert.ok((await page.evaluate(() => WS.game.engine.camera.x)) > x0);
   await page.click('#zoomReset');
-  assert.equal(await page.evaluate(() => WS.game.engine.camera.zoom), 1);
+  assert.equal(await page.evaluate(() => WS.game.engine.camera.zoom), 1.3);
+  await page.close();
+});
+
+await test('wheel zoom keeps the world point under the pointer fixed', async () => {
+  const { page } = await open('?seed=ZOOM-2');
+  await page.click('#startBtn');
+  await page.evaluate(() => WS.game.engine.camera.centerOn(1600, 1200, 1.5));
+  await page.mouse.move(900, 300);
+  const before = await page.evaluate(() => WS.game.engine.camera.toWorld(900, 300));
+  for (let i = 0; i < 4; i++) await page.mouse.wheel(0, -120);
+  await page.waitForFunction(() => !WS.game.engine.camera.easing);
+  const r = await page.evaluate(() => ({ z: WS.game.engine.camera.zoom, w: WS.game.engine.camera.toWorld(900, 300) }));
+  assert.ok(r.z > 1.9, 'zoomed in: ' + r.z);
+  assert.ok(Math.hypot(r.w[0] - before[0], r.w[1] - before[1]) < 1, 'anchored: ' + JSON.stringify([before, r.w]));
   await page.close();
 });
 
@@ -227,17 +245,115 @@ await test('stress crowd of 10,000 builds and stays playable', async () => {
   await page.close();
 });
 
-await test('phone viewport: HUD and controls fit, touch targets at least 44 px', async () => {
+await test('phone viewport: HUD and controls fit, never overlap, touch targets at least 44 px', async () => {
   const { page } = await open('?seed=PHONE-1', { width: 390, height: 844 });
-  const boxes = await page.evaluate(() => [...document.querySelectorAll('#controls button, #startBtn')].map((b) => b.getBoundingClientRect().toJSON()));
-  for (const b of boxes) { assert.ok(b.width >= 44 && b.height >= 44, 'touch target'); assert.ok(b.right <= 390 && b.left >= 0, 'inside viewport'); }
-  const hud = await page.evaluate(() => document.getElementById('hud').getBoundingClientRect().toJSON());
-  assert.ok(hud.right <= 390);
-  assert.ok(hud.height <= 56, 'compact HUD on phones: ' + hud.height);
-  const r = await page.evaluate(() => ['actions', 'controls'].map((id) => document.getElementById(id).getBoundingClientRect().toJSON()));
-  assert.ok(r[0].right <= r[1].left, 'hint/scores and zoom controls do not overlap');
-  const covered = hud.height + Math.max(r[0].height, r[1].height) + 16;
-  assert.ok(covered / 844 < 0.16, 'chrome covers under 16% of the screen: ' + (covered / 844).toFixed(2));
+  const sb = await page.evaluate(() => document.getElementById('startBtn').getBoundingClientRect().toJSON());
+  assert.ok(sb.width >= 44 && sb.height >= 44);
+  await page.click('#startBtn');
+  const r = await page.evaluate(() => Object.fromEntries(['hud', 'actions', 'controls', 'where', 'hintBtn', 'menuBtn', 'zoomIn', 'zoomOut', 'zoomReset'].map((id) => [id, document.getElementById(id).getBoundingClientRect().toJSON()])));
+  for (const id of ['hintBtn', 'menuBtn', 'zoomIn', 'zoomOut', 'zoomReset']) { const b = r[id]; assert.ok(b.width >= 44 && b.height >= 44, 'touch target ' + id); assert.ok(b.right <= 390 && b.left >= 0, 'inside viewport ' + id); }
+  const overlap = (a, b) => a.left < b.right && b.left < a.right && a.top < b.bottom && b.top < a.bottom;
+  const ids = ['hud', 'actions', 'controls', 'where'];
+  for (let i = 0; i < ids.length; i++) for (let j = i + 1; j < ids.length; j++) assert.ok(!overlap(r[ids[i]], r[ids[j]]), ids[i] + ' overlaps ' + ids[j]);
+  const covered = Math.max(r.hud.height, r.actions.height) + Math.max(r.controls.height, r.where.height) + 24;
+  assert.ok(covered / 844 < 0.22, 'chrome covers little of the screen: ' + (covered / 844).toFixed(2));
+  await page.close();
+});
+
+// ---------- overhaul: the camera always shows illustrated world, never blank edges ----------
+await test('camera: at every viewport, zoom and edge, the screen shows only the world', async () => {
+  for (const [w, h] of [[320, 568], [390, 844], [768, 1024], [1440, 900], [1920, 1080]]) {
+    const { page } = await open('?seed=CAM-1&scene=savannah', { width: w, height: h });
+    await page.click('#startBtn');
+    const bad = await page.evaluate(() => {
+      const c = WS.game.engine.camera, W = WS.game.world, out = [];
+      const inside = (tag) => { const [x0, y0, x1, y1] = c.visible(); if (x0 < -0.5 || y0 < -0.5 || x1 > W.w + 0.5 || y1 > W.h + 0.5) out.push(tag + ' ' + [x0, y0, x1, y1].map(Math.round)); };
+      for (const z of [0.01, 1.3, 99]) for (const [fx, fy] of [[0, 0], [1, 0], [0, 1], [1, 1], [0.5, 0.5]]) { c.centerOn(fx * W.w, fy * W.h, z); inside('z' + z + ' ' + fx + ',' + fy); }
+      for (let i = 0; i < 30; i++) c.panBy(5000, 5000); inside('drag');
+      return out;
+    });
+    assert.deepEqual(bad, [], w + 'x' + h);
+    // also count blank pixels after a real render at the far corner and minimum zoom
+    const blank = await page.evaluate(() => {
+      const c = WS.game.engine.camera; c.centerOn(0, 0, 0.01); WS.game.engine.renderNow();
+      const cv = document.getElementById('scene'), d = cv.getContext('2d').getImageData(0, 0, cv.width, cv.height).data; let n = 0, k = 0;
+      for (let i = 0; i < d.length; i += 4 * 53) { n++; if (d[i] === 0xF6 && d[i + 1] === 0xE7 && d[i + 2] === 0xC8 && d[i + 3] === 255) k++; }
+      return k / n;
+    });
+    assert.ok(blank < 0.03, w + 'x' + h + ' blank share ' + blank);
+    await page.close();
+  }
+});
+
+await test('camera: resizing and rotating keep the view covered and centred', async () => {
+  const { page } = await open('?seed=CAM-2&scene=savannah', { width: 390, height: 844 });
+  await page.click('#startBtn');
+  const c0 = await page.evaluate(() => [WS.game.engine.camera.x, WS.game.engine.camera.y]);
+  for (const [w, h] of [[844, 390], [1440, 900], [320, 568]]) {
+    await page.setViewportSize({ width: w, height: h });
+    await page.waitForTimeout(250);
+    const r = await page.evaluate(() => { const c = WS.game.engine.camera, W = WS.game.world, v = c.visible(); return { v, ok: v[0] >= -0.5 && v[1] >= -0.5 && v[2] <= W.w + 0.5 && v[3] <= W.h + 0.5, x: c.x, y: c.y, min: c.minZoom, z: c.zoom }; });
+    assert.ok(r.ok, w + 'x' + h + ' ' + JSON.stringify(r));
+    assert.ok(r.z >= r.min - 1e-9);
+    assert.ok(Math.hypot(r.x - c0[0], r.y - c0[1]) < 600, 'stays near the same place');
+  }
+  await page.close();
+});
+
+await test('city: Bull Street joins every district, with a street sign at each crossing', async () => {
+  const { page } = await open('?seed=BULL-1&scene=savannah');
+  const r = await page.evaluate(() => {
+    const W = WS.game.world, ds = W.districts;
+    const contiguous = ds.every((d, i) => i === 0 || Math.abs(ds[i - 1].y0 + ds[i - 1].h - d.y0) < 1) && ds[ds.length - 1].y0 + ds[ds.length - 1].h === W.h;
+    const signs = W.entities.filter((e) => e.asset.startsWith('props/street/sign-')).map((e) => e.asset.split('sign-')[1]);
+    const cars = W.entities.filter((e) => e.drive).length;
+    const landmarks = ['props/landmarks/city-hall-dome', 'props/landmarks/obelisk', 'environments/monterey/temple', 'environments/monterey/mercer-house', 'props/landmarks/pulaski-monument', 'environments/forsyth/fountain'].map((a) => W.entities.some((e) => e.asset === a));
+    return { contiguous, signs, cars, landmarks };
+  });
+  assert.ok(r.contiguous, 'districts tile the world with no gaps');
+  for (const s of ['bay', 'congress', 'harris', 'charlton', 'jones', 'gordon', 'gaston']) assert.ok(r.signs.includes(s), 'sign at Bull and ' + s);
+  assert.ok(r.cars >= 12, 'traffic on the streets: ' + r.cars);
+  assert.ok(r.landmarks.every(Boolean), JSON.stringify(r.landmarks));
+  await page.close();
+});
+
+await test('touch: a finger tap near a small person counts, a two-finger pinch never guesses', async () => {
+  const { page } = await open('?seed=TOUCH-1&difficulty=easy', { width: 390, height: 844 });
+  await page.click('#startBtn');
+  const r = await page.evaluate(() => {
+    const g = WS.game, e = g.world.target; g.engine.setMotion(false);
+    // isolate the tolerance logic from the crowd: only the target can be picked in this check
+    const restore = g.engine.list().filter((q) => q !== e && q.pickable); restore.forEach((q) => { q.pickable = false; });
+    g.engine.camera.centerOn(e.x, e.y - 30, g.engine.camera.minZoom); g.engine.renderNow();
+    const cv = document.getElementById('scene').getBoundingClientRect(), [x, y, w, h] = e.rect;
+    // an empty spot 8 CSS px outside his drawn outline (beyond the 4 px mouse allowance), left or right, at
+    // several heights; neighbours may stand on one side
+    const px = 1 / (g.engine.camera.zoom * 0.4); let spot = null;
+    for (const fy of [0.55, 0.4, 0.7, 0.3]) {
+      const ym = y + h * fy; let l = null, rr = null;
+      for (let u = x; u < x + w; u += px * 0.5) if (g.engine.pickWorld(u, ym) === e) { if (l === null) l = u; rr = u; }
+      if (l === null) continue;
+      const alone = (u, v) => { for (let r = 1; r <= 13; r++) for (let i = 0; i < 24; i++) { const q = g.engine.pickWorld(u + Math.cos(i / 24 * 6.283) * r * px, v + Math.sin(i / 24 * 6.283) * r * px); if (q && q.kind === 'person' && q !== e) return false; } return true; };
+      for (const u of [rr + 8 * px, l - 8 * px]) if (!g.engine.pickWorld(u, ym) && alone(u, ym)) { spot = [u, ym]; break; }
+      if (spot) break;
+    }
+    const [sx, sy] = g.engine.camera.toScreen(spot[0], spot[1]);
+    const mouse = g.engine.pick(sx + cv.left, sy + cv.top);
+    const touch = g.engine.pick(sx + cv.left, sy + cv.top, { touch: true });
+    restore.forEach((q) => { q.pickable = true; });
+    return { mouse: !!(mouse && mouse.isTarget), touch: !!(touch && touch.isTarget) };
+  });
+  assert.equal(r.touch, true, 'finger-sized tolerance reaches him');
+  assert.equal(r.mouse, false, 'the mouse allowance stays small');
+  const wrong0 = await page.evaluate(() => WS.game.round.wrong);
+  const cdp = await page.context().newCDPSession(page);
+  const tp = (pts) => pts.map(([x, y], i) => ({ x, y, id: i }));
+  await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: tp([[150, 400]]) });
+  await cdp.send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: tp([[150, 400], [240, 420]]) });
+  await cdp.send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: tp([[120, 390], [270, 430]]) });
+  await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
+  await page.waitForTimeout(100);
+  assert.equal(await page.evaluate(() => WS.game.round.wrong), wrong0, 'pinch is not a guess');
   await page.close();
 });
 
@@ -247,6 +363,7 @@ async function win(page) {
   const t = await pointOn(page, 'target');
   await page.mouse.click(t.x, t.y);
   await page.waitForSelector('#won:not([hidden])');
+  await page.click('details.more summary');
 }
 
 await test('leaderboard: save once, sorted, max 10, names rendered as text, tolerant of bad records', async () => {
@@ -287,17 +404,21 @@ await test('share link carries the replay identity and rebuilds the same park', 
   await page2.close();
 });
 
-await test('hints: first names the area, second pans and rings it, then no more', async () => {
+await test('hints: area, then a nearby landmark, then a ring round him, then no more', async () => {
   const { page } = await open('?seed=HINT-3');
   await page.click('#startBtn');
   await page.click('#hintBtn');
   assert.match(await page.textContent('#toast'), /^Hint: he is /);
   const z0 = await page.evaluate(() => WS.game.engine.camera.zoom);
   await page.click('#hintBtn');
+  assert.match(await page.textContent('#toast'), /^Hint: (look near|he is close)/);
   const r = await page.evaluate(() => { const c = WS.game.engine.camera, t = WS.game.world.target; return { d: Math.hypot(c.x - t.x, c.y - t.y), z: c.zoom, hints: WS.game.round.hints }; });
   assert.equal(r.hints, 2); assert.ok(r.d < 320, 'camera near the target area'); assert.ok(r.d > 20, 'but not on the exact spot'); assert.ok(r.z >= Math.max(z0, 1.6) - 1e-9);
   await page.click('#hintBtn');
-  assert.equal(await page.evaluate(() => WS.game.round.hints), 2);
+  assert.match(await page.textContent('#toast'), /circle/);
+  assert.equal(await page.evaluate(() => WS.game.round.hints), 3);
+  await page.click('#hintBtn');
+  assert.equal(await page.evaluate(() => WS.game.round.hints), 3);
   await page.close();
 });
 
@@ -308,6 +429,8 @@ await test('fallback: ?fallback=1, the test button, and recovery to a new scene'
   await page.waitForFunction(() => document.title.includes('Waldo'));
   const q = await page.evaluate(() => location.search);
   assert.ok(!/fallback/.test(q) && !/seed=FB-1/.test(q), q);
+  await page.click('#startBtn');
+  await page.click('#menuBtn');
   await page.click('#testFallbackBtn');
   assert.equal(await page.isVisible('#failed'), true);
   assert.equal(await page.evaluate(() => WS.game.round.state), 'FALLBACK');
@@ -316,14 +439,14 @@ await test('fallback: ?fallback=1, the test button, and recovery to a new scene'
 
 await test('difficulty picker reloads with the same seed and the new difficulty', async () => {
   const { page } = await open('?seed=PICK-1');
-  await page.selectOption('#difficulty', 'hard');
+  await page.selectOption('#introDifficulty', 'hard');
   await page.waitForFunction(() => location.search.includes('difficulty=hard') && document.title.includes('Waldo'));
   assert.equal(await page.evaluate(() => WS.game.identity.seed + '|' + WS.game.identity.difficulty), 'PICK-1|hard');
   await page.close();
 });
 
 // ---------- checkpoint 4: the whole city ----------
-await test('city: four districts in one world, target can land in any of them', async () => {
+await test('city: five districts in one world, target can land in any of them', async () => {
   const { page, external, errors } = await open('?seed=CITY-1&scene=savannah');
   assert.deepEqual(external, []); assert.deepEqual(errors, []);
   const r = await page.evaluate(() => {
@@ -335,16 +458,16 @@ await test('city: four districts in one world, target can land in any of them', 
     }
     return { people: w.people, stories: w.stories, districts: w.districts.map((d) => d.id), h: w.h, spotsBy, ok: WS.game.placement.ok };
   });
-  assert.deepEqual(r.districts, ['riverfront', 'market', 'squares', 'forsyth']);
-  assert.equal(r.people, 901); assert.ok(r.stories >= 40); assert.equal(r.h, 6700); assert.ok(r.ok);
-  assert.equal(Object.keys(r.spotsBy).length, 4, 'first candidates spread over every district: ' + JSON.stringify(r.spotsBy));
+  assert.deepEqual(r.districts, ['riverfront', 'market', 'squares', 'monterey', 'forsyth']);
+  assert.equal(r.people, 901); assert.ok(r.stories >= 40); assert.equal(r.h, 7600); assert.ok(r.ok);
+  assert.equal(Object.keys(r.spotsBy).length, 5, 'first candidates spread over every district: ' + JSON.stringify(r.spotsBy));
   await page.close();
 });
 
 await test('city: winning anywhere works and the HUD names the district in view', async () => {
   const { page } = await open('?seed=CITY-4&scene=savannah');
   await page.evaluate(() => WS.game.engine.camera.centerOn(1600, 700, 1.5));
-  await page.waitForFunction(() => document.getElementById('hereLabel').textContent === 'River Street');
+  await page.waitForFunction(() => document.getElementById('hereLabel').textContent.endsWith('River Street'));
   await win(page);
   assert.match(await page.textContent('#winPoints'), /points/);
   await page.close();

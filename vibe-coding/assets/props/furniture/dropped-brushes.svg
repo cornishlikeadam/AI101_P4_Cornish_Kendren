@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 90 34" width="90" height="34" data-anchor="45 30" data-asset="props/furniture/dropped-brushes" data-author="original, hand-authored SVG, Waldo's Savannah 2026-11-16">
+<ellipse cx="45" cy="30" rx="40" ry="3" fill="#2B1D16" opacity=".14"/>
+<path d="M44,26 C52,22 66,22 74,26 C70,30 56,31 44,28 Z" fill="#3FC1C9" stroke="#2B1D16" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/>
+<path d="M58,24 C62,23 66,23 68,24.6" fill="none" stroke="#FFFFFF" stroke-width="1.4" opacity=".7"/>
+<g transform="rotate(-70 40 22)"><path d="M32,14 H48 V30 H32 Z" fill="#C9C2B2" stroke="#2B1D16" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/><path d="M32,18 H48" stroke="#2B1D16" stroke-width="1"/></g>
+<path d="M4,22 L26,16" stroke="#2B1D16" stroke-width="3.6" stroke-linecap="round"/><path d="M4,22 L26,16" stroke="#C99A62" stroke-width="2" stroke-linecap="round"/><path d="M26,16 l5,-1.4" stroke="#E8457A" stroke-width="3.6" stroke-linecap="round"/>
+<path d="M10,30 L30,27" stroke="#2B1D16" stroke-width="3.6" stroke-linecap="round"/><path d="M10,30 L30,27" stroke="#5C9E4A" stroke-width="2" stroke-linecap="round"/><path d="M30,27 l5,-.8" stroke="#F2D55C" stroke-width="3.6" stroke-linecap="round"/>
+<path d="M76,18 L86,28" stroke="#2B1D16" stroke-width="3.6" stroke-linecap="round"/><path d="M76,18 L86,28" stroke="#C99A62" stroke-width="2" stroke-linecap="round"/><path d="M74,16 l-3,-3" stroke="#7D5BA6" stroke-width="3.6" stroke-linecap="round"/>
+<circle cx="18" cy="26" r="1.6" fill="#E8457A"/><circle cx="62" cy="18" r="1.4" fill="#3FC1C9"/><circle cx="36" cy="31" r="1.2" fill="#F2D55C"/>
+</svg>
