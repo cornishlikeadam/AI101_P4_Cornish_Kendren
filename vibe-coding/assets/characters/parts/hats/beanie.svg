@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="10 -8 48 52" width="48" height="52" data-anchor="34 44" data-part="hat" data-asset="characters/parts/hats/beanie"  data-author="original, hand-authored SVG, Waldo's Savannah 2026-11-15">
+<style>
+.o{stroke:#2B1D16;stroke-width:1.5;stroke-linejoin:round;stroke-linecap:round}
+.l{fill:none;stroke:#2B1D16;stroke-width:1;stroke-linecap:round;stroke-linejoin:round}
+.fold{fill:none;stroke:#2B1D16;stroke-opacity:.4;stroke-width:.8;stroke-linecap:round}
+.sh{fill:#2B1D16;opacity:.15}.ink{fill:#2B1D16}.wht{fill:#FFFFFF}
+.skin{fill:var(--skin,#E0A97E)}.hair{fill:var(--hair,#4A2F1E)}
+.hat{fill:var(--hat,#3E8E7E)}.hat2{fill:var(--hat2,#F5F0E6)}
+</style>
+<path class="hat o" d="M22.2,17.4 C21.4,7.8 26.8,3.6 34,3.6 C41.2,3.6 46.4,7.8 45.8,17 Z"/>
+<path class="sh" d="M39.6,4.8 C44,6.6 46.2,10.6 45.8,15 L42,15 C42,11 41.2,7.6 39.6,4.8 Z"/>
+<path class="hat o" d="M21.6,13.6 Q34,11.4 46.4,13.2 Q47.4,15.6 46.4,17.8 Q34,16 21.6,18.2 Q20.8,15.8 21.6,13.6 Z"/>
+<path class="fold" style="stroke-opacity:.5" d="M25,13 L25,17 M28.4,12.4 L28.4,16.4 M31.8,12 L31.8,16 M35.2,11.9 L35.2,15.9 M38.6,12 L38.6,16 M42,12.2 L42,16.2 M45.2,12.4 L45.2,16.6"/>
+</svg>

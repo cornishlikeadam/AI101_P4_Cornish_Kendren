@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 -12 80 116" width="80" height="116" data-anchor="38 100" data-asset="characters/archetypes/dancer" data-slots="skin hair top top2 bottom shoe acc hat" data-head="4 0 1" data-kit="face=happy hair=bun" data-author="original, hand-authored SVG, Waldo's Savannah 2026-11-15">
+<style>
+.o{stroke:#2B1D16;stroke-width:1.5;stroke-linejoin:round;stroke-linecap:round}
+.l{fill:none;stroke:#2B1D16;stroke-width:1;stroke-linecap:round;stroke-linejoin:round}
+.fold{fill:none;stroke:#2B1D16;stroke-opacity:.4;stroke-width:.8;stroke-linecap:round}
+.sh{fill:#2B1D16;opacity:.15}.ink{fill:#2B1D16}.wht{fill:#FFFFFF}
+.skin{fill:var(--skin,#E0A97E)}.hair{fill:var(--hair,#4A2F1E)}
+.top{fill:var(--top,#4F6CC4)}.top2{fill:var(--top2,#F5F0E6)}.bottom{fill:var(--bottom,#3B3A48)}
+.hat{fill:var(--hat,#3E8E7E)}.hat2{fill:var(--hat2,#F5F0E6)}.acc{fill:var(--acc,#F2D55C)}.shoe{fill:var(--shoe,#5A3A28)}
+</style>
+<ellipse cx="38" cy="100" rx="22" ry="2.8" class="sh"/>
+<path class="skin o" d="M33.6,70 C29,74 24,77.4 19.4,79.4 L21,84 C26.6,82 32,78.6 37,74.4 Z"/>
+<path class="acc o" d="M17.8,77.8 C14.8,78.6 13.2,81.4 14.4,84 L21.2,84.4 Z"/>
+<path class="skin o" d="M36,72 C36.4,80 36.6,88 36.4,95.6 L41,95.6 C41.4,88 41.6,80 41.2,72 Z"/>
+<path class="acc o" d="M35.6,94.6 L41.6,94.6 C43.8,95 44.6,97 43.8,99 L35.2,99 C34.4,97.4 34.4,95.6 35.6,94.6 Z"/>
+<path class="l" d="M36,96.6 L42.6,96.4"/>
+<path class="top o" d="M30.2,40 C24,40 17.4,42 11.6,46 L13.4,50.4 C19,47.6 24.8,46.4 30.6,46.4 Z"/>
+<path class="sh" d="M30.2,40 C24,40 17.4,42 11.6,46 L13.4,50.4 C19,47.6 24.8,46.4 30.6,46.4 Z"/>
+<circle class="skin o" cx="10.6" cy="48.6" r="2.8"/>
+<path class="top o" d="M27,54 C18,57.6 9,63 3.6,70.4 C16,75.6 30,76.4 40,75 C52,76.4 66,74 76,68 C70,61.6 59,56.6 49,54 Z"/>
+<path class="sh" d="M49,54 C59,56.6 70,61.6 76,68 C70.6,71.2 64,73.4 57.6,74.6 C58,67.6 55,60 49,54 Z"/>
+<path class="fold" d="M27,58 Q19,66 14,73 M36,57 Q31,66 28,75.4 M43,57 Q44,66 44,75.6 M48,57 Q55,64 60,74"/>
+<path class="top2 o" style="stroke-width:1.1" d="M3.6,70.4 C16,75.6 30,76.4 40,75 C52,76.4 66,74 76,68 L76.8,70.6 C66,77 52,79 40,77.8 C30,79 16,78.4 3,73 Z"/>
+<path class="top o" d="M28,40.6 C27.6,36.6 31.4,34.8 37.8,34.8 C44.2,34.8 48,36.6 48,40.6 L47,55.4 C41,57.4 34,57.4 28.6,55.4 Z"/>
+<path class="sh" d="M43.6,35.2 C46.4,36.2 48,38 48,40.6 L47,55.4 C45.6,56 44.2,56.3 42.8,56.5 C44.2,49.6 44.6,42 43.6,35.2 Z"/>
+<path class="top2 o" style="stroke-width:1.1" d="M28.6,52 C34.6,54 41.6,54 47.2,52 L47,55.4 C41,57.4 34,57.4 28.6,55.4 Z"/>
+<g transform="translate(4 0)"><path class="skin o" d="M28.4,30 L36.2,30 L36.6,36.4 Q32.4,38.6 28,36.4 Z"/></g>
+<path class="top o" d="M43,38.2 C47.6,34.6 50.6,29 51.4,22.2 L56.2,22.8 C55.8,30.6 52,37.6 45.6,42.8 Z"/>
+<path class="skin o" d="M51.4,22.2 C51,17.6 50.4,13.4 49,9.6 L53.4,8.4 C55,12.6 56,17.4 56.2,22.8 Z"/>
+<circle class="skin o" cx="50.4" cy="7.4" r="2.8"/>
+<path class="l" style="stroke-opacity:.45" d="M60,12 q4,4 3.6,9.4 M64,9 q5,5.6 4.4,12 M6,62 q-3,4 -2.6,8"/>
+<!--HEAD-->
+</svg>

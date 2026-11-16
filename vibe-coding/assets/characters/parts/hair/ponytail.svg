@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="10 -8 48 52" width="48" height="52" data-anchor="34 44" data-part="hair" data-asset="characters/parts/hair/ponytail" data-hats="cap visor sunhat bucket" data-author="original, hand-authored SVG, Waldo's Savannah 2026-11-15">
+<style>
+.o{stroke:#2B1D16;stroke-width:1.5;stroke-linejoin:round;stroke-linecap:round}
+.l{fill:none;stroke:#2B1D16;stroke-width:1;stroke-linecap:round;stroke-linejoin:round}
+.fold{fill:none;stroke:#2B1D16;stroke-opacity:.4;stroke-width:.8;stroke-linecap:round}
+.sh{fill:#2B1D16;opacity:.15}.ink{fill:#2B1D16}.wht{fill:#FFFFFF}
+.skin{fill:var(--skin,#E0A97E)}.hair{fill:var(--hair,#4A2F1E)}
+.hat{fill:var(--hat,#3E8E7E)}.hat2{fill:var(--hat2,#F5F0E6)}
+</style>
+<!--back-->
+<path class="hair o" d="M23.4,14 C17,14 14.6,20 15.4,27 C16,31 18,34 17.6,38 C21,35.6 22,31 21.4,27 C21,23 22.4,19 24.8,17.4 Z"/>
+<path class="hat o" d="M21.4,15.4 L24.6,14.4 L25.4,17.8 L22.4,18.8 Z"/>
+<!--/back-->
+<!--front-->
+<path class="hair o" d="M22.6,20.8 C21.4,12.6 26.8,8.2 34,8.2 C41,8.2 45.4,12.2 45.2,16.6 C40.8,14.4 34.4,13.6 29.8,15 C27.8,16.6 26.6,19.2 25.8,21.4 C25.2,23 24.4,23.6 23.6,23.4 C23,22.6 22.7,21.8 22.6,20.8 Z"/>
+<path class="fold" d="M29.8,15 C28,12.6 25.6,12.4 23.6,14 M33.6,11 q4.4,-.6 8.4,1.8"/>
+<!--/front-->
+</svg>

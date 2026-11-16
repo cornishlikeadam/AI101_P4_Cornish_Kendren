@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="10 -8 48 52" width="48" height="52" data-anchor="34 44" data-part="beard" data-asset="characters/parts/beards/full"  data-author="original, hand-authored SVG, Waldo's Savannah 2026-11-15">
+<style>
+.o{stroke:#2B1D16;stroke-width:1.5;stroke-linejoin:round;stroke-linecap:round}
+.l{fill:none;stroke:#2B1D16;stroke-width:1;stroke-linecap:round;stroke-linejoin:round}
+.fold{fill:none;stroke:#2B1D16;stroke-opacity:.4;stroke-width:.8;stroke-linecap:round}
+.sh{fill:#2B1D16;opacity:.15}.ink{fill:#2B1D16}.wht{fill:#FFFFFF}
+.skin{fill:var(--skin,#E0A97E)}.hair{fill:var(--hair,#4A2F1E)}
+.hat{fill:var(--hat,#3E8E7E)}.hat2{fill:var(--hat2,#F5F0E6)}
+</style>
+<path class="hair o" d="M26.8,24.8 C27,30 30,34.4 35,34.6 C40.4,34.8 44.2,31 44.6,26 C42.6,27.6 41,28.4 39.4,27.6 C37.6,26.8 35.6,27.2 34.6,28.6 C32,28.6 29.8,27.4 28.2,24.6 Z"/>
+<path class="skin" d="M37,29.6 Q39.6,31 42,29.4 Q40.6,31.2 39.4,31.2 Q37.8,31 37,29.6 Z"/><path class="l" d="M37,29.6 Q39.6,31 42,29.4"/>
+<path class="fold" d="M31,30.4 q1.4,1.6 3,2 M41.6,31.6 q-1,1.2 -2.4,1.6"/>
+</svg>

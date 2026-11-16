@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 92 46" width="92" height="46" data-anchor="46 44" data-seat-y="28" data-asset="props/furniture/park-bench" data-author="original, hand-authored SVG, Waldo's Savannah 2026-11-15">
+<style>.o{stroke:#2B1D16;stroke-width:1.4;stroke-linejoin:round;stroke-linecap:round}.iron{fill:#2E4A3C}.slat{fill:#B9824F}.slat-dk{fill:#946235}</style>
+<ellipse cx="49" cy="43" rx="44" ry="3.4" fill="#2B1D16" opacity=".15"/>
+<!-- back legs -->
+<path class="iron o" d="M12,26 L10,40 L13,40 L15,27 Z M80,26 L82,40 L79,40 L77,27 Z"/>
+<!-- back rest slats -->
+<path class="slat o" d="M8,4 L84,4 L84,9 L8,9 Z"/>
+<path class="slat o" d="M8,11 L84,11 L84,16 L8,16 Z"/>
+<path class="slat-dk o" d="M8,18 L84,18 L84,22 L8,22 Z"/>
+<!-- seat slats -->
+<path class="slat o" d="M6,23 L86,23 L88,27 L4,27 Z"/>
+<path class="slat o" d="M4,27 L88,27 L89,31 L3,31 Z"/>
+<!-- ornate cast-iron ends -->
+<path class="iron o" d="M5,2 C2,2 1,5 3,7 C5,9 6,12 6,16 L6,24 C4,26 3,30 4,34 L2,43 L6,43 L8,34 C10,30 11,27 11,24 L10,8 C10,5 8,2 5,2 Z"/>
+<path class="iron o" d="M87,2 C90,2 91,5 89,7 C87,9 86,12 86,16 L86,24 C88,26 89,30 88,34 L90,43 L86,43 L84,34 C82,30 81,27 81,24 L82,8 C82,5 84,2 87,2 Z"/>
+<path d="M6,14 q3,3 0,6 M86,14 q-3,3 0,6" fill="none" stroke="#5E8A70" stroke-width="1" stroke-linecap="round"/>
+<path class="iron o" d="M40,31 L39,42 L42,42 L43,31 Z M50,31 L51,42 L48,42 L47,31 Z"/>
+<path d="M10,6 L82,6 M10,13 L82,13" stroke="#E0B485" stroke-width=".8" opacity=".7"/>
+</svg>
