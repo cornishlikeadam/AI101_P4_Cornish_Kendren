@@ -62,10 +62,53 @@ def warehouse(x, wdt):
     s += ''.join(f'<path d="M{f(bx-18-k*1.5)},{240+k*9} v12 M{f(bx+18+k*1.5)},{240+k*9} v12" stroke="{INK}" stroke-width="1"/>' for k in range(9))
     s += f'<path d="M{x+wdt-6},20 V{H}" stroke="{INK}" stroke-width="3"/><path d="M{x+wdt-6},20 V{H}" stroke="#7E7A72" stroke-width="1.5"/>'
     return s
+def city_hall(x, wdt=320):
+    # Savannah City Hall (1906) at Bay and Bull: granite, four storeys, a portico over the Bull Street
+    # entrance and a gilded dome. Drawn from Bay Street, so it stands on the bluff like the warehouses.
+    G, G2, GOLD, GOLD2 = '#DCD4C3', '#C8BFAC', '#E8B53A', '#C99422'
+    cx = x + wdt / 2; s = ''
+    s += f'<rect x="{x}" y="40" width="{wdt}" height="290" fill="{G}" {O}/><rect x="{x+wdt-16}" y="40" width="16" height="290" fill="{INK}" opacity=".12"/>'
+    for yy in range(56, 250, 12): s += f'<path d="M{x+2},{yy} H{x+wdt-2}" stroke="{INK}" stroke-opacity=".08" stroke-width=".8"/>'
+    s += f'<rect x="{x-6}" y="28" width="{wdt+12}" height="16" fill="{G2}" {O}/><text x="{f(cx)}" y="41" text-anchor="middle" font-family="Georgia, serif" font-weight="700" font-size="11" letter-spacing="3" fill="{INK}">CITY HALL</text>'
+    for fy in (60, 118):
+        for i in range(5):
+            wx = x + 26 + i * (wdt - 52) / 4 - 13
+            s += f'<path d="M{f(wx)},{fy+44} V{fy+10} A13,13 0 0,1 {f(wx+26)},{fy+10} V{fy+44} Z" fill="#3D5468" {O}/><path d="M{f(wx+13)},{fy} V{fy+44}" stroke="#E8E2D2" stroke-width="1.4"/>'
+            s += f'<rect x="{f(wx-3)}" y="{fy+44}" width="32" height="4" fill="{G2}" {O}/>'
+    # portico: four columns, pediment, arched door to Bull Street
+    s += f'<path d="M{f(cx-96)},176 L{f(cx)},140 L{f(cx+96)},176 Z" fill="{G2}" {O}/><rect x="{f(cx-96)}" y="176" width="192" height="12" fill="{G}" {O}/>'
+    for i in range(4):
+        px = cx - 78 + i * 52
+        s += f'<rect x="{f(px-8)}" y="188" width="16" height="64" fill="#F0EBDD" {O}/><path d="M{f(px-3)},192 V248 M{f(px+3)},192 V248" stroke="{INK}" stroke-opacity=".25" stroke-width=".8"/><rect x="{f(px-11)}" y="186" width="22" height="5" fill="{G2}" {O}/>'
+    s += f'<path d="M{f(cx-18)},252 V222 A18,18 0 0,1 {f(cx+18)},222 V252 Z" fill="#5A3A28" {O}/>'
+    s += f'<rect x="{f(cx-100)}" y="252" width="200" height="10" fill="{G2}" {O}/>' + ''.join(f'<rect x="{f(cx-100-k*8)}" y="{262+k*9}" width="{200+k*16}" height="9" fill="#BDB5A3" {O}/>' for k in range(8))
+    return s
+def city_hall_dome(x, wdt=320):
+    # The dome is a separate sprite anchored at Bay Street (world y 1350), so River Street people behind it
+    # are hidden by it rather than walking across it.
+    G, G2, GOLD, GOLD2 = '#DCD4C3', '#C8BFAC', '#E8B53A', '#C99422'
+    cx = x + wdt / 2; s = ''
+    # drum, clock and gilded dome with a lantern
+    s += f'<rect x="{f(cx-70)}" y="-34" width="140" height="66" fill="{G}" {O}/>' + ''.join(f'<rect x="{f(cx-62+k*26)}" y="-26" width="10" height="50" fill="#3D5468" {O}/>' for k in range(5))
+    s += f'<rect x="{f(cx-78)}" y="28" width="156" height="12" fill="{G2}" {O}/><rect x="{f(cx-76)}" y="-42" width="152" height="10" fill="{G2}" {O}/>'
+    s += f'<path d="M{f(cx-74)},-42 C{f(cx-74)},-120 {f(cx+74)},-120 {f(cx+74)},-42 Z" fill="{GOLD}" {O}/>'
+    s += f'<path d="M{f(cx+10)},-108 C{f(cx+50)},-100 {f(cx+70)},-80 {f(cx+74)},-42 L{f(cx+40)},-42 C{f(cx+38)},-74 {f(cx+26)},-98 {f(cx+10)},-108 Z" fill="{GOLD2}"/>'
+    s += ''.join(f'<path d="M{f(cx+k*24)},-42 C{f(cx+k*20)},-80 {f(cx+k*10)},-104 {f(cx)},-109" fill="none" stroke="{INK}" stroke-opacity=".35" stroke-width="1"/>' for k in (-3, -2, -1, 1, 2, 3))
+    s += f'<path d="M{f(cx-38)},-60 C{f(cx-36)},-84 {f(cx-22)},-98 {f(cx-8)},-104" fill="none" stroke="#FFF2B8" stroke-width="3" stroke-linecap="round" opacity=".8"/>'
+    s += f'<rect x="{f(cx-12)}" y="-136" width="24" height="26" fill="{G}" {O}/><path d="M{f(cx-16)},-136 L{f(cx)},-158 L{f(cx+16)},-136 Z" fill="{GOLD}" {O}/><path d="M{f(cx)},-158 v-14" stroke="{INK}" stroke-width="2"/>'
+    s += f'<circle cx="{f(cx)}" cy="-2" r="13" fill="#F7F1E3" {O}/><path d="M{f(cx)},-2 v-8 M{f(cx)},-2 h6" stroke="{INK}" stroke-width="1.6"/>'
+    return s
+w('props/landmarks/city-hall-dome', '1520 -180 160 220', '1600 330', city_hall_dome(1440, 320))
 body = ''; x = 0
 while x < 3200:
-    wdt = random.choice([170, 200, 230, 260]); wdt = min(wdt, 3200 - x)
-    if wdt < 90: break
+    if x >= 1440 and x < 1760:
+        body += city_hall(1440, 320); x = 1760; continue
+    end = 1440 if x < 1440 else 3200
+    wdt = random.choice([170, 200, 230, 260]); wdt = min(wdt, end - x)
+    if end - x - wdt < 120: wdt = end - x           # the last warehouse meets City Hall or the edge
+    if wdt < 90:
+        if x < 1440: x = 1440; continue
+        break
     body += warehouse(x, wdt); x += wdt
 w('environments/riverfront/warehouse-row', '0 0 3200 330', '0 330', f'<rect x="0" y="300" width="3200" height="30" fill="{INK}" opacity=".08"/>' + body, 'data-layer="far"')
 
@@ -97,14 +140,17 @@ def shop(x, wdt):
     s += f'<path d="M{x+2},166 L{x+wdt-2},166 L{x+wdt+8},196 L{x-8},196 Z" fill="none" {O}/>'
     s += ''.join(f'<path d="M{f(x-8+j*14)},196 q7,9 14,0" fill="{aw}" {O}/>' for j in range(int((wdt+16)/14)))
     return s
-body = ''; x = 0
-while x < 3200:
-    wdt = min(random.choice([180, 220, 260]), 3200 - x)
-    if wdt < 100: break
-    body += shop(x, wdt); x += wdt
-gate = f'''<path d="M1480,300 V60 M1720,300 V60" stroke="{INK}" stroke-width="12"/><path d="M1480,300 V60 M1720,300 V60" stroke="#3D4F6E" stroke-width="7"/>
-<path d="M1474,70 Q1600,4 1726,70 L1726,92 Q1600,30 1474,92 Z" fill="#3D4F6E" {O}/>
-<text x="1600" y="64" text-anchor="middle" font-family="Georgia, serif" font-weight="700" font-size="22" fill="#F2D55C" letter-spacing="3">CITY MARKET</text>'''
+body = ''
+for a, b in ((0, 1515), (1685, 3200)):      # Bull Street passes between the blocks at x 1515-1685
+    x = a
+    while x < b:
+        wdt = min(random.choice([180, 220, 260]), b - x)
+        if b - x - wdt < 110: wdt = b - x
+        body += shop(x, wdt); x += wdt
+gx = 760
+gate = f'''<path d="M{gx-120},300 V60 M{gx+120},300 V60" stroke="{INK}" stroke-width="12"/><path d="M{gx-120},300 V60 M{gx+120},300 V60" stroke="#3D4F6E" stroke-width="7"/>
+<path d="M{gx-126},70 Q{gx},4 {gx+126},70 L{gx+126},92 Q{gx},30 {gx-126},92 Z" fill="#3D4F6E" {O}/>
+<text x="{gx}" y="64" text-anchor="middle" font-family="Georgia, serif" font-weight="700" font-size="22" fill="#F2D55C" letter-spacing="3">CITY MARKET</text>'''
 w('environments/market/market-row', '0 0 3200 300', '0 300', body + gate, 'data-layer="far"')
 
 # ---------- riverboat: two-deck paddle-wheeler ----------
@@ -252,12 +298,16 @@ def church(x):
     s += f'<circle cx="{x+W/2}" cy="168" r="10" fill="#F2D55C" {O}/>'
     s += f'<path d="M{x+W/2-30},290 V236 A30,30 0 0,1 {x+W/2+30},236 V290 Z" fill="#5A3A28" {O}/><path d="M{x+W/2},206 V290" stroke="{INK}" stroke-width="1.4"/>'
     return s, W
-body = ''; x = 0; churchdone = False
-while x < 3200:
-    if not churchdone and x > 1350:
-        c, cw = church(x); body += c; x += cw; churchdone = True; continue
-    wdt = min(random.choice([140, 160, 180]), 3200 - x)
-    if wdt < 100: break
-    body += rowhouse(x, wdt); x += wdt
+body = ''; churchdone = False
+for a, b in ((0, 1515), (1685, 3200)):
+    x = a
+    while x < b:
+        if not churchdone and a > 0 and x + 180 > 2090:
+            if 2090 - x >= 60: body += rowhouse(x, 2090 - x)
+            c, cw = church(2090); body += c; x = 2090 + cw; churchdone = True; continue
+        wdt = min(random.choice([140, 160, 180]), b - x)
+        if b - x - wdt < 100: wdt = b - x
+        if not churchdone and a > 0 and x < 2090 < x + wdt: wdt = 2090 - x
+        body += rowhouse(x, wdt); x += wdt
 w('environments/squares/row-houses', '0 -110 3200 400', '0 290', body, 'data-layer="far"')
 print('square row houses written')

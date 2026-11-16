@@ -88,3 +88,16 @@ Load time is the cost of the second frame; frame rate is unchanged.
 - A headed browser window (all runs were headless; the GPU run uses the real Metal device).
 - Long-session memory growth beyond the 20 s tour.
 - Cost of drawn animation frames (not built yet; current motion is procedural).
+
+## Overhaul: camera, Bull Street city, new art (2026-11-16)
+
+Same machine and method as above (`tests/perf.mjs`, Apple M4, headless Chrome with the Metal GPU flags, 1440 × 900, DPR 1, seed `PERF-1`, city scene). The tour's 0.6x keyframes are now clamped to the viewport-cover zoom, so the camera never shows blank edges during the run.
+
+| Run | People | Load ms | Avg FPS | p95 ms | p99 ms | Worst ms | Heap MB |
+|---|---:|---:|---:|---:|---:|---:|---:|
+| before, standard | 901 | 1467 | 59.8 | 16.7 | 16.8 | 100.0 | 35.6 |
+| after, standard | 901 | 1529 | 59.6 | 16.8 | 16.8 | 66.7 | 31.6 |
+| after, dense | 1,501 | 2579 | 59.6 | 16.7 | 16.8 | 66.6 | 54.2 |
+| after, `crowd=2000` | 2,001 | 3704 | 59.2 | 16.7 | 16.8 | 83.3 | 61.0 |
+
+The display caps at 60 Hz, so these show headroom on this laptop only. Phones and older laptops were not measured. An earlier 41 FPS figure came from the lab's iframe without GPU flags and is not comparable.

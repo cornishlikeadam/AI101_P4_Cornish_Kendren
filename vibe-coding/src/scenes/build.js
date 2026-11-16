@@ -53,8 +53,8 @@
     };
     const fill = Math.max(0, total - people.length);
     const spacing = total > 3000 ? 8 : total > 1600 ? 18 : 30;
-    const POOL_PATH = [[B + 'walk', 20], [B + 'dress', 13], [B + 'tote', 10], [B + 'phone', 7], [B + 'cane', 5], [B + 'child', 6], [C + 'jogger', 7], [C + 'tourist-photographer', 5], [C + 'scad-student-portfolio', 4], [C + 'dog-walker', 3], [C + 'parent-stroller', 3], [C + 'cyclist', 2]];
-    const POOL_STAND = [[B + 'coffee', 14], [B + 'phone', 12], [B + 'walk', 10], [B + 'dress', 10], [B + 'tote', 8], [B + 'child', 7], [B + 'cane', 4], [C + 'tourist-photographer', 5], [C + 'scad-student-portfolio', 3]];
+    const POOL_PATH = [[B + 'walk', 12], [B + 'dress', 11], [B + 'tote', 6], [B + 'umbrella', 7], [B + 'books', 7], [B + 'phone', 7], [B + 'cane', 5], [B + 'child', 6], [C + 'jogger', 7], [C + 'tourist-photographer', 5], [C + 'scad-student-portfolio', 4], [C + 'dog-walker', 3], [C + 'parent-stroller', 3], [C + 'cyclist', 2]];
+    const POOL_STAND = [[B + 'coffee', 12], [B + 'phone', 10], [B + 'wave', 9], [B + 'books', 6], [B + 'walk', 6], [B + 'dress', 9], [B + 'tote', 4], [B + 'umbrella', 3], [B + 'child', 7], [B + 'cane', 4], [C + 'tourist-photographer', 5], [C + 'scad-student-portfolio', 3]];
     const zonePairs = districts.flatMap((d) => d.zones.map((z) => [z, z.w]));
     for (let placed = 0, tries = 0; placed < fill && tries < fill * 60; tries++) {
       const z = rng.weighted(zonePairs);
@@ -85,7 +85,7 @@
     const target = push({ id: 'target', asset: C + 'target-walker', x: candidates[0].x, y: candidates[0].y, flip: candidates[0].flip, kind: 'person', isTarget: true, colours: null, traits: ['stripes', 'bobble', 'glasses', 'blue', 'stick'], spot: candidates[0].spot });
 
     const area = (x, y) => { for (const d of districts) { const a = d.area(x, y); if (a) return a; } return 'somewhere in Savannah'; };
-    return { blocked, id: scene.id, name: scene.name, w: scene.w, h: scene.h, ground: scene.ground, background: '#F6E7C8', fountains: districts.flatMap((d) => d.fountains || (d.fountain ? [d.fountain] : [])), districts: districts.map((d) => ({ id: d.id, name: d.name, y0: d.y0, h: d.h })), area, entities, target, candidates, identity, people: people.length + 1, stories: new Set(allStories.map((s) => s.story)).size };
+    return { blocked, id: scene.id, name: scene.name, w: scene.w, h: scene.h, home: scene.home || null, ground: scene.ground, background: '#F6E7C8', fountains: districts.flatMap((d) => d.fountains || (d.fountain ? [d.fountain] : [])), districts: districts.map((d) => ({ id: d.id, name: d.name, y0: d.y0, h: d.h })), area, entities, target, candidates, identity, people: people.length + 1, stories: new Set(allStories.map((s) => s.story)).size };
   }
 
   WS.buildScene = buildScene;

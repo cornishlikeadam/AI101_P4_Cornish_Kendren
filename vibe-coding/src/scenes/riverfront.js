@@ -17,8 +17,10 @@
     for (let x = 120; x < 3200; x += 260) add('props/furniture/lamp-post', x, 452, 0.95);
     for (const x of [260, 760, 1300, 1760]) add('props/furniture/park-bench', x, 470, 0.9);
     for (let x = 80; x < 3200; x += 380) add('props/furniture/lamp-post', x, 1046, 0.9);
-    add('props/vehicles/trolley', 1200, 1470, 0.95);
-    add('props/vehicles/carriage', 2500, 1460, 0.95, 1);
+    add('props/vehicles/trolley', 1200, 1474, 0.95, 0, { drive: 30 });
+    add('props/landmarks/city-hall-dome', 1600, 1350, 1);
+    add('props/vehicles/carriage', 2500, 1440, 0.95, 1, { drive: 24 });
+    if (WS.streets) WS.streets.street(add, 1400, 80, { parked: [], moving: 1 });
     add('props/vehicles/carriage', 700, 1030, 0.95);
     return g;
   }
@@ -57,6 +59,7 @@
   ];
   function area(x, y) {
     if (y < 0 || y >= 1500) return null;
+    if (y >= 1350 && x > 1430 && x < 1770) return 'on Bay Street, in front of City Hall';
     if (x > 2000 && y < 640) return 'on the Festival Pier';
     if (y < 900) return x < 900 ? 'on the riverwalk by the Waving Girl' : 'on the riverwalk along the Savannah River';
     if (y < 1100) return 'on cobbled River Street';

@@ -4,7 +4,11 @@
   const WS = (window.WS = window.WS || {});
   const S = () => WS.sprites;
   const ZOOM_BASE = 0.4;                 // 1.0x zoom = 0.4 CSS px per world unit (an adult is about 30 px tall)
-  const ZOOM_MIN = 0.6, ZOOM_MAX = 3.5;  // the directive's 0.6x to 3.5x range
+  // Zoom limits depend on the viewport: the minimum is whatever keeps the whole screen covered by the
+  // illustrated world (never below 0.5x, where people are still recognisable shapes); the maximum shows a
+  // face about 60 px across, which the sprite and ground tiers render sharply.
+  const ZOOM_FLOOR = 0.5, ZOOM_MAX = 5;
+  const ZOOM_EASE_MS = 90;               // smooth zoom: time constant of the exponential approach
   const GROUND_TILE = 256;
   const GROUND_TIERS = [0.5, 1, 2, 3, 5];
   const SMOOTH = 'low';               // bilinear; sprite tiers are chosen near the target scale so this stays crisp
@@ -13,7 +17,12 @@
     const ctx = canvas.getContext('2d');
     const queue = S().makeQueue();
     const frameFns = [];
-    const cam = { x: world.w / 2, y: world.h / 2, zoom: 1 };   // zoom is the 0.6x..3.5x multiplier
+    const cam = { x: world.w / 2, y: world.h / 2, zoom: 1 };   // zoom multiplies ZOOM_BASE
+    // The illustrated area the camera may show: the world minus a thin margin so no sprite edge or
+    // half-drawn tile ever reaches the screen border.
+    const EDGE = 6;
+    const bounds = { x0: EDGE, y0: EDGE, x1: world.w - EDGE, y1: world.h - EDGE };
+    let ease = null;                     // { target, sx, sy } while a smooth zoom is in flight
     let vw = 0, vh = 0, dpr = 1, dirty = true, beacon = !!opts.beacon, effects = [], lastT = 0;
     const perf = { frames: 0, times: [] };
 
@@ -38,14 +47,14 @@
     // ---------- motion ----------
     // Procedural motion, not drawn frames: walkers bounce in step, standers breathe, kites sway, bubbles rise,
     // the fountain sparkles. Offsets never change placement, and prefers-reduced-motion freezes everything.
-    const WALKERS = /bodies\/(walk|dress|tote|cane|child)$|archetypes\/(jogger|tourist-photographer|scad-student-portfolio|dog-walker|parent-stroller|tour-guide|target-walker|cyclist)$/;
+    const WALKERS = /bodies\/(walk|dress|tote|cane|child|umbrella|books)$|archetypes\/(jogger|tourist-photographer|scad-student-portfolio|dog-walker|parent-stroller|tour-guide|target-walker|cyclist)$/;
     const reduced = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     let motionOn = !reduced && opts.motion !== false;
     function assignMotion() {
       for (const e of world.entities) {
         const h = WS.rng.fnv1a(e.id) / 4294967296;
         e.phase = h * Math.PI * 2;
-        e.motion = e.kind === 'person' ? (WALKERS.test(e.asset) ? (e.asset.endsWith('jogger') ? 'jog' : 'walk') : 'idle')
+        e.motion = e.kind === 'person' ? (WALKERS.test(e.asset) ? (e.asset.endsWith('jogger') ? 'jog' : 'walk') : e.asset.endsWith('bodies/wave') ? 'wave' : 'idle')
           : e.asset === 'effects/kite' ? 'kite' : e.asset === 'effects/bubbles' ? 'rise' : e.asset.includes('animals') ? 'idle' : null;
         e.speed = 0.85 + h * 0.35;
         assignTravel(e, h);
@@ -57,10 +66,12 @@
     // pauses on lawns and plazas. Story characters stay at their story; the target paces a few steps
     // around his validated hiding spot. Dogs on leads follow their walkers.
     const H_LANES = new Set(['north-walk', 'cross-walk', 'south-walk', 'riverwalk', 'river-street', 'factors-walk', 'market-front', 'congress-walk', 'square-sidewalks']);
-    const V_LANES = new Set(['promenade', 'side-walks', 'between-squares']);
+    const V_LANES = new Set(['promenade', 'side-walks', 'between-squares', 'bull-walk']);
     const SPEED = (a) => /cyclist/.test(a) ? 85 : /jogger/.test(a) ? 55 : /child|cane/.test(a) ? 14 : /stroller/.test(a) ? 16 : 22;
     function assignTravel(e, h) {
       e.travel = null;
+      // cars, carriages and trolleys drive along their street and come round again at the far edge
+      if (e.drive) { e.travel = { kind: 'drive', v: e.drive }; return; }
       if (e.kind !== 'person' || e.motion !== 'walk' && e.motion !== 'jog') return;
       const r = WS.rng.mulberry32(WS.rng.fnv1a(e.id + '#walk'));
       const v = SPEED(e.asset) * (0.85 + r() * 0.3);
@@ -83,6 +94,12 @@
         const T = e.travel;
         if (!T) continue;
         e.moving = true;
+        if (T.kind === 'drive') {
+          e.x += (e.flip ? -1 : 1) * T.v * dt;
+          if (e.x > world.w + 160) e.x = -160; else if (e.x < -160) e.x = world.w + 160;
+          e.rect = rectOf(e);
+          continue;
+        }
         if (T.kind === 'h') {
           const dir = e.flip ? -1 : 1, nx = e.x + dir * T.v * dt;
           if (nx < 70 || nx > world.w - 70 || blockedAt(nx, e.y)) e.flip = e.flip ? 0 : 1; else e.x = nx;
@@ -130,6 +147,7 @@
         }
         else if (e.motion === 'jog') e.oy = -Math.abs(Math.sin(p * 1.4)) * 3.2;
         else if (e.motion === 'idle') e.oy = Math.sin(p * 0.25) * 0.5;
+        else if (e.motion === 'wave') { e.oy = Math.sin(p * 0.25) * 0.5; if (e.sprite1) e.sprite = Math.sin(p * 1.6) > 0 ? e.sprite1 : e.sprite0; }
         else if (e.motion === 'kite') { e.oy = Math.sin(p * 0.35) * 6; e.rot = Math.sin(p * 0.27) * 0.08; }
         else if (e.motion === 'rise') e.oy = -((s * 6 + e.phase * 4) % 14);
       }
@@ -176,33 +194,67 @@
     }
 
     // ---------- camera ----------
+    // cam.x/cam.y is the world point at the centre of the screen. The visible world rectangle is
+    // [cam.x ± vw/2/scale] × [cam.y ± vh/2/scale]; it must stay inside `bounds`, which forces
+    // scale ≥ max(vw / boundsWidth, vh / boundsHeight) — the viewport-cover zoom.
     const scale = () => cam.zoom * ZOOM_BASE;            // CSS px per world unit
+    const minZoom = () => {
+      if (!vw || !vh) return ZOOM_FLOOR;
+      const cover = Math.max(vw / (bounds.x1 - bounds.x0), vh / (bounds.y1 - bounds.y0)) / ZOOM_BASE;
+      return Math.max(ZOOM_FLOOR, cover * 1.0005);
+    };
+    const maxZoom = () => Math.max(ZOOM_MAX, minZoom() * 2);
     function clamp() {
-      cam.zoom = Math.max(ZOOM_MIN, Math.min(ZOOM_MAX, cam.zoom));
+      cam.zoom = Math.max(minZoom(), Math.min(maxZoom(), cam.zoom));
       const hw = vw / 2 / scale(), hh = vh / 2 / scale();
-      cam.x = hw * 2 >= world.w ? world.w / 2 : Math.max(hw, Math.min(world.w - hw, cam.x));
-      cam.y = hh * 2 >= world.h ? world.h / 2 : Math.max(hh, Math.min(world.h - hh, cam.y));
+      cam.x = Math.max(bounds.x0 + hw, Math.min(bounds.x1 - hw, cam.x));
+      cam.y = Math.max(bounds.y0 + hh, Math.min(bounds.y1 - hh, cam.y));
       dirty = true;
     }
     const toWorld = (sx, sy) => [cam.x + (sx - vw / 2) / scale(), cam.y + (sy - vh / 2) / scale()];
     const toScreen = (wx, wy) => [(wx - cam.x) * scale() + vw / 2, (wy - cam.y) * scale() + vh / 2];
+    // Zoom so that the world point under screen point (sx, sy) stays under it.
+    function zoomAround(z, sx, sy) {
+      const [wx, wy] = toWorld(sx, sy);
+      cam.zoom = Math.max(minZoom(), Math.min(maxZoom(), z));
+      cam.x = wx - (sx - vw / 2) / scale(); cam.y = wy - (sy - vh / 2) / scale();
+      clamp();
+    }
+    // One step of the smooth zoom, frame-rate independent: move a fraction 1 - e^(-dt/τ) of the way in log space.
+    function stepEase(dt) {
+      if (!ease) return;
+      const k = 1 - Math.exp(-Math.max(0, dt) / ZOOM_EASE_MS);
+      const z = Math.exp(Math.log(cam.zoom) + (Math.log(ease.target) - Math.log(cam.zoom)) * k);
+      zoomAround(z, ease.sx, ease.sy);
+      if (Math.abs(Math.log(cam.zoom / ease.target)) < 0.002) { zoomAround(ease.target, ease.sx, ease.sy); ease = null; }
+    }
+    const home = () => world.home || { x: world.w / 2, y: world.h / 2, zoom: 1.2 };
     const camera = {
       get zoom() { return cam.zoom; }, get x() { return cam.x; }, get y() { return cam.y; },
-      ZOOM_MIN, ZOOM_MAX, ZOOM_BASE,
+      get minZoom() { return minZoom(); }, get maxZoom() { return maxZoom(); },
+      get ZOOM_MIN() { return minZoom(); }, get ZOOM_MAX() { return maxZoom(); }, ZOOM_BASE,
+      get bounds() { return Object.assign({}, bounds); },
+      /** The world rectangle currently on screen: [x0, y0, x1, y1]. */
+      visible() { return [...toWorld(0, 0), ...toWorld(vw, vh)]; },
       panBy(dxCss, dyCss) { cam.x -= dxCss / scale(); cam.y -= dyCss / scale(); clamp(); },
-      zoomAt(factor, sx = vw / 2, sy = vh / 2) {
-        const [wx, wy] = toWorld(sx, sy);
-        cam.zoom *= factor; clamp();
-        const [nx, ny] = toWorld(sx, sy);
-        cam.x += wx - nx; cam.y += wy - ny; clamp();
+      zoomAt(factor, sx = vw / 2, sy = vh / 2) { ease = null; zoomAround(cam.zoom * factor, sx, sy); },
+      /** Smooth zoom toward the pointer; repeated calls (wheel ticks) accumulate into one target. */
+      zoomSmooth(factor, sx = vw / 2, sy = vh / 2) {
+        const base = ease ? ease.target : cam.zoom;
+        ease = { target: Math.max(minZoom(), Math.min(maxZoom(), base * factor)), sx, sy };
+        dirty = true;
       },
-      centerOn(wx, wy, zoom) { if (zoom) cam.zoom = zoom; cam.x = wx; cam.y = wy; clamp(); },
-      reset() { cam.zoom = 1; cam.x = world.w / 2; cam.y = world.h / 2; clamp(); },
-      fit() { cam.zoom = Math.max(ZOOM_MIN, Math.min(vw / world.w, vh / world.h) / ZOOM_BASE); cam.x = world.w / 2; cam.y = world.h / 2; clamp(); },
+      get easing() { return !!ease; },
+      centerOn(wx, wy, zoom) { ease = null; if (zoom) cam.zoom = zoom; clamp(); cam.x = wx; cam.y = wy; clamp(); },
+      reset() { const h = home(); ease = null; cam.zoom = h.zoom; clamp(); cam.x = h.x; cam.y = h.y; clamp(); },
+      fit() { ease = null; cam.zoom = minZoom(); cam.x = world.w / 2; cam.y = world.h / 2; clamp(); },
       toWorld, toScreen,
     };
+    // Keeps the same world point at the centre of the screen across resizes and rotations; the zoom
+    // floor and pan limits are recomputed for the new aspect ratio by clamp().
     function resize() {
       const r = canvas.getBoundingClientRect();
+      if (!r.width || !r.height) return;
       vw = r.width; vh = r.height; dpr = Math.min(window.devicePixelRatio || 1, 2);
       canvas.width = Math.round(vw * dpr); canvas.height = Math.round(vh * dpr);
       clamp();
@@ -291,6 +343,7 @@
     function loop(t) {
       const dt = lastT ? t - lastT : 16;
       lastT = t;
+      stepEase(dt);
       for (const fn of frameFns) if (fn({ t, dt })) dirty = true;
       if (motionOn) { animate(t); dirty = true; }
       const worked = queue.size ? queue.run(6) : false;
@@ -315,14 +368,21 @@
       }
       return null;
     }
-    function pick(clientX, clientY) {
+    // A tap picks what is drawn under it. If that is not a person, the nearest person within a small screen
+    // radius wins instead (4 CSS px with a mouse, 12 with a finger), so tiny figures at low zoom are still
+    // fair to tap. Rings are tested from the inside out, so a closer person always beats a farther one.
+    function pick(clientX, clientY, opts = {}) {
       const r = canvas.getBoundingClientRect();
       const sx = clientX - r.left, sy = clientY - r.top;
       const [wx, wy] = toWorld(sx, sy);
-      let hit = pickWorld(wx, wy);
-      if (!hit) {                                   // forgive a near miss of up to 4 CSS px
-        const d = 4 / scale();
-        for (const [ox, oy] of [[d, 0], [-d, 0], [0, d], [0, -d], [d, d], [-d, -d], [d, -d], [-d, d]]) { hit = pickWorld(wx + ox, wy + oy); if (hit) break; }
+      const hit = pickWorld(wx, wy);
+      if (hit && hit.kind === 'person') return hit;
+      const R = opts.touch ? 12 : 4, px = 1 / scale();
+      for (let rr = 1; rr <= R; rr += 1) {                 // rings one CSS px apart: the nearest person wins
+        for (let i = 0; i < 16; i++) {
+          const a = (i / 16) * Math.PI * 2, p = pickWorld(wx + Math.cos(a) * rr * px, wy + Math.sin(a) * rr * px);
+          if (p && p.kind === 'person') return p;
+        }
       }
       return hit;
     }
@@ -408,6 +468,8 @@
       renderNow() { return render(true); },
       get pendingWork() { return queue.size; },
       get viewport() { return { vw, vh, dpr }; },
+      /** A small raster of the whole ground, for the minimap. */
+      get groundImage() { return ground.base; },
     };
   }
   WS.engine = { create };

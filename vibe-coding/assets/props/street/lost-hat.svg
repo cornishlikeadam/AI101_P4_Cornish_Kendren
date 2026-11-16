@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 52 34" width="52" height="34" data-anchor="26 30" data-asset="props/street/lost-hat" data-author="original, hand-authored SVG, Waldo's Savannah 2026-11-16">
+<ellipse cx="26" cy="30" rx="16" ry="2.6" fill="#2B1D16" opacity=".16"/>
+<g transform="rotate(-22 26 16)"><ellipse cx="26" cy="20" rx="22" ry="7" fill="#E8C872" stroke="#2B1D16" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/><path d="M14,19 C14,6 38,6 38,19 Z" fill="#E8C872" stroke="#2B1D16" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/><path d="M14.4,16 C20,18.4 32,18.4 37.6,16 L37.8,19 C32,21.4 20,21.4 14.2,19 Z" fill="#E8457A" stroke="#2B1D16" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/>
+<path d="M8,22 q4,2 9,2 M33,24 q6,0 10,-3" fill="none" stroke="#B9953E" stroke-width="1"/></g>
+<path d="M2,12 q4,-2 8,0 M0,20 q3,-1.4 6,0" fill="none" stroke="#2B1D16" stroke-width="1" stroke-linecap="round" opacity=".5"/>
+</svg>

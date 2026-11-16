@@ -2,129 +2,184 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content">
 <title>Loading · Waldo's Savannah</title>
 <style>
   :root {
-    --bg-sand: #F6EFE6; --bg-sand-deep: #EDE2D3; --surface-card: #FFFDF9; --border-soft: #E2D3C1;
-    --text-cocoa: #3E2723; --text-muted: #6D5D53; --accent-coral: #FF6F61; --accent-coral-hover: #FF5746;
-    --waldo-red: #E53935; --waldo-blue: #1E88E5; --waldo-cane: #8D6E63; --ink: #2B1D16;
+    --sand: #F6EFE6; --sand-deep: #EDE2D3; --card: #FFFDF9; --line: #E2D3C1;
+    --cocoa: #3E2723; --muted: #6D5D53; --coral: #FF6F61; --coral-hover: #FF5746; --mint: #1FA971;
+    --waldo-red: #E53935; --waldo-blue: #1E88E5; --ink: #2B1D16;
     /* Local font stacks only: no web font requests. */
     --font-display: 'Cooper Black', 'Georgia', 'Times New Roman', serif;
-    --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    --font-sans: ui-rounded, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
     --font-mono: ui-monospace, 'SFMono-Regular', Menlo, Consolas, monospace;
+    --gap: max(10px, env(safe-area-inset-top));
   }
   * { box-sizing: border-box; }
-  html, body { margin: 0; height: 100%; overflow: hidden; background: #F6E7C8; color: var(--text-cocoa); font-family: var(--font-sans); }
-  #scene { position: fixed; inset: 0; width: 100vw; height: 100vh; height: 100dvh; display: block; touch-action: none; cursor: crosshair; outline: none; }
+  html, body { margin: 0; height: 100%; overflow: hidden; overscroll-behavior: none; background: #7E9A6E; color: var(--cocoa); font-family: var(--font-sans); -webkit-tap-highlight-color: transparent; }
+  #scene { position: fixed; inset: 0; width: 100vw; height: 100vh; height: 100dvh; display: block; touch-action: none; cursor: grab; outline: none; }
   #scene.grabbing { cursor: grabbing; }
-  .card { background: var(--surface-card); border: 2px solid var(--ink); border-radius: 14px; box-shadow: 3px 4px 0 rgba(43,29,22,.85); }
-  #hud { position: fixed; top: 12px; left: 12px; display: flex; gap: 12px; align-items: center; padding: 8px 14px 8px 8px; max-width: calc(100vw - 24px); }
-  #portrait { width: 44px; height: 64px; background: var(--bg-sand); border-radius: 10px; border: 1.5px solid var(--border-soft); }
-  #hud h1 { font-family: var(--font-display); font-size: 18px; margin: 0; line-height: 1.1; }
-  #hud .sub { font-size: 12px; color: var(--text-muted); }
-  .stats { display: flex; gap: 14px; margin-top: 4px; font-family: var(--font-mono); font-size: 14px; font-weight: 700; }
-  .stats span small { font-family: var(--font-sans); font-weight: 600; color: var(--text-muted); font-size: 11px; margin-right: 4px; }
-  #controls { position: fixed; right: 12px; bottom: 12px; display: flex; gap: 6px; align-items: center; padding: 6px; }
-  #controls button { width: 44px; height: 44px; border-radius: 10px; border: 2px solid var(--ink); background: var(--bg-sand); font-size: 20px; font-weight: 800; color: var(--text-cocoa); cursor: pointer; }
-  #controls button:hover { background: var(--bg-sand-deep); }
-  #zoomLabel { font-family: var(--font-mono); font-size: 13px; min-width: 42px; text-align: center; }
-  #help { position: fixed; left: 12px; bottom: 12px; padding: 6px 10px; font-size: 12px; color: var(--text-muted); }
-  #seedLabel { position: fixed; right: 12px; top: 12px; padding: 6px 10px; font-family: var(--font-mono); font-size: 12px; }
-  button:focus-visible { outline: 3px solid var(--waldo-blue); outline-offset: 2px; }
-  .overlay { position: fixed; inset: 0; display: grid; place-items: center; background: rgba(43,29,22,.35); padding: 16px; }
-  .overlay[hidden] { display: none; }
-  .dialog { max-width: 420px; width: 100%; padding: 22px; text-align: center; }
-  .dialog h2 { font-family: var(--font-display); margin: 0 0 8px; font-size: 26px; }
-  .dialog p { margin: 6px 0 14px; line-height: 1.45; }
-  .primary { font: 800 16px var(--font-sans); padding: 12px 22px; min-height: 44px; border-radius: 12px; border: 2px solid var(--ink); background: var(--accent-coral); color: #fff; cursor: pointer; box-shadow: 2px 3px 0 var(--ink); }
-  .primary:hover { background: var(--accent-coral-hover); }
-  .traits { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; margin: 8px 0 14px; padding: 0; list-style: none; font-size: 13px; }
-  .traits li { padding: 4px 8px; border-radius: 99px; background: var(--bg-sand); border: 1px solid var(--border-soft); }
-  .bar { height: 10px; border-radius: 99px; background: var(--bg-sand-deep); overflow: hidden; border: 1.5px solid var(--ink); }
-  #loadBar { height: 100%; width: 0; background: var(--accent-coral); transition: width .1s; }
-  #toast { position: fixed; left: 50%; top: 18px; transform: translate(-50%, -80px); padding: 8px 14px; font-weight: 700; transition: transform .2s; pointer-events: none; }
-  #toast.show { transform: translate(-50%, 70px); }
-  .row { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; margin-top: 10px; }
-  .secondary { font: 700 14px var(--font-sans); padding: 10px 16px; min-height: 44px; border-radius: 12px; border: 2px solid var(--ink); background: var(--bg-sand); color: var(--text-cocoa); cursor: pointer; }
-  .secondary:hover { background: var(--bg-sand-deep); }
+  .card { background: var(--card); border: 2px solid var(--ink); border-radius: 16px; box-shadow: 3px 4px 0 rgba(43,29,22,.85); }
+  button { font-family: var(--font-sans); }
+  button:focus-visible, select:focus-visible, input:focus-visible { outline: 3px solid var(--waldo-blue); outline-offset: 2px; }
+
+  /* ---- in-game HUD: who to find, time, misses ---- */
+  #hud { position: fixed; top: var(--gap); left: max(10px, env(safe-area-inset-left)); display: flex; gap: 10px; align-items: center; padding: 5px 14px 5px 5px; }
+  #portrait { width: 34px; height: 50px; background: var(--sand); border-radius: 10px; border: 1.5px solid var(--line); }
+  .stat { display: flex; align-items: center; gap: 5px; font: 800 18px var(--font-mono); font-variant-numeric: tabular-nums; }
+  .stat .ico { font: 700 15px var(--font-sans); }
+  #wrongStat.bump { animation: bump .45s; }
+  @keyframes bump { 0%, 100% { transform: none; } 25% { transform: translateX(-4px) rotate(-4deg); } 60% { transform: translateX(4px) rotate(4deg); } }
+
+  /* ---- top right: hint and menu ---- */
+  #actions { position: fixed; top: var(--gap); right: max(10px, env(safe-area-inset-right)); display: flex; gap: 8px; }
+  .pill { min-height: 48px; min-width: 48px; padding: 0 16px; border-radius: 14px; border: 2px solid var(--ink); background: var(--card); color: var(--cocoa); font: 800 16px var(--font-sans); cursor: pointer; box-shadow: 2px 3px 0 var(--ink); display: inline-flex; align-items: center; justify-content: center; gap: 6px; }
+  .pill:hover { background: var(--sand-deep); }
+  .pill:active { transform: translate(1px, 2px); box-shadow: 1px 1px 0 var(--ink); }
+  #hintBtn { background: #FFE38A; }
+  #hintBtn:hover { background: #FFD95C; }
+  #hintCount { font: 700 12px var(--font-mono); opacity: .75; }
+  #menuBtn { padding: 0; font-size: 22px; }
+
+  /* ---- bottom right: zoom ---- */
+  #controls { position: fixed; right: max(10px, env(safe-area-inset-right)); bottom: max(10px, env(safe-area-inset-bottom)); display: flex; gap: 6px; }
+  #controls button { width: 48px; height: 48px; border-radius: 14px; border: 2px solid var(--ink); background: var(--card); font: 800 22px var(--font-sans); color: var(--cocoa); cursor: pointer; box-shadow: 2px 3px 0 var(--ink); display: grid; place-items: center; }
+  #controls button:hover { background: var(--sand-deep); }
+  #controls button:active { transform: translate(1px, 2px); box-shadow: 1px 1px 0 var(--ink); }
+
+  /* ---- bottom left: where am I, and a tiny map ---- */
+  #where { position: fixed; left: max(10px, env(safe-area-inset-left)); bottom: max(10px, env(safe-area-inset-bottom)); display: flex; align-items: flex-end; gap: 8px; pointer-events: none; }
+  #minimap { pointer-events: auto; width: 46px; height: 110px; border-radius: 10px; border: 2px solid var(--ink); background: #F6E7C8; cursor: pointer; box-shadow: 2px 3px 0 var(--ink); }
+  #hereLabel { padding: 6px 10px; font: 700 13px var(--font-sans); white-space: nowrap; max-width: 46vw; overflow: hidden; text-overflow: ellipsis; }
+
+  /* ---- toast and floating reactions ---- */
+  #toast { position: fixed; left: 50%; top: var(--gap); transform: translate(-50%, -120px); padding: 10px 18px; font: 800 16px var(--font-sans); transition: transform .25s cubic-bezier(.2,1.4,.4,1); pointer-events: none; max-width: min(92vw, 520px); text-align: center; z-index: 4; }
+  #toast.show { transform: translate(-50%, 64px); }
+  .pop { position: fixed; pointer-events: none; font: 900 18px var(--font-sans); color: #fff; padding: 4px 10px; border-radius: 99px; background: var(--waldo-red); border: 2px solid var(--ink); transform: translate(-50%, -140%); animation: pop .9s ease-out forwards; z-index: 3; white-space: nowrap; }
+  @keyframes pop { 0% { opacity: 0; transform: translate(-50%, -80%) scale(.6); } 20% { opacity: 1; transform: translate(-50%, -150%) scale(1.1); } 70% { opacity: 1; transform: translate(-50%, -170%) scale(1); } 100% { opacity: 0; transform: translate(-50%, -210%) scale(.9); } }
+
+  /* ---- overlays ---- */
+  .overlay { position: fixed; inset: 0; display: grid; place-items: center; background: rgba(43,29,22,.32); padding: 16px; z-index: 5; }
+  .overlay[hidden], #menu[hidden], #board[hidden] { display: none; }
+  /* the win card sits low and clear, so Waldo stays visible above it */
+  #won { place-items: end center; background: linear-gradient(transparent 45%, rgba(43,29,22,.35)); padding-bottom: max(16px, env(safe-area-inset-bottom)); }
+  .dialog { max-width: 400px; width: 100%; padding: 20px 22px 18px; text-align: center; max-height: calc(100dvh - 32px); overflow: auto; }
+  .dialog h2 { font-family: var(--font-display); margin: 4px 0 4px; font-size: 30px; line-height: 1.1; }
+  .dialog p { margin: 4px 0 12px; line-height: 1.4; font-size: 17px; }
+  .primary { font: 900 22px var(--font-sans); padding: 12px 34px; min-height: 56px; border-radius: 16px; border: 2px solid var(--ink); background: var(--coral); color: #fff; cursor: pointer; box-shadow: 3px 4px 0 var(--ink); }
+  .primary:hover { background: var(--coral-hover); }
+  .primary:active { transform: translate(2px, 3px); box-shadow: 1px 1px 0 var(--ink); }
+  .secondary { font: 800 15px var(--font-sans); padding: 8px 16px; min-height: 44px; border-radius: 12px; border: 2px solid var(--ink); background: var(--sand); color: var(--cocoa); cursor: pointer; }
+  .secondary:hover { background: var(--sand-deep); }
   .primary:disabled, .secondary:disabled { opacity: .5; cursor: default; }
-  label.pick { font-size: 13px; color: var(--text-muted); display: inline-flex; flex-direction: column; gap: 4px; text-align: left; }
-  select, input[type=text], textarea { font: 600 15px var(--font-sans); min-height: 44px; padding: 8px 10px; border-radius: 10px; border: 2px solid var(--ink); background: #fff; color: var(--text-cocoa); }
-  #shareBox { width: 100%; font: 12px var(--font-mono); resize: none; height: 44px; }
-  #actions { position: fixed; top: 12px; right: 12px; display: flex; gap: 6px; margin-top: 40px; }
-  #actions button { min-height: 44px; }
-  #hintCount { font-family: var(--font-mono); font-size: 12px; }
-  #board { position: fixed; inset: 0; display: grid; place-items: center; background: rgba(43,29,22,.35); padding: 16px; z-index: 5; }
-  #board[hidden] { display: none; }
+  .row { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; align-items: center; margin-top: 10px; }
+  #bigPortrait { width: 92px; height: 134px; display: block; margin: 0 auto 2px; animation: hop 1.6s ease-in-out infinite; }
+  @keyframes hop { 0%, 100% { transform: translateY(0) rotate(-2deg); } 50% { transform: translateY(-6px) rotate(2deg); } }
+  .howto { display: flex; justify-content: center; gap: 16px; margin: 12px 0 2px; font: 700 13px var(--font-sans); color: var(--muted); }
+  .opts { display: flex; justify-content: center; gap: 10px; margin-top: 12px; font: 700 13px var(--font-sans); color: var(--muted); }
+  .opts label { display: inline-flex; align-items: center; gap: 4px; }
+  select { font: 700 14px var(--font-sans); min-height: 36px; padding: 4px 6px; border-radius: 10px; border: 2px solid var(--ink); background: #fff; color: var(--cocoa); }
+  input[type=text] { font: 700 16px var(--font-sans); min-height: 44px; padding: 8px 10px; border-radius: 12px; border: 2px solid var(--ink); background: #fff; color: var(--cocoa); width: 170px; }
+  .bar { height: 12px; border-radius: 99px; background: var(--sand-deep); overflow: hidden; border: 2px solid var(--ink); }
+  #loadBar { height: 100%; width: 0; background: var(--coral); transition: width .12s; }
+  #winTime { font: 900 40px var(--font-mono); color: var(--coral); margin: 2px 0; font-variant-numeric: tabular-nums; }
+  #winPoints { font: 800 15px var(--font-sans); color: var(--muted); margin: 0 0 4px; }
+  #winText { font-size: 15px !important; color: var(--muted); }
+  #winSpot { font-size: 14px !important; color: var(--muted); margin-top: -6px !important; }
+  .stars { font-size: 30px; letter-spacing: 4px; margin: 0; }
+  details.more { margin-top: 10px; font-size: 14px; text-align: left; }
+  details.more summary { cursor: pointer; text-align: center; font-weight: 800; color: var(--muted); list-style: none; }
+  details.more summary::-webkit-details-marker { display: none; }
+  #shareBox { width: 100%; font: 12px var(--font-mono); resize: none; height: 44px; border-radius: 10px; border: 2px solid var(--ink); padding: 6px; margin-top: 6px; }
+
+  /* ---- menu sheet and scores ---- */
+  #menu { position: fixed; top: calc(var(--gap) + 58px); right: max(10px, env(safe-area-inset-right)); width: min(280px, calc(100vw - 20px)); padding: 12px; z-index: 6; display: flex; flex-direction: column; gap: 8px; }
+  #menu .secondary { width: 100%; text-align: left; }
+  #menu label { display: flex; justify-content: space-between; align-items: center; font: 700 14px var(--font-sans); }
+  #menu .small { font: 600 11px var(--font-mono); color: var(--muted); text-align: center; }
+  #board { position: fixed; inset: 0; display: grid; place-items: center; background: rgba(43,29,22,.32); padding: 16px; z-index: 7; }
   #boardList { list-style: none; padding: 0; margin: 10px 0; text-align: left; counter-reset: r; max-height: 50vh; overflow: auto; }
-  #boardList li { display: grid; grid-template-columns: 28px 1fr auto; gap: 2px 8px; padding: 6px 4px; border-bottom: 1px solid var(--border-soft); counter-increment: r; }
-  #boardList li::before { content: '#' counter(r); font: 700 13px var(--font-mono); grid-row: span 2; color: var(--text-muted); }
+  #boardList li { display: grid; grid-template-columns: 28px 1fr auto; gap: 2px 8px; padding: 6px 4px; border-bottom: 1px solid var(--line); counter-increment: r; }
+  #boardList li::before { content: '#' counter(r); font: 700 13px var(--font-mono); grid-row: span 2; color: var(--muted); }
   #boardList li.mine { background: #FFF1D6; }
   #boardList .name { font-weight: 800; overflow: hidden; text-overflow: ellipsis; }
-  #boardList .meta { font: 12px var(--font-mono); grid-column: 2; color: var(--text-muted); }
-  #boardList .seed { font: 12px var(--font-mono); grid-row: 1; grid-column: 3; color: var(--text-muted); }
+  #boardList .meta { font: 12px var(--font-mono); grid-column: 2; color: var(--muted); }
+  #boardList .seed { font: 12px var(--font-mono); grid-row: 1; grid-column: 3; color: var(--muted); }
+  .ingame-only { visibility: hidden; }
+  body.playing .ingame-only { visibility: visible; }
+
   @media (max-width: 560px) {
-    #help, #seedLabel, #hud .sub, #zoomLabel { display: none; }
-    #hud { top: 8px; left: 8px; right: 8px; padding: 4px 10px 4px 4px; gap: 8px; }
-    #portrait { width: 28px; height: 40px; border-radius: 7px; }
-    #hud > div { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
-    #hud h1 { font-size: 15px; } .stats { margin-top: 0; font-size: 13px; }
-    #actions { top: auto; bottom: 8px; left: 8px; right: auto; margin: 0; }
-    #actions button { padding: 8px 12px; }
-    #controls { right: 8px; bottom: 8px; padding: 0; gap: 4px; background: none; border: 0; box-shadow: none; }
-    #controls button { box-shadow: 2px 2px 0 var(--ink); }
+    #hud { gap: 8px; padding: 4px 10px 4px 4px; }
+    #portrait { width: 28px; height: 40px; }
+    .stat { font-size: 16px; }
+    .pill { padding: 0 12px; }
+    #minimap { width: 38px; height: 90px; }
+    .dialog h2 { font-size: 26px; }
   }
-  @media (prefers-reduced-motion: reduce) { #toast, #loadBar { transition: none; } }
+  @media (prefers-reduced-motion: reduce) { #toast, #loadBar { transition: none; } #bigPortrait, .pop, #wrongStat.bump { animation: none; } }
 </style>
 </head>
 <body>
-<canvas id="scene" tabindex="0" aria-label="Illustrated Savannah, from River Street to Forsyth Park. Drag or use arrow keys to pan, scroll, pinch or use plus and minus to zoom, click a person to guess."></canvas>
+<canvas id="scene" tabindex="0" aria-label="Illustrated Savannah, from the river down Bull Street to Forsyth Park. Drag to look around, pinch or scroll to zoom, tap a person to guess."></canvas>
 
-<div id="hud" class="card" role="status" aria-live="polite">
-  <canvas id="portrait" width="88" height="128" aria-label="The person to find"></canvas>
-  <div>
-    <h1 id="sceneName">Savannah</h1>
-    <div class="sub">Striped shirt and hat, round glasses, blue trousers, walking stick</div>
-    <div class="stats"><span><small>Time</small><b id="timer">0:00.0</b></span><span><small>Wrong</small><b id="wrong">0</b></span><span><small>Here</small><b id="hereLabel" style="font-family:var(--font-sans)"></b></span></div>
-  </div>
+<div id="hud" class="card ingame-only" role="status" aria-live="polite">
+  <canvas id="portrait" width="68" height="100" aria-label="Waldo, the person to find"></canvas>
+  <span class="stat" title="Time"><span class="ico" aria-hidden="true">⏱</span><b id="timer">0:00.0</b></span>
+  <span class="stat" id="wrongStat" title="Wrong guesses"><span class="ico" aria-hidden="true">✗</span><b id="wrong" aria-label="wrong guesses">0</b></span>
 </div>
-<div id="seedLabel" class="card" title="Replay seed and difficulty"></div>
-<div id="actions"><button id="hintBtn" class="secondary" aria-label="Get a hint">Hint <span id="hintCount"></span></button><button id="boardBtn" class="secondary">Scores</button></div>
-<div id="help" class="card">Drag to pan · scroll or pinch to zoom · click to guess · keys: arrows/WASD, + −, 0</div>
-<div id="controls" class="card">
+<div id="actions" class="ingame-only">
+  <button id="hintBtn" class="pill" aria-label="Get a hint">💡 Hint <span id="hintCount"></span></button>
+  <button id="menuBtn" class="pill" aria-label="Menu" aria-expanded="false" aria-controls="menu">☰</button>
+</div>
+<div id="menu" class="card" hidden>
+  <button id="boardBtn" class="secondary">🏆 Top scores</button>
+  <button id="newRoundBtn" class="secondary">🔄 New Savannah</button>
+  <label>Level <select id="difficulty"><option value="easy">Easy</option><option value="normal">Normal</option><option value="hard">Hard</option></select></label>
+  <label>Crowd <select id="density"><option value="low">Light</option><option value="standard">Busy</option><option value="dense">Packed</option></select></label>
+  <button id="testFallbackBtn" class="secondary">🧪 Test the oops screen</button>
+  <div id="seedLabel" class="small" title="Replay seed"></div>
+</div>
+<div id="where" class="ingame-only">
+  <canvas id="minimap" width="92" height="220" aria-label="Map of the city: tap to jump there" role="button" tabindex="0"></canvas>
+  <div id="hereLabel" class="card"></div>
+</div>
+<div id="controls" class="ingame-only">
   <button id="zoomOut" aria-label="Zoom out">−</button>
-  <span id="zoomLabel" aria-live="off">1.0x</span>
   <button id="zoomIn" aria-label="Zoom in">+</button>
-  <button id="zoomReset" aria-label="Reset view" style="font-size:15px">⟲</button>
+  <button id="zoomReset" aria-label="Back to the start view">⟲</button>
 </div>
 <div id="board" hidden><div class="dialog card" role="dialog" aria-labelledby="boardTitle">
-  <h2 id="boardTitle">Top 10 on this device</h2><p style="font-size:13px;color:var(--text-muted);margin:0">Saved only in this browser. Nothing is sent anywhere.</p>
-  <ol id="boardList"></ol><p id="boardEmpty">No times saved yet.</p>
-  <div class="row"><button id="boardClear" class="secondary">Clear</button><button id="boardClose" class="primary">Close</button></div>
+  <h2 id="boardTitle">Top scores</h2><p style="font-size:13px;color:var(--muted);margin:0">Saved only on this device.</p>
+  <ol id="boardList"></ol><p id="boardEmpty">No scores yet.</p>
+  <div class="row"><button id="boardClear" class="secondary">Clear</button><button id="boardClose" class="primary" style="font-size:18px;min-height:48px;padding:8px 26px">Close</button></div>
 </div></div>
 <div id="toast" class="card" role="status" aria-live="assertive"></div>
 
 <div id="loading" class="overlay"><div class="dialog card" role="dialog" aria-label="Loading">
-  <h2>Drawing Savannah…</h2><p>Unpacking the illustrated crowd.</p><div class="bar"><div id="loadBar"></div></div>
+  <h2>Drawing Savannah…</h2><div class="bar" style="margin-top:12px"><div id="loadBar"></div></div>
 </div></div>
 <div id="intro" class="overlay" hidden><div class="dialog card" role="dialog" aria-labelledby="introTitle">
-  <h2 id="introTitle">Find the walker</h2>
-  <p>Somewhere in Savannah, from River Street to Forsyth Park, one person wears all five of these at once. Others may share one or two. Scroll and zoom to search.</p>
-  <ul class="traits"><li>Red-and-white striped shirt</li><li>Striped bobble hat</li><li>Round glasses</li><li>Blue trousers</li><li>Brown walking stick</li></ul>
-  <div class="row"><label class="pick">Difficulty<select id="difficulty"><option value="easy">Easy (×1 points)</option><option value="normal">Normal (×1.5)</option><option value="hard">Hard (×2.5)</option></select></label>
-  <label class="pick">Crowd<select id="density"><option value="low">Light</option><option value="standard">Busy</option><option value="dense">Packed</option></select></label></div>
-  <div class="row"><button id="startBtn" class="primary">Start searching</button><button id="testFallbackBtn" class="secondary">Test fallback state</button></div>
+  <canvas id="bigPortrait" width="184" height="268" aria-hidden="true"></canvas>
+  <h2 id="introTitle">Find Waldo in Savannah!</h2>
+  <p>Look for the striped shirt and hat.</p>
+  <button id="startBtn" class="primary">Play!</button>
+  <div class="howto" aria-hidden="true"><span>✋ drag to look</span><span>🔍 pinch or scroll</span><span>👆 tap Waldo</span></div>
+  <div class="opts"><label>Level <select id="introDifficulty" aria-label="Level"><option value="easy">Easy</option><option value="normal">Normal</option><option value="hard">Hard</option></select></label></div>
 </div></div>
 <div id="won" class="overlay" hidden><div class="dialog card" role="dialog" aria-labelledby="wonTitle">
-  <h2 id="wonTitle">Found him!</h2><p id="winPoints" style="font:800 24px var(--font-mono);color:var(--accent-coral);margin:4px 0"></p><p id="winText"></p><p id="winSpot" style="color:var(--text-muted);font-size:14px"></p>
-  <div class="row"><input type="text" id="nameInput" maxlength="18" placeholder="Your name" aria-label="Your name for the leaderboard" autocomplete="nickname"><button id="saveBtn" class="primary">Save time</button></div>
-  <p style="margin:12px 0 4px;font-size:13px;color:var(--text-muted)">Share this exact park:</p>
-  <textarea id="shareBox" readonly aria-label="Share link"></textarea>
-  <div class="row"><button id="copyBtn" class="secondary">Copy link</button><button id="againBtn" class="secondary">New round</button></div>
+  <p class="stars" id="winStars" aria-hidden="true">⭐⭐⭐</p>
+  <h2 id="wonTitle">You found Waldo!</h2>
+  <p id="winTime"></p>
+  <p id="winText"></p><p id="winSpot"></p><p id="winPoints"></p>
+  <button id="againBtn" class="primary">Play again</button>
+  <details class="more"><summary>Save my score · share</summary>
+    <div class="row"><input type="text" id="nameInput" maxlength="18" placeholder="Your name" aria-label="Your name for the scores" autocomplete="nickname"><button id="saveBtn" class="secondary">Save</button></div>
+    <textarea id="shareBox" readonly aria-label="Share link"></textarea>
+    <div class="row"><button id="copyBtn" class="secondary">Copy link</button></div>
+  </details>
 </div></div>
 <div id="failed" class="overlay" hidden><div class="dialog card" role="alertdialog" aria-labelledby="failTitle">
-  <h2 id="failTitle">A sea breeze knocked the easel over</h2><p>The park could not be drawn this time. Nothing left your computer; a fresh layout usually works.</p><p id="failText" style="font:12px var(--font-mono);color:var(--text-muted)"></p><button id="recoverBtn" class="primary">Try a new scene</button>
+  <h2 id="failTitle">Oops! A sea breeze knocked the easel over.</h2><p>Let's draw a fresh Savannah.</p><p id="failText" style="font:12px var(--font-mono);color:var(--muted)"></p><button id="recoverBtn" class="primary">Try again</button>
 </div></div>
 
 <script src="js/assets.bundle.js"></script>
