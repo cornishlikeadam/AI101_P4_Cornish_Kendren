@@ -26,8 +26,8 @@ A link like `?seed=SAV-1234` replays the same city. There are also testing links
 
 ## Known limits
 
-- Phones have not been measured. Frame rate was only measured on one Apple M4 laptop in headless Chrome (59 FPS with 1,801 people, load about 3.8 s).
-- The first load is heavier than a normal web page because all the drawings are packed into the game.
+- Phones have not been measured. Frame rate was only measured on one Apple M4 laptop in headless Chrome (~60 FPS with 1,801 or 3,001 people, load about 0.57 s).
+- The first load downloads a 2.89 MB asset bundle (~310 KB gzipped) because all the drawings are packed into the game.
 - Changing the art can change how an old seed link looks.
 
 ## Rebuild and test

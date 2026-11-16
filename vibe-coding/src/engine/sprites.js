@@ -33,7 +33,10 @@
     const img = new Image();
     const url = URL.createObjectURL(new Blob([s.svg], { type: 'image/svg+xml' }));
     img.src = url;
-    s.loading = img.decode().then(() => { s.img = img; stats.decoded++; }, () => { throw new Error('could not decode ' + s.key.split('|')[0]); });
+    s.loading = img.decode().then(
+      () => { URL.revokeObjectURL(url); s.img = img; stats.decoded++; },
+      () => { URL.revokeObjectURL(url); throw new Error('could not decode ' + s.key.split('|')[0]); }
+    );
     return s.loading;
   }
   const pickTier = (s, pxPerUnit) => {
@@ -72,7 +75,7 @@
     queue.add(lk, () => { if (!s.tiers.has(tier) && s.img) rasterize(s, tier); });
     let best = null, bestT = 0;                       // nearest tier we already have, preferring sharper
     for (const [t, cv] of s.tiers) if (!best || Math.abs(Math.log(t / tier)) < Math.abs(Math.log(bestT / tier))) { best = cv; bestT = t; }
-    return best || rasterize(s, Math.min(tier, 0.5));
+    return best || s.img;
   }
   function buildMask(s) {
     const mt = Math.min(1, 512 / Math.max(s.vb[2], s.vb[3]));
@@ -86,10 +89,13 @@
     for (let i = 0; i < a.length; i++) a[i] = d[i * 4 + 3];
     s.mask = { w: c.width, h: c.height, t: mt, a };
   }
-  // Alpha (0..255) of sprite s at SVG coordinates (u, v).
+  // Alpha (0..255) of sprite s at SVG coordinates (u, v); built lazily on first pick/validation query.
   function alphaAt(s, u, v) {
+    if (!s.mask) {
+      if (!s.img) return 0;
+      buildMask(s);
+    }
     const m = s.mask;
-    if (!m) return 0;
     const x = Math.floor((u - s.vb[0]) * m.t), y = Math.floor((v - s.vb[1]) * m.t);
     if (x < 0 || y < 0 || x >= m.w || y >= m.h) return 0;
     return m.a[y * m.w + x];

@@ -36,6 +36,8 @@ After the overhaul all 28 automated tests passed. After I made the city 2.85× w
 - The target sometimes walked back to his first candidate spot instead of the checked one. Fixed so he stays where the visibility check placed him.
 - The trolley sign was drawn mirrored. Fixed.
 - The City Hall dome drew in front of people standing in front of it. Fixed the depth sorting.
+- The difficulty-picker test hit a reload race where `document.title.includes('Waldo')` matched `"Loading · Waldo's Savannah"` before `game.js` finished booting. Changed the initial `<title>` to `"Drawing Savannah…"` and added an inline favicon (`data:,`) so there are zero 404s; all 29 automated tests now pass.
+- Cut `assets.bundle.js` from 6.94 MB (1.03 MB gzip) to 2.89 MB (310 KB gzip) via SVG `<pattern>` ground fills and safe path compaction, and cut startup load from 3.84 s to 0.56 s (standard 1,801 and dense 3,001 crowds) by deferring walk-frame decoding, lazy-building hit masks, and pooling crowd looks.
 - Earlier failures FAIL-01 to FAIL-09 are written up in `docs/history/testing-and-failure-log-full.md`. The version 1 test matrix there has performance numbers that were never measured. I don't rely on them.
 
 ## What the two cycles proved

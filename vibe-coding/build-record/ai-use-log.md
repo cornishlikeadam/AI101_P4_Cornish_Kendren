@@ -14,4 +14,5 @@ These are short summaries, not exact quotes. Where the original prompt isn't sav
 | 2026-11-16 | Claude Code + playwright-core | Fix the camera, improve the art and make it kid-friendly; join the city with Bull Street | Full-screen camera, Bull Street city, 24 new drawings, simpler UI; 28 tests passing | Kept | Cycle 2. I wanted one believable Savannah, not separate maps |
 | 2026-11-16 | Claude Code + Vercel CLI | Deploy and update the repo | Live site and merged PRs | Kept | So I could check it myself |
 | 2026-11-16 | Claude Code + playwright-core + Vercel CLI | Make the world 2.85× wider with more real Savannah places | West and east wings, 78 new drawings; 29 tests passing | Kept | More to search, same gameplay |
-| 2026-11-16 | Claude Code | Clean up the documentation for submission | These shorter documents | Pending my review | — |
+| 2026-11-16 | Claude Code | Clean up the documentation for submission | These shorter documents | Kept | Shortened to match templates |
+| 2026-11-16 | AI coding agent + playwright-core + Vercel CLI | Fix the reload test flake, 404 favicon, slow bundle download, and slow startup/panning | Fixed initial `<title>` race and favicon, cut bundle to 2.89 MB (310 KB gzip), cut load to 0.57 s, 29/29 tests passing, deployed live | Kept | Verified 29/29 Playwright tests and `perf.mjs` on Apple M4 |

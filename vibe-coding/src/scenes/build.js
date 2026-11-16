@@ -20,13 +20,14 @@
     const cellKey = (cx, cy) => cx + ',' + cy;
     const decoyRate = DECOY_RATE[identity.difficulty] || DECOY_RATE.normal;
     const total = identity.crowd ? Math.max(20, Math.min(10000, identity.crowd)) : BUDGET[identity.density] || BUDGET.standard;
-    // Stress crowds reuse a fixed set of looks so thousands of people do not mean thousands of sprite decodes.
-    const templates = total > 3200 ? new Map() : null;
+    // Large city crowds reuse a rich pool of looks per archetype so loading stays fast (~500 decodes vs 1,800+).
+    const templates = total > 650 ? new Map() : null;
     const person = (asset, x, y, flip, extra = {}) => {
       let c;
       if (templates) {
         const list = templates.get(asset) || templates.set(asset, []).get(asset);
-        if (list.length < 24) { c = make(rng, asset, { decoys: rng.chance(decoyRate) ? 1 : 0 }); list.push(c); } else c = rng.pick(list);
+        const decoys = rng.chance(decoyRate) ? (rng.chance(0.45) ? 2 : 1) : 0;
+        if (list.length < 40) { c = make(rng, asset, { decoys }); list.push(c); } else c = rng.pick(list);
       } else c = make(rng, asset, { decoys: rng.chance(decoyRate) ? (rng.chance(0.45) ? 2 : 1) : 0 });
       const e = push(Object.assign({ asset, x, y, flip, kind: 'person', colours: c.colours, kit: c.kit, kit2: c.kit2, traits: c.traits }, extra));
       people.push(e);

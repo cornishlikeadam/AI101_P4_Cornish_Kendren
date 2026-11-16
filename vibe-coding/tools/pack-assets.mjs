@@ -17,10 +17,43 @@ function walk(dir) {
   });
 }
 
+const STRAIGHT_H = /^M-?\d+(?:\.\d+)?,(-?\d+(?:\.\d+)?)\s*H-?\d+(?:\.\d+)?$/;
+const STRAIGHT_HV = /^M-?\d+(?:\.\d+)?[,\s]-?\d+(?:\.\d+)?\s*[HVhv]-?\d+(?:\.\d+)?$/;
+const UNSAFE_ATTR = /\b(?:id|clip-path|mask|transform|marker-|stroke-dasharray|stroke-dashoffset|opacity|data-)=/;
+const SEM_OPACITY = /\bstroke-opacity=/;
+function compactSvg(s) {
+  s = s.replace(/>\s+</g, '><').trim();
+  const re = /<path d="([^"]+)"((?:\s+[a-zA-Z0-9:-]+="[^"]*")*)\s*\/>/g;
+  let out = '', lastIdx = 0, runD = [], runAttr = null, runYs = null;
+  const flush = () => {
+    if (runD.length) { out += `<path d="${runD.join(' ').replace(/ ([MLHVmlhv])/g, '$1')}"${runAttr}/>`; runD = []; runAttr = null; runYs = null; }
+  };
+  for (let m; (m = re.exec(s)); ) {
+    if (m.index > lastIdx) { flush(); out += s.slice(lastIdx, m.index); }
+    const [, d, attrs] = m;
+    const noUnsafe = !UNSAFE_ATTR.test(attrs);
+    const hasAlpha = SEM_OPACITY.test(attrs);
+    const hMatch = STRAIGHT_H.exec(d);
+    const unfilled = /\bfill="none"/.test(attrs) || (STRAIGHT_HV.test(d) && !/\bfill=/.test(attrs));
+    const ok = noUnsafe && unfilled && (!hasAlpha || hMatch);
+    if (ok && attrs === runAttr && (!hasAlpha || (hMatch && !runYs.has(hMatch[1])))) {
+      runD.push(d);
+      if (runYs && hMatch) runYs.add(hMatch[1]);
+    } else {
+      flush();
+      if (ok) { runD = [d]; runAttr = attrs; runYs = hasAlpha && hMatch ? new Set([hMatch[1]]) : null; }
+      else out += m[0];
+    }
+    lastIdx = re.lastIndex;
+  }
+  flush();
+  return out + s.slice(lastIdx);
+}
+
 const svg = {}, meta = {};
 for (const file of walk(assetsDir)) {
   const id = relative(assetsDir, file).replace(/\\/g, '/').replace(/\.svg$/, '');
-  const text = readFileSync(file, 'utf8').replace(/\n\s*/g, '\n').trim();
+  const text = compactSvg(readFileSync(file, 'utf8'));
   const head = /<svg[^>]*>/.exec(text)[0];
   const attr = (name) => (new RegExp(`${name}="([^"]+)"`).exec(head) || [])[1];
   const vb = attr('viewBox').split(/\s+/).map(Number);
