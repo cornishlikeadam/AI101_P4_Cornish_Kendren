@@ -6,8 +6,7 @@
   const SQ = [[900, 3655], [2300, 3655]];
   function geography() {
     const g = [], add = (asset, x, y, k = 1, flip = 0, extra = {}) => g.push(Object.assign({ asset, x, y, k, flip }, extra));
-    add('environments/forsyth/gaston-street-houses', 0, 3220, 1, 0, { layer: 'far' });
-    add('environments/forsyth/gaston-street-houses', 3200, 3220, 1, 1, { layer: 'far' });
+    add('environments/squares/row-houses', 0, 3220, 1, 0, { layer: 'far' });
     add('props/landmarks/obelisk', 900, 3690, 0.95);
     add('environments/forsyth/fountain', 2300, 3700, 0.5);
     const OAK = ['props/vegetation/live-oak', 'props/vegetation/live-oak-tall', 'props/vegetation/live-oak-lean'];

@@ -6,7 +6,7 @@ One continuous world, 3200 × 6700 units, north at the top. The target can hide 
 |---|---|---|---|
 | 0–1500 | River Street and Festival Pier | Savannah River with a paddle-wheeler and a tug; riverwalk with lamps, benches and the Waving Girl statue; plank pier with eight festival tents; cobbled River Street; cotton warehouse row; Factors Walk and Bay Street | `src/scenes/riverfront.js` |
 | 1500–2950 | City Market | Shopfront row with the City Market gate; brick plaza with stalls, café tables, planters; Congress Street with a carriage and trolley | `src/scenes/market.js` |
-| 2950–4300 | Two Oglethorpe squares | Townhouse rows; an obelisk square and a fountain square with oaks, benches and azaleas; streets either side | `src/scenes/squares.js` |
+| 2950–4300 | Two Oglethorpe squares | Italianate townhouse row with a twin-spired church; an obelisk square and a fountain square with oaks, benches and azaleas; streets either side | `src/scenes/squares.js` |
 | 4300–6700 | Forsyth Park | Unchanged from checkpoints 2 and 3, moved south | `src/scenes/forsyth.js` |
 
 Ground: `assets/environments/savannah/ground.svg` from `tools/author/savannah-ground.mjs` (embeds the Forsyth ground). Crowd budgets: low 450, standard 900, dense 1,500.
@@ -21,4 +21,4 @@ River: open riverwalk (easy), festival crowd (normal, hard), among the tents (ha
 
 ## Known gaps
 
-The warehouse row shows its street face to the viewer although the river is behind it (a picture-book liberty). The squares reuse the Gaston Street townhouse drawing. The market plaza is less crowded than the riverwalk at standard density.
+The warehouse row shows its street face to the viewer although the river is behind it (a picture-book liberty). Revision 2: the squares have their own row (pastel Italianate townhouses with high stoops and cast-iron balconies around a twin-spired church), and the market plaza gained 4 more stalls, 4 tents, planters and five more stories (tent shoppers, a juggler with kids, sketching students, a balloon kid, pigeons), with a larger share of the crowd. Vehicles carrying signs are never mirrored.
