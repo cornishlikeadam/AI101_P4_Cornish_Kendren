@@ -21,12 +21,36 @@ let s = '';
 const rect = (x, y, w, h, fill, extra = '') => `<rect x="${x}" y="${y}" width="${w}" height="${h}" fill="${fill}" ${extra}/>`;
 const line = (y, x0 = 0, x1 = W, sw = 1.6) => `<path d="M${x0},${y}H${x1}" stroke="${INK}" stroke-width="${sw}"/>`;
 
+// ---- pattern helpers ----
+const defs = [];
+const swPattern = (step) => {
+  const id = 'sg-sw-' + step;
+  if (!swPattern.seen.has(step)) {
+    swPattern.seen.add(step);
+    defs.push(`<pattern id="${id}" width="${step}" height="${step}" patternUnits="userSpaceOnUse"><rect width="${step}" height="${step}" fill="${WALK}"/><path d="M0,${step}H${step}M${step},0V${step}" stroke="${JOINT}" stroke-width=".7" opacity=".7" fill="none"/></pattern>`);
+  }
+  return id;
+};
+swPattern.seen = new Set();
+
+function makePatterns() {
+  let wv = '';
+  for (let i = 0; i < 18; i++) { const x = 8 + rnd() * 220, y = 8 + rnd() * 104, w = 6 + rnd() * 14; wv += `M${f(x)},${f(y)}q${f(w / 2)},-3 ${f(w)},0`; }
+  defs.push(`<pattern id="sg-waves" width="240" height="120" patternUnits="userSpaceOnUse"><path d="${wv}" fill="none" stroke="#A9DCEA" stroke-width="1.4" stroke-linecap="round" opacity=".8"/></pattern>`);
+  defs.push(`<pattern id="sg-pav" width="32" height="32" patternUnits="userSpaceOnUse"><rect width="32" height="32" fill="#D9C6A4"/><path d="M0,16H32M0,32H32M0,0v16M16,16v16" stroke="#BFA984" stroke-width=".8" fill="none"/></pattern>`);
+  let cob = '';
+  for (let i = 0; i < 64; i++) { const x = 4 + rnd() * 132, y = 4 + rnd() * 62; cob += `<ellipse cx="${f(x)}" cy="${f(y)}" rx="${f(2 + rnd() * 2)}" ry="${f(1.2 + rnd())}"/>`; }
+  defs.push(`<pattern id="sg-cob" width="140" height="70" patternUnits="userSpaceOnUse"><rect width="140" height="70" fill="#9C948A"/><g fill="#B5ADA2" stroke="#7E776D" stroke-width=".5">${cob}</g></pattern>`);
+  defs.push(`<pattern id="sg-brk" width="26" height="24" patternUnits="userSpaceOnUse"><rect width="26" height="24" fill="#C9805E"/><path d="M0,12H26M0,24H26M0,0v12M13,12v12" stroke="#A9654A" stroke-width=".8" fill="none"/></pattern>`);
+  let tf = '';
+  for (let i = 0; i < 28; i++) { const x = 6 + rnd() * 128, y = 6 + rnd() * 128; tf += `M${f(x)},${f(y)}l-1.5,-3M${f(x)},${f(y)}l.8,-3.6M${f(x)},${f(y)}l1.6,-2.4`; }
+  defs.push(`<pattern id="sg-tufts" width="140" height="140" patternUnits="userSpaceOnUse"><path d="${tf}" fill="none" stroke="#5E8F3E" stroke-width="1.1" stroke-linecap="round" opacity=".6"/></pattern>`);
+}
+makePatterns();
+
 // ---- street furniture painted on the ground ----
 function sidewalk(x, y, w, h, step = 22) {
-  let p = rect(x, y, w, h, WALK), j = '';
-  for (let yy = y + step; yy < y + h; yy += step) j += `M${x},${yy}h${w}`;
-  for (let xx = x + step; xx < x + w; xx += step) j += `M${xx},${y}v${h}`;
-  return p + `<path d="${j}" stroke="${JOINT}" stroke-width=".7" opacity=".7"/>`;
+  return rect(x, y, w, h, `url(#${swPattern(step)})`);
 }
 // An east-west street: curbs, a dashed centre line, painted parking bays along both curbs, and the odd
 // manhole cover. Crosswalk stripes are added where Bull Street crosses.
@@ -62,18 +86,13 @@ function bull(y0, y1, opts = {}) {
   for (let y = y0 + 90; y < y1 - 60; y += 170) for (const x of [BULL.s0 + 15, BULL.s1 - 15]) p += `<ellipse cx="${x}" cy="${y}" rx="13" ry="6" fill="#6B5A44" stroke="${INK}" stroke-width="1"/>`;
   return p;
 }
-const tufts = (x0, y0, w, h, n, skip = () => false) => {
-  let t = '';
-  for (let i = 0; i < n; i++) { const x = x0 + rnd() * w, y = y0 + rnd() * h; if (skip(x, y)) continue; t += `M${f(x)},${f(y)}l-1.5,-3M${f(x)},${f(y)}l.8,-3.6M${f(x)},${f(y)}l1.6,-2.4`; }
-  return `<path d="${t}" fill="none" stroke="#5E8F3E" stroke-width="1.1" stroke-linecap="round" opacity=".6"/>`;
-};
 // A city square: lawn, diagonal and cross paths, a central circle, a low iron rail.
 function square(cx, cy, hw, hh, circle = [170, 80]) {
-  let p = rect(cx - hw, cy - hh, hw * 2, hh * 2, '#8DBA5A', `stroke="${INK}" stroke-width="1.8"`);
+  let p = rect(cx - hw, cy - hh, hw * 2, hh * 2, '#8DBA5A');
+  p += rect(cx - hw + 6, cy - hh + 6, hw * 2 - 12, hh * 2 - 12, 'url(#sg-tufts)');
   p += `<path d="M${cx - hw},${cy - hh}L${cx + hw},${cy + hh}M${cx + hw},${cy - hh}L${cx - hw},${cy + hh}" stroke="${WALK}" stroke-width="44"/>`;
   p += `<path d="M${cx},${cy - hh}V${cy + hh}M${cx - hw},${cy}H${cx + hw}" stroke="${WALK}" stroke-width="56"/>`;
   p += `<ellipse cx="${cx}" cy="${cy}" rx="${circle[0]}" ry="${circle[1]}" fill="${WALK}" stroke="${INK}" stroke-width="1.6"/>`;
-  p += tufts(cx - hw + 10, cy - hh + 10, hw * 2 - 20, hh * 2 - 20, Math.round(hw * hh / 230), (x, y) => Math.abs(x - cx) < 40 || Math.abs(y - cy) < 34 || ((x - cx) / circle[0]) ** 2 + ((y - cy) / circle[1]) ** 2 < 1.1);
   p += rect(cx - hw, cy - hh, hw * 2, hh * 2, 'none', `stroke="${INK}" stroke-width="1.8"`);
   let rail = ''; for (let x = cx - hw + 8; x < cx + hw; x += 14) { if (Math.abs(x - cx) < 34) continue; rail += `M${x},${cy + hh}v-7`; }
   p += `<path d="M${cx - hw},${cy + hh - 7}H${cx - 30}M${cx + 30},${cy + hh - 7}H${cx + hw}" stroke="${INK}" stroke-width="1.4"/><path d="${rail}" stroke="${INK}" stroke-width="1.2"/>`;
@@ -82,22 +101,14 @@ function square(cx, cy, hw, hh, circle = [170, 80]) {
 
 // ---- River Street and Festival Pier ----
 s += rect(0, 0, W, 430, '#4F8FA8');
+s += rect(0, 54, W, 376, 'url(#sg-waves)');
 s += rect(0, 0, W, 54, '#7E9A6E') + line(54);
-let waves = '';
-for (let i = 0; i < 700; i++) { const x = rnd() * W, y = 60 + rnd() * 360, w = 6 + rnd() * 14; waves += `M${f(x)},${f(y)}q${f(w / 2)},-3 ${f(w)},0`; }
-s += `<path d="${waves}" fill="none" stroke="#A9DCEA" stroke-width="1.4" stroke-linecap="round" opacity=".8"/>`;
-s += rect(0, 430, W, 470, '#D9C6A4') + line(430, 0, W, 2.2);
-let pav = '';
-for (let y = 446; y < 900; y += 16) pav += `M0,${y}H${W}`;
-for (let y = 430, r = 0; y < 900; y += 16, r++) for (let x = (r % 2) * 16; x < W; x += 32) pav += `M${x},${y}v16`;
-s += `<path d="${pav}" stroke="#BFA984" stroke-width=".8"/>`;
+s += rect(0, 430, W, 470, 'url(#sg-pav)') + line(430, 0, W, 2.2);
 s += rect(2000, 250, 1160, 190, '#B98A5E', `stroke="${INK}" stroke-width="2"`);
 let planks = ''; for (let x = 2000; x < 3160; x += 14) planks += `M${x},250v190`;
 s += `<path d="${planks}" stroke="#9C7048" stroke-width="1"/>`;
 for (let x = 2010; x < 3160; x += 60) s += `<rect x="${x}" y="440" width="8" height="10" fill="#6B4A33" stroke="${INK}" stroke-width="1"/>`;
-s += rect(0, 900, W, 140, '#9C948A') + line(900) + line(1040);
-let cob = ''; for (let i = 0; i < 5200; i++) { const x = rnd() * W, y = 904 + rnd() * 132; cob += `<ellipse cx="${f(x)}" cy="${f(y)}" rx="${f(2 + rnd() * 2)}" ry="${f(1.2 + rnd())}"/>`; }
-s += `<g fill="#B5ADA2" stroke="#7E776D" stroke-width=".5">${cob}</g>`;
+s += rect(0, 900, W, 140, 'url(#sg-cob)') + line(900) + line(1040);
 s += rect(0, 1040, W, 310, '#C9C2B2');
 // Factors Walk sidewalk and Bay Street
 s += sidewalk(0, 1350, W, 50);
@@ -106,10 +117,7 @@ s += sidewalk(0, 1480, W, 20, 10);
 
 // ---- Bay Street to Congress Street: City Market (west of Bull) and Johnson Square (east) ----
 s += sidewalk(0, 1500, W, 330, 26);
-s += rect(0, 1830, BULL.s0, 870, '#C9805E') + line(1830, 0, BULL.s0);
-let brk = ''; for (let y = 1842; y < 2700; y += 12) brk += `M0,${y}H${BULL.s0}`;
-for (let y = 1830, r = 0; y < 2700; y += 12, r++) for (let x = (r % 2) * 13; x < BULL.s0; x += 26) brk += `M${x},${y}v12`;
-s += `<path d="${brk}" stroke="#A9654A" stroke-width=".8"/>`;
+s += rect(0, 1830, BULL.s0, 870, 'url(#sg-brk)') + line(1830, 0, BULL.s0);
 for (const x of [380, 1300]) s += `<ellipse cx="${x}" cy="2440" rx="90" ry="36" fill="#8DBA5A" stroke="${INK}" stroke-width="1.6"/>`;
 // Johnson Square: Savannah's first square, with the Greene Monument obelisk at its centre
 s += sidewalk(BULL.s1, 1830, W - BULL.s1, 870, 24);
@@ -135,7 +143,7 @@ s += streetH(4560, 80);
 s += sidewalk(0, 4640, W, 560, 26);
 // front gardens of the houses facing the square, with low iron fences
 for (const [x0, x1] of [[90, 1060], [2140, 3110]]) {
-  s += rect(x0, 4690, x1 - x0, 300, '#8DBA5A', `stroke="${INK}" stroke-width="1.6"`) + tufts(x0 + 6, 4696, x1 - x0 - 12, 288, 700);
+  s += rect(x0, 4690, x1 - x0, 300, '#8DBA5A', `stroke="${INK}" stroke-width="1.6"`) + rect(x0 + 6, 4696, x1 - x0 - 12, 288, 'url(#sg-tufts)');
   let fence = ''; for (let x = x0; x <= x1; x += 12) fence += `M${x},4990v-8`;
   s += `<path d="M${x0},4982H${x1}" stroke="${INK}" stroke-width="1.4"/><path d="${fence}" stroke="${INK}" stroke-width="1.1"/>`;
 }
@@ -152,4 +160,4 @@ s += `<g transform="translate(0 ${FORSYTH})">${inner}</g>`;
 // Bull Street's last block, between the Gaston Street houses, ends at the park's north gate
 s += bull(FORSYTH, FORSYTH + 350, { noTop: true });
 
-process.stdout.write(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" data-anchor="0 0" data-layer="ground" data-asset="environments/savannah/ground" data-author="original SVG, hand-composed with tools/author/savannah-ground.mjs, Waldo's Savannah 2026-11-15; Bull Street and Monterey Square added 2026-11-16">\n${s}\n</svg>\n`);
+process.stdout.write(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" data-anchor="0 0" data-layer="ground" data-asset="environments/savannah/ground" data-author="original SVG, hand-composed with tools/author/savannah-ground.mjs, Waldo's Savannah 2026-11-15; Bull Street and Monterey Square added 2026-11-16">\n<defs>${defs.join('')}</defs>\n${s}\n</svg>\n`);

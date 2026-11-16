@@ -1,9 +1,7 @@
-# Execution plan: Waldo's Savannah (illustrated edition)
-
-*Five lines. Version 1 is archived in [docs/history/plan-v1.md](docs/history/plan-v1.md).*
+# Plan
 
 1. **Option:** game
-2. **User:** A cognitive UX professor who evaluates whether a joyful surface rests on rigorous, reproducible engineering, and who will judge the picture before reading any code.
-3. **Build sentence:** When the professor opens `build/index.html`, Waldo's Savannah shows an illustrated Forsyth Park crowded with distinct characters and small stories, and the professor can pan and zoom to find and click the one person with all five traits while the timer runs and wrong guesses are counted.
-4. **Boundary:** No third-party network request, account, analytics or remote storage at runtime; all art is original and ships inside the build folder; and no scene beyond Forsyth Park is built until Forsyth Park passes visual review.
-5. **Rejected idea:** Adding more polygons and NPCs to the existing isometric renderer. Rejected because the zero-asset and fixed-camera rules, not the polygon count, are what make it look primitive (see `docs/audit.md`).
+2. **User:** a ten-year-old I tutor, playing on a laptop or tablet.
+3. **Build sentence:** When the player drags, zooms and taps a person in the crowd, the build either celebrates and stops the timer (if it's Waldo) or adds one to the wrong-guess counter.
+4. **Boundary:** no accounts, no online scores and no requests to other websites; all art is drawn for this project and ships inside `build/`.
+5. **Rejected idea:** making the first 3D box version busier with more shapes and people. More boxes still looked like a geometry demo, not a picture book, so I switched to illustrated art (ADR-002).

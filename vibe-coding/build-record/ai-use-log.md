@@ -1,269 +1,39 @@
-# AI Use and Multi-Agent Orchestration Log: Waldo's Savannah
+# AI-use log
 
-*Session-by-session documentation of AI tools, skills, and human decisions. Every consequential prompt and decision included.*
+Short record of consequential AI sessions. Prompt descriptions are summarized where full chat text is archived; full session notes are in `docs/history/ai-use-log-full.md`.
 
----
+**Date:** 2026-11-14
+**AI tool:** Research session (REA)
+**Prompt (reconstructed):** Study reference search-and-find and isometric map games for camera, seed, and storage patterns.
+**Result:** Drafted the initial architecture plan and design rules for version 1.
+**My contribution:** Picked Savannah as the setting and chose the core rules (offline, no accounts, seeded replay).
 
-## Session 1: Research Synthesis & Architectural Key Extraction
+**Date:** 2026-11-15
+**AI tool:** Multi-agent coding setup
+**Prompt (reconstructed):** Build the first playable browser game in `build/index.html` using geometric 3D boxes with zero external assets.
+**Result:** Built version 1 (`docs/history/index-v1.html`).
+**My contribution:** Tested it, asked for the 6 px drag rule, fixed-width timer, and fallback screen, and rejected the box look because it did not feel like a picture book.
 
-**Date**: 2026-11-14  
-**Agents/Tools Used**: morluto/rea (rea-agents), Research Synthesis  
-**Task & Prompt Summary**: Inspected reference architectures (waldo-stripes-soft, tiny-savannah, pixel-worlds, unslop) to extract orthographic camera angles, PRNG seeding, and localStorage schemas.  
-**Human Review & Modification Applied**:
-- Verified that zero external API keys or telemetry endpoints are included
-- Enforced 100% localhost isolation requirement
-- Extracted the following architectural keys:
-  - KEY-01: Orthographic frustum pan - 45° elevation, 15° azimuth (Tiny London spec)
-  - KEY-02: Zero-asset crowd scaling - Up to 10,000 NPCs with batched/instanced loops
-  - KEY-03: Deterministic seeded PRNG - Mulberry32 implementation
-  - KEY-04: Target signature & hit test - Waldo's 5 traits with decoy constraint
-  - KEY-05: Local-only leaderboard - localStorage persistence with Top 10 sorting
-  - KEY-06: Visual frame inspection - look.mjs pattern for frame stepping
-  - KEY-07: Scene setup fallback - try/catch with friendly fallback state
+**Date:** 2026-11-15
+**AI tool:** Claude Code + `playwright-core`
+**Prompt (summary):** Switch to original illustrated SVG art (ADR-002), build Forsyth Park first, then expand into one continuous Savannah with hints, scores, and tests.
+**Result:** Created the SVG artwork, 2D canvas engine, four connected districts, gameplay UI, and Playwright tests (23 passing).
+**My contribution:** Approved the art direction, rejected early drafts without motion or hard difficulty, and decided the landmarks should follow real Bull Street order.
 
----
+**Date:** 2026-11-16
+**AI tool:** Claude Code (Vite, React)
+**Prompt:** Master prompt to build an "Art Direction & Build Lab" workspace to inspect assets and before/after screenshots.
+**Result:** Built the separate `lab/` design tool outside the game build.
+**My contribution:** Used it to review visual gaps without mixing dev tools into `vibe-coding/build/`.
 
-## Session 2: Agent 1 - Procedural 3D World & Math Architect
+**Date:** 2026-11-16
+**AI tool:** Claude Code + `playwright-core` + Vercel CLI
+**Prompt (summary):** Fix the zoomed-out blank edges (ADR-003), simplify the kid UI, widen the city with west and east wings, and deploy to Vercel.
+**Result:** Added full-screen camera clamping, 78 new drawings across a 9120-wide city, 29 automated tests, and the live Vercel deployment.
+**My contribution:** Caught the zoomed-out edge failure in Cycle 1, requested the wider city and kid-friendly UI, and verified the live site.
 
-**Date**: 2026-11-15  
-**Agent**: Agent 1 (Procedural 3D World & Math Architect)  
-**Task & Prompt Summary**: Generated 3D orthographic projection engine with Mulberry32 PRNG, procedural Savannah blocks (Poetter Hall, Forsyth Fountain, Factors Walk), and animated festival crowd.  
-**Human Review & Modification Applied**:
-- Tuned decoy NPC color palettes so no decoy simultaneously wears red-and-white stripes AND blue trousers, preventing false positives
-- Adjusted walkRadius and speed parameters for more natural crowd movement
-- Verified depth sorting order for correct rendering
-- Optimized rendering loop for 60 FPS performance
-
-**Key Deliverables**:
-- `project3D(wx, wy, wz)` - Orthographic projection with depth
-- `createPRNG(seedString)` - Mulberry32 seeded random number generator
-- `generateSavannahScene(seedStr)` - Procedural scene generation
-- `drawIsoBox()` - Isometric box rendering
-- `renderScene(now)` - Main render loop
-- Camera controls (drag, zoom, keyboard)
-
----
-
-## Session 3: Agent 2 - Cognitive UX, Storybook UI & Copy Engineer
-
-**Date**: 2026-11-15  
-**Agent**: Agent 2 (Cognitive UX, Storybook UI & Copy Engineer)  
-**Task & Prompt Summary**: Built the Warm Sand (#F6EFE6), Cocoa (#3E2723), Coral Pink (#FF6F61), and Nickelodeon Whimsical token system, pill buttons, tabular-numeral timer, Top 10 localStorage leaderboard, and Friendly Fallback State.  
-**Human Review & Modification Applied**:
-- Stripped default CSS drop shadows (`box-shadow: none`) - unslop requirement
-- Rewrote UI microcopy so a 10-year-old can read every instruction effortlessly
-- Applied `--font-mono` with `font-variant-numeric: tabular-nums` to timer, wrong-guess, and leaderboard to prevent digit jitter (FAIL-03 fix)
-- Adjusted color tokens to match 80/15/5 cognitive color rule precisely
-- Ensured all text is sentence-case (no uppercase headings)
-- Added generous breathing room (Warm Sand whitespace) around all elements
-
-**Key Deliverables**:
-- Complete CSS design system with :root variables
-- Pill button styling (`border-radius: 9999px`)
-- Storybook card styling (22-24px border radius)
-- HUD bar with timer, wrong guesses, seed display
-- Intro, Congrats, and Fallback overlay cards
-- Leaderboard display and persistence logic
-- Share link generation
-
----
-
-## Session 4: Agent 3 - Harness QA, Unslop Auditor & REA Verifier
-
-**Date**: 2026-11-15  
-**Agent**: Agent 3 (Harness QA, Unslop Auditor & REA Verifier)  
-**Task & Prompt Summary**: Ran unslop UI/prose checks, executed frame inspections across Intro, Active, Win, and Fallback states, populated build-record/ documentation.  
-**Human Review & Modification Applied**:
-- Added `< 6 pixel` pointer movement threshold so dragging the camera never accidentally counts as a "Wrong guess" (FAIL-01 fix)
-- Positioned Waldo at a radial offset (65-160 units) from the chosen district landmark and kept props outside an 85-unit radius of landmark centers to prevent occlusion (FAIL-02 fix)
-- Built a zero-dependency 3D orthographic projection engine directly inside index.html and wrapped generateSavannahScene in a try/catch block that triggers the Friendly Fallback Card with a "Try a new scene" recovery button (FAIL-04 fix)
-- Verified all four failure modes (FAIL-01 through FAIL-04) with deterministic testing
-- Populated `build-record/testing-and-failure-log.md` with root causes and engineering fixes
-- Populated `build-record/ai-use-log.md` with complete session documentation
-
-**Key Deliverables**:
-- unslop UI audit pass
-- unslop prose audit pass
-- Frame-by-frame visual verification
-- Complete build-record/ documentation
-- CHECKLIST.md verification
-- Deterministic test URL parameters documentation
-
----
-
-## Session 5: Integration & Verification
-
-**Date**: 2026-11-15  
-**Agents/Tools Used**: All three agents, HARNESS.md, HANDOFF.md, CHECKLIST.md  
-**Task & Prompt Summary**: Integrated Agent 1's 3D engine with Agent 2's UI layer, verified all CHECKLIST.md items, ran final unslop pass.  
-**Human Review & Modification Applied**:
-- Verified index.html opens and runs in current browsers (Chrome, Firefox, Safari, Edge)
-- Confirmed randomized layout on every refresh and deterministic replay via ?seed=
-- Tested all URL parameters: ?seed=, ?fallback=1, ?beacon=1, ?crowd=
-- Verified 60 FPS performance with default 420 NPCs and maximum 10,000 NPCs
-- Confirmed zero external HTTP requests (browser dev tools)
-- Tested offline functionality (WiFi disabled)
-- Tested file:// protocol access
-- Verified localStorage leaderboard persistence
-- Confirmed share link generation and replay
-- Ran final unslop UI and prose audits
-
----
-
-## Session 6: Final Documentation
-
-**Date**: 2026-11-15  
-**Agents/Tools Used**: Human + Agent 3  
-**Task & Prompt Summary**: Completed reflection.md in "Weight, Not Weight Loss" voice, finalized disclosure.md, verified all CHECKLIST.md items.  
-**Human Review & Modification Applied**:
-- Wrote reflection.md in human's own voice (not AI-generated)
-- Completed disclosure.md with full AI contribution disclosure
-- Verified all 16 core governance and build files are present
-- Verified all vibe-coding/ packet files are complete
-- Verified all root harness files (HARNESS.md, HANDOFF.md, AGENTS.md) are in place
-- Verified symlinks (CLAUDE.md, GEMINI.md) point to AGENTS.md
-- Renamed folder to AI101_P4_[Last]_[First] format
-
----
-
-## Session 7: Illustrated rebuild, phases 0 to 2 (art direction checkpoint)
-
-**Date**: 2026-11-15
-**Agents/Tools Used**: Claude Code (Claude Opus 5.5), one web-fetch subagent for the skill and engine docs, `playwright-core` driving the installed Chrome. An earlier Codex session wrote the first ADR-002 draft and captured `before.html`, then stopped at a usage limit.
-**Task & Prompt Summary**: Master Rebuild Directive V3. Audit the docs, correct the specs, review skills and engines, write the art direction, and build a representative Forsyth Park illustration from real asset files for the project lead's approval.
-**Work done**:
-- `docs/audit.md`: restrictions, binding requirements, wrong claims in the v1 record (Google Fonts requests, unmeasured 60 FPS), conflicts, risk register.
-- `docs/skill-and-engine-review.md`: frontend-design skill (read, applied by hand, not installed), PixiJS and Konva (read, not adopted), Playwright (adopted; `playwright-core` in a scratch folder only). Tested `file://` loading in Chrome: SVG files taint the canvas and `fetch` is refused, so assets are packed into a script.
-- Rewrote ADR-002, `prd.md`, `plan.md`, `HARNESS.md`, `AGENTS.md`, `HANDOFF.md`. Version 1 copies are in `docs/history/`.
-- Drew 32 original SVG assets (18 character archetypes, 3 animals, props, fountain, live oak, townhouses, ground). Wrote `tools/pack-assets.mjs` and author helpers in `tools/author/`.
-- Composed `docs/art-direction/forsyth-sample.html` and captured `build-record/visual-qa/art-direction/`.
-**Human Review & Modification Applied**: the project lead approved checkpoint 1 (art direction) on 2026-11-15.
-**Not done**: no playable illustrated build yet; `build/index.html` is still version 1. No performance numbers. Six archetypes short of 24.
-
----
-
-## Session 8: Illustrated rebuild, phase 3 (first playable scene)
-
-**Date**: 2026-11-15
-**Agents/Tools Used**: Claude Code (Claude Opus 5.5), `playwright-core` driving the installed Chrome.
-**Task & Prompt Summary**: after checkpoint 1 approval, build the playable Forsyth Park scene: part libraries, the missing archetypes, the engine (camera, sprite tiers, alpha picking, target validator), tests and performance numbers.
-**Work done**:
-- Art (52 new SVG files, 84 in all): head part library (5 faces, 10 hair, 9 hats, 3 glasses, 2 beards), 7 bodies with a head socket, 6 archetypes (sculptor, dancer, gardener, maintenance worker, chess players, juggler), two more oak shapes, palmetto, hedge, three market stalls, café table, kite, full 3200 × 2400 ground.
-- Code in `src/`: seeded RNG, character composer and factory with the decoy cap, Forsyth scene (25 stories, seeded crowd, 16 hiding spots), sprite cache with zoom tiers and alpha masks, engine (camera, ground tiles, depth-sorted drawing, picking, validator), input, round logic. `tools/build.mjs` writes `build/js/game.js`; the page is `build/illustrated.html`.
-- Tests `tests/illustrated.test.mjs` (12 of 12 pass) and `tests/perf.mjs`; results in `testing-and-failure-log.md` and `performance.md`. FAIL-07 and FAIL-08 found and fixed.
-- Visual QA in `build-record/visual-qa/checkpoint-2/` with a self-assessed rubric of 3.9 of 5.
-**Human Review & Modification Applied**: the project lead chose to fix the gaps before approval. Revision 2 added procedural motion with reduced-motion support, a seated café pose, crowd-and-decoy rules for hard mode, and fixed FAIL-09. Tests 14 of 14. Resubmitted for checkpoint 2.
-**Not done**: no animation; leaderboard, hints, share links and fallback not wired into the new page; `build/index.html` still version 1; nothing deployed or committed.
-
----
-
-## Session 9: Gameplay integration (checkpoint 3)
-
-**Date**: 2026-11-15
-**Agents/Tools Used**: Claude Code (Claude Opus 5.5), `playwright-core` driving the installed Chrome.
-**Work done**: leaderboard module, hints, share links, fallback state, difficulty and density pickers; the illustrated page became `build/index.html` with version 1 archived in `docs/history/index-v1.html`. Five new tests (19 of 19 pass). Captures in `build-record/visual-qa/checkpoint-3/`, served over HTTP with no outside requests.
-**Human Review & Modification Applied**: checkpoint 2 approved by the project lead; checkpoint 3 pending.
-**Not done**: not committed or deployed.
-
----
-
-## Session 10: The whole city in one world (checkpoint 4)
-
-**Date**: 2026-11-15
-**Agents/Tools Used**: Claude Code (Claude Opus 5.5), `playwright-core` driving the installed Chrome.
-**Task**: project lead asked for every location in one game (the target can be anywhere; scroll to search) and for difficulty to weight leaderboard points.
-**Work done**: 14 new SVG assets (warehouse row, City Market row, riverboat, tug, Waving Girl, obelisk, festival tent, carriage, trolley, riverboat worker, festival-goer, historian, tricorn hat, citywide ground). Scene builder split into `src/scenes/build.js` plus districts (riverfront, market, squares, forsyth); default scene `savannah`. Points system and points-ordered leaderboard; "Here" district readout. Tests 22 of 22; city performance in `performance.md`. PR #1 opened for checkpoints 1–3.
-**Human Review & Modification Applied**: checkpoint 3 approved; checkpoint 4 pending.
-
----
-
-## Session 11: Art Direction & Build Lab (companion workspace)
-
-**Date**: 2026-11-16
-**Agents/Tools Used**: Claude Code (Claude Opus 5.5); Vite, React, TypeScript, Tailwind; `playwright-core` driving the installed Chrome.
-**Task**: the project lead's "Art Direction & Build Lab" brief: a persistent workspace for the redesign cycle (inspect → reference → diagnose → redesign → prototype → compare → test → approve → export → implement).
-**Work done**: new top-level `lab/` folder (see `lab/README.md`). It reads this repository at build time (`lab/scripts/ingest.mjs`) and runs the game's own asset bundle, composer, factory and scene builder for its previews, so nothing in `vibe-coding/` was changed. Seeded with ADR-V001 to V008, VIS-001 to VIS-010, Sprint 01 and 12 character families, each citing the repository file it came from. No approvals, scores, player results or benchmarks were seeded. Verification: unit tests 9 of 9; the brief's five journeys (A–E) pass in `lab/scripts/journeys.mjs` on the production build; no page errors across all 15 views; no horizontal scroll at 390 px. Lab checks run during development (a fresh test profile, not saved anywhere) flagged 7 crowd-body silhouette pairs that overlap 80% or more at 36 px (`tote` vs `walk` 96%), which supports VIS-003. The brief's baseline described version 1; the lab records that the current build is the illustrated edition.
-**Human Review & Modification Applied**: pending. Nothing in the lab is approved yet.
-
----
-
-## Session 12: Gameplay and visual overhaul
-
-**Date**: 2026-11-16
-**Agents/Tools Used**: Claude Code (Claude Opus 5.5), `playwright-core` driving the installed Chrome.
-**Task**: the project lead's overhaul brief (full-screen bounded camera, better zoom, better art, Forsyth first, a child-friendly interface), plus a later requirement for one continuous, geographically believable Savannah.
-**Work done**: the camera now has a viewport-cover minimum zoom and keeps the view inside the world at every size, rotation and zoom. Wheel zoom is smooth and anchored, trackpads are normalised, pinch is anchored on the finger midpoint, and taps get a finger-sized tolerance. The city is joined by Bull Street (City Hall to the Forsyth gate) with Johnson, Pulaski, Lafayette and Monterey Squares, and has street signs, traffic and parked cars. 24 new original SVG assets (registered in `sources/asset-register.md`), including three crowd bodies that break the `tote`/`walk` silhouette match (96% overlap at 36 px in the lab check). New interface: picture-and-Play intro, compact HUD, menu, minimap, three-step hints, playful misses, celebration. Tests: 28 of 28 (five new). Before/after screenshots in `visual-qa/overhaul/`. Performance in `performance.md`. Both version 1 READMEs archived in `docs/history/`; a short README replaces them.
-**Human Review & Modification Applied**: pending.
-
----
-
-## Session 13: A 2.85× wider city
-
-**Date**: 2026-11-16
-**Agents/Tools Used**: Claude Code (Claude Opus 5.5), `playwright-core` driving the installed Chrome, Vercel CLI.
-**Task**: the project lead asked to keep gameplay and height the same but make the world 2.85 times wider, filled with more Savannah streets, buildings and landmarks.
-**Work done**: world 3200 → 9120 wide; the original city kept unchanged in the middle; `src/scenes/wings.js` adds west and east wings to all five bands with real landmarks in their real order (see `docs/savannah-blueprint.md`). Ground split into three seamless chunks (engine support for `world.grounds`, base raster capped near 12 MP for phones). 78 new SVG files (ground chunks, building rows, landmarks, street signs). Crowd budget doubled. Fixed a latent bug: the target now paces around his final hiding spot, not the first candidate. Tests: 29 of 29 (one new for the wings). Performance in `performance.md`.
-**Human Review & Modification Applied**: pending.
-
----
-
-## AI Tools & Skills Used Summary
-
-| Tool/Skill | Purpose | Sessions | Human Oversight |
-|------------|---------|----------|-----------------|
-| morluto/rea (rea-agents) | Static analysis, architectural key extraction | 1 | High |
-| unslop | UI hierarchy audit, prose quality control | 3, 4, 5 | High |
-| pixel-worlds | Procedural patterns, frame verification | 2, 4 | Medium |
-| harness-engineering | Project structure, quality gates | 1, 5 | Medium |
-| isometric-city-map | Orthographic projection reference | 1, 2 | Low |
-| interactive-map-app | Camera controls, navigation patterns | 1, 2 | Low |
-
----
-
-## Human vs. AI Contribution Split
-
-| Area | Human Contribution | AI Contribution |
-|------|-------------------|----------------|
-| **Core Vision** | 100% | 0% |
-| **Architecture** | 90% | 10% |
-| **Specifications** | 95% | 5% |
-| **3D Engine** | 40% | 60% |
-| **UI/UX** | 50% | 50% |
-| **Testing** | 60% | 40% |
-| **Documentation** | 80% | 20% |
-| **Reflection** | 100% | 0% |
-
-**Overall**: ~60% Human, ~40% AI
-
----
-
-## Decision Log
-
-| Decision | Made By | Rationale |
-|----------|---------|-----------|
-| Zero-asset requirement | Human | Core project thesis |
-| 80/15/5 color rule | Human | Cognitive UX framework |
-| 45°/15° orthographic camera | Human (from Tiny London) | Fair perspective rendering |
-| Mulberry32 PRNG | Human (from references) | Deterministic seeding |
-| localStorage persistence | Human | Privacy requirement |
-| < 6px click threshold | Human (Agent 3 suggestion) | Fix FAIL-01 |
-| Radial offset spawning | Human (Agent 3 suggestion) | Fix FAIL-02 |
-| Tabular-nums | Human (Agent 3 suggestion) | Fix FAIL-03 |
-| Try/catch fallback | Human (Agent 3 suggestion) | Fix FAIL-04 |
-| File structure | Human | vibe-coding requirement |
-| Multi-agent approach | Human | Prevent context collision |
-
----
-
-## Verification Checklist
-
-- [x] All AI sessions documented
-- [x] All human decisions documented
-- [x] All modifications and adjustments noted
-- [x] All tools and skills identified
-- [x] Contribution split estimated
-- [x] Decision log complete
-
----
-
-**Status**: Complete | **Last Updated**: 2026-11-15 | **All sessions documented**
+**Date:** 2026-11-16
+**AI tool:** AI coding agents + `playwright-core` + Vercel CLI
+**Prompt (summary):** Shorten the submission docs to match the course templates, fix the reload test flake and 404, speed up loading and panning, and sync the Obsidian folder.
+**Result:** Shortened docs and ADRs, cut asset size to ~2.9 MB and startup load to ~0.6 s, cleared all 29/29 tests, redeployed Vercel, and synced Obsidian.
+**My contribution:** Reviewed the docs and Obsidian folder, caught overly long technical text in the ADRs and logs, and asked to keep the submission concise and faithful to the course format (with `reflection.md` left for me to write).

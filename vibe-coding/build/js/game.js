@@ -228,13 +228,14 @@
     const cellKey = (cx, cy) => cx + ',' + cy;
     const decoyRate = DECOY_RATE[identity.difficulty] || DECOY_RATE.normal;
     const total = identity.crowd ? Math.max(20, Math.min(10000, identity.crowd)) : BUDGET[identity.density] || BUDGET.standard;
-    // Stress crowds reuse a fixed set of looks so thousands of people do not mean thousands of sprite decodes.
-    const templates = total > 3200 ? new Map() : null;
+    // Large city crowds reuse a rich pool of looks per archetype so loading stays fast (~500 decodes vs 1,800+).
+    const templates = total > 650 ? new Map() : null;
     const person = (asset, x, y, flip, extra = {}) => {
       let c;
       if (templates) {
         const list = templates.get(asset) || templates.set(asset, []).get(asset);
-        if (list.length < 24) { c = make(rng, asset, { decoys: rng.chance(decoyRate) ? 1 : 0 }); list.push(c); } else c = rng.pick(list);
+        const decoys = rng.chance(decoyRate) ? (rng.chance(0.45) ? 2 : 1) : 0;
+        if (list.length < 40) { c = make(rng, asset, { decoys }); list.push(c); } else c = rng.pick(list);
       } else c = make(rng, asset, { decoys: rng.chance(decoyRate) ? (rng.chance(0.45) ? 2 : 1) : 0 });
       const e = push(Object.assign({ asset, x, y, flip, kind: 'person', colours: c.colours, kit: c.kit, kit2: c.kit2, traits: c.traits }, extra));
       people.push(e);
@@ -1366,7 +1367,10 @@
     const img = new Image();
     const url = URL.createObjectURL(new Blob([s.svg], { type: 'image/svg+xml' }));
     img.src = url;
-    s.loading = img.decode().then(() => { s.img = img; stats.decoded++; }, () => { throw new Error('could not decode ' + s.key.split('|')[0]); });
+    s.loading = img.decode().then(
+      () => { URL.revokeObjectURL(url); s.img = img; stats.decoded++; },
+      () => { URL.revokeObjectURL(url); throw new Error('could not decode ' + s.key.split('|')[0]); }
+    );
     return s.loading;
   }
   const pickTier = (s, pxPerUnit) => {
@@ -1405,7 +1409,7 @@
     queue.add(lk, () => { if (!s.tiers.has(tier) && s.img) rasterize(s, tier); });
     let best = null, bestT = 0;                       // nearest tier we already have, preferring sharper
     for (const [t, cv] of s.tiers) if (!best || Math.abs(Math.log(t / tier)) < Math.abs(Math.log(bestT / tier))) { best = cv; bestT = t; }
-    return best || rasterize(s, Math.min(tier, 0.5));
+    return best || s.img;
   }
   function buildMask(s) {
     const mt = Math.min(1, 512 / Math.max(s.vb[2], s.vb[3]));
@@ -1419,10 +1423,13 @@
     for (let i = 0; i < a.length; i++) a[i] = d[i * 4 + 3];
     s.mask = { w: c.width, h: c.height, t: mt, a };
   }
-  // Alpha (0..255) of sprite s at SVG coordinates (u, v).
+  // Alpha (0..255) of sprite s at SVG coordinates (u, v); built lazily on first pick/validation query.
   function alphaAt(s, u, v) {
+    if (!s.mask) {
+      if (!s.img) return 0;
+      buildMask(s);
+    }
     const m = s.mask;
-    if (!m) return 0;
     const x = Math.floor((u - s.vb[0]) * m.t), y = Math.floor((v - s.vb[1]) * m.t);
     if (x < 0 || y < 0 || x >= m.w || y >= m.h) return 0;
     return m.a[y * m.w + x];
@@ -1480,14 +1487,30 @@
     // ---------- world list in draw order ----------
     const LAYER_ORDER = { ground: 0, far: 1, world: 2, effects: 3 };
     let list = [];
+    const cmpOrder = (a, b) => LAYER_ORDER[a.layer] - LAYER_ORDER[b.layer] || a.y - b.y || (a.x - b.x) || (a.id < b.id ? -1 : 1);
     function sortList() {
-      list = world.entities.slice().sort((a, b) => LAYER_ORDER[a.layer] - LAYER_ORDER[b.layer] || a.y - b.y || (a.x - b.x) || (a.id < b.id ? -1 : 1));
-      list.forEach((e, i) => (e.order = i));
+      if (list.length !== world.entities.length) {
+        list = world.entities.slice().sort(cmpOrder);
+      } else {
+        for (let i = 1; i < list.length; i++) {
+          const cur = list[i];
+          let j = i - 1;
+          while (j >= 0 && cmpOrder(list[j], cur) > 0) { list[j + 1] = list[j]; j--; }
+          list[j + 1] = cur;
+        }
+      }
+      for (let i = 0; i < list.length; i++) list[i].order = i;
     }
     function rectOf(e) {
       const s = e.sprite, [vx, vy, w, h] = s.vb, [ax, ay] = s.anchor, k = e.k;
       const left = e.flip ? e.x - (vx + w - ax) * k : e.x + (vx - ax) * k;
       return [left, e.y + (vy - ay) * k, w * k, h * k];
+    }
+    function updateRect(e) {
+      if (!e.rect) { e.rect = rectOf(e); return; }
+      const s = e.sprite, [vx, vy, w, ,] = s.vb, [ax, ay] = s.anchor, k = e.k;
+      e.rect[0] = e.flip ? e.x - (vx + w - ax) * k : e.x + (vx - ax) * k;
+      e.rect[1] = e.y + (vy - ay) * k;
     }
     // world point -> sprite SVG coordinates
     function local(e, wx, wy) {
@@ -1548,7 +1571,7 @@
         if (T.kind === 'drive') {
           e.x += (e.flip ? -1 : 1) * T.v * dt;
           if (e.x > world.w + 160) e.x = -160; else if (e.x < -160) e.x = world.w + 160;
-          e.rect = rectOf(e);
+          updateRect(e);
           continue;
         }
         if (T.kind === 'h') {
@@ -1574,13 +1597,13 @@
           if (Math.abs(dx) > 1) e.flip = dx < 0 ? 1 : 0;
           movedY = movedY || Math.abs(dy) > 0.01;
         }
-        e.rect = rectOf(e);
+        updateRect(e);
       }
       // dogs keep to their walkers
       for (const e of world.entities) {
         if (!e.leash || !e.leashTo) continue;
         const w = e.leashTo;
-        e.flip = w.flip; e.x = w.x + (w.flip ? -84 : 84); e.y = w.y + 6; e.rect = rectOf(e);
+        e.flip = w.flip; e.x = w.x + (w.flip ? -84 : 84); e.y = w.y + 6; updateRect(e);
       }
       if (movedY && t - lastSort > 200) { sortList(); lastSort = t; }
     }
@@ -1594,11 +1617,11 @@
         if (e.motion === 'walk') {
           e.oy = -Math.abs(Math.sin(p * 0.9)) * 1.8;
           // stride at the bottom of the bounce, passing pose at the top: two drawn frames per step
-          if (e.sprite1) e.sprite = Math.abs(Math.sin(p * 0.9)) > 0.5 ? e.sprite1 : e.sprite0;
+          if (e.sprite1 && e.sprite1.img) e.sprite = Math.abs(Math.sin(p * 0.9)) > 0.5 ? e.sprite1 : e.sprite0;
         }
         else if (e.motion === 'jog') e.oy = -Math.abs(Math.sin(p * 1.4)) * 3.2;
         else if (e.motion === 'idle') e.oy = Math.sin(p * 0.25) * 0.5;
-        else if (e.motion === 'wave') { e.oy = Math.sin(p * 0.25) * 0.5; if (e.sprite1) e.sprite = Math.sin(p * 1.6) > 0 ? e.sprite1 : e.sprite0; }
+        else if (e.motion === 'wave') { e.oy = Math.sin(p * 0.25) * 0.5; if (e.sprite1 && e.sprite1.img) e.sprite = Math.sin(p * 1.6) > 0 ? e.sprite1 : e.sprite0; }
         else if (e.motion === 'kite') { e.oy = Math.sin(p * 0.35) * 6; e.rot = Math.sin(p * 0.27) * 0.08; }
         else if (e.motion === 'rise') e.oy = -((s * 6 + e.phase * 4) % 14);
       }
@@ -1624,17 +1647,37 @@
     // wide city never needs one giant image. `base` is a low-resolution copy of the whole ground, kept under
     // about 12 megapixels so phones (Safari caps a canvas near 16.7 MP) can hold it.
     const ground = { chunks: [], base: null, baseScale: 0.5, tiles: new Map() };
+    let extraSprites = [];
+    function decodeExtra() {
+      if (!extraSprites.length) return;
+      const pending = extraSprites;
+      extraSprites = [];
+      let i = 0;
+      const batch = () => {
+        const end = Math.min(pending.length, i + 20);
+        const jobs = [];
+        for (; i < end; i++) jobs.push(S().decode(pending[i]).catch(() => {}));
+        Promise.all(jobs).then(() => { if (i < pending.length) setTimeout(batch, 12); });
+      };
+      setTimeout(batch, 0);
+    }
     async function load(progress) {
       for (const e of world.entities) {
         e.sprite = e.sprite0 = S().forEntity(e);
         // walking figures with a drawn second frame get it as a separate sprite (not in stress crowds)
         if (window.WS_ASSETS.meta[e.asset].frames === 2 && world.people <= 2001) e.sprite1 = S().forEntity(e, 2);
       }
-      const sprites = [...new Set(world.entities.flatMap((e) => (e.sprite1 ? [e.sprite0, e.sprite1] : [e.sprite0])))];
+      const sprites0 = [...new Set(world.entities.map((e) => e.sprite0))];
+      extraSprites = [...new Set(world.entities.filter((e) => e.sprite1).map((e) => e.sprite1))];
       let done = 0;
       const defs = world.grounds || [{ asset: world.ground, x: 0, y: 0, w: world.w, h: world.h }];
-      ground.chunks = defs.map((d) => { const img = new Image(); img.src = URL.createObjectURL(new Blob([window.WS_ASSETS.svg[d.asset]], { type: 'image/svg+xml' })); return Object.assign({ img }, d); });
-      const jobs = ground.chunks.map((c) => c.img.decode()).concat(sprites.map((s) => S().decode(s).then(() => { S().buildMask(s); progress && progress(++done / sprites.length); })));
+      ground.chunks = defs.map((d) => {
+        const img = new Image(), url = URL.createObjectURL(new Blob([window.WS_ASSETS.svg[d.asset]], { type: 'image/svg+xml' }));
+        img.src = url;
+        return Object.assign({ img, url }, d);
+      });
+      const jobs = ground.chunks.map((c) => c.img.decode().then(() => URL.revokeObjectURL(c.url), (err) => { URL.revokeObjectURL(c.url); throw err; }))
+        .concat(sprites0.map((s) => S().decode(s).then(() => { progress && progress(++done / sprites0.length); })));
       await Promise.all(jobs);
       ground.baseScale = Math.min(0.5, Math.sqrt(12e6 / (world.w * world.h)));
       ground.base = document.createElement('canvas');
@@ -1645,7 +1688,7 @@
       assignMotion();
       for (const e of world.entities) if (e.leash) e.leashTo = world.entities.find((p) => p.id === e.leash);
       sortList();
-      return { sprites: sprites.length };
+      return { sprites: sprites0.length + extraSprites.length };
     }
 
     // ---------- camera ----------
@@ -1719,7 +1762,7 @@
     function groundTile(tx, ty, tier) {
       const key = tx + ',' + ty + '@' + tier;
       let c = ground.tiles.get(key);
-      if (c) return c;
+      if (c) { ground.tiles.delete(key); ground.tiles.set(key, c); return c; }
       queue.add('ground:' + key, () => rasterGround(tx, ty, tier));
       return null;
     }
@@ -1735,12 +1778,14 @@
         cx.drawImage(g.img, x0 - g.x, y0 - g.y, x1 - x0, y1 - y0, (x0 - tx * T) * k, (y0 - ty * T) * k, (x1 - x0) * k, (y1 - y0) * k);
       }
       ground.tiles.set(tx + ',' + ty + '@' + tier, c);
-      if (ground.tiles.size > 260) { const first = ground.tiles.keys().next().value; ground.tiles.delete(first); }
+      if (ground.tiles.size > 400) { const first = ground.tiles.keys().next().value; ground.tiles.delete(first); }
     }
     function drawGround(view) {
-      const need = scale() * dpr;
-      ctx.drawImage(ground.base, 0, 0, world.w, world.h);
-      if (need <= ground.baseScale * 1.1) return;
+      const need = scale() * dpr, bs = ground.baseScale;
+      const sx = Math.max(0, Math.floor(view[0] * bs)), sy = Math.max(0, Math.floor(view[1] * bs));
+      const sx1 = Math.min(ground.base.width, Math.ceil(view[2] * bs)), sy1 = Math.min(ground.base.height, Math.ceil(view[3] * bs));
+      if (sx1 > sx && sy1 > sy) ctx.drawImage(ground.base, sx, sy, sx1 - sx, sy1 - sy, sx / bs, sy / bs, (sx1 - sx) / bs, (sy1 - sy) / bs);
+      if (need <= bs * 1.1) return;
       const tier = GROUND_TIERS.find((t) => t >= need) || GROUND_TIERS[GROUND_TIERS.length - 1];
       const T = GROUND_TILE;
       for (let ty = Math.max(0, Math.floor(view[1] / T)); ty * T < Math.min(world.h, view[3]); ty++)
@@ -1764,7 +1809,7 @@
       else ctx.drawImage(c, x, y, w, h);
     }
     function drawLeash(dog) {
-      const walker = world.entities.find((p) => p.id === dog.leash);
+      const walker = dog.leashTo;
       if (!walker) return;
       const wm = window.WS_ASSETS.meta[walker.asset], dm = window.WS_ASSETS.meta[dog.asset];
       if (!wm.hand || !dm.collar) return;
@@ -1927,7 +1972,7 @@
       setMotion(on) { motionOn = on && !reduced; lastMove = 0; for (const e of world.entities) { e.oy = 0; e.rot = 0; if (e.sprite0) e.sprite = e.sprite0; } dirty = true; },
       get motion() { return motionOn; },
       invalidate() { dirty = true; },
-      start() { requestAnimationFrame(loop); },
+      start() { decodeExtra(); requestAnimationFrame(loop); },
       renderNow() { return render(true); },
       get pendingWork() { return queue.size; },
       get viewport() { return { vw, vh, dpr }; },
