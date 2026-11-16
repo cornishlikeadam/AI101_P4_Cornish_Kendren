@@ -65,8 +65,8 @@
     // Crowd people travel: along walks and streets (lanes), up and down the long paths, or wandering with
     // pauses on lawns and plazas. Story characters stay at their story; the target paces a few steps
     // around his validated hiding spot. Dogs on leads follow their walkers.
-    const H_LANES = new Set(['north-walk', 'cross-walk', 'south-walk', 'riverwalk', 'river-street', 'factors-walk', 'market-front', 'congress-walk', 'square-sidewalks']);
-    const V_LANES = new Set(['promenade', 'side-walks', 'between-squares', 'bull-walk']);
+    const H_LANES = new Set(['wing-walk', 'north-walk', 'cross-walk', 'south-walk', 'riverwalk', 'river-street', 'factors-walk', 'market-front', 'congress-walk', 'square-sidewalks']);
+    const V_LANES = new Set(['wing-ns', 'promenade', 'side-walks', 'between-squares', 'bull-walk']);
     const SPEED = (a) => /cyclist/.test(a) ? 85 : /jogger/.test(a) ? 55 : /child|cane/.test(a) ? 14 : /stroller/.test(a) ? 16 : 22;
     function assignTravel(e, h) {
       e.travel = null;
@@ -169,7 +169,10 @@
     }
 
     // ---------- loading ----------
-    const ground = { img: null, base: null, tiles: new Map() };
+    // The ground can be one image or several seamless chunks ({ asset, x, y, w, h } in world units), so a
+    // wide city never needs one giant image. `base` is a low-resolution copy of the whole ground, kept under
+    // about 12 megapixels so phones (Safari caps a canvas near 16.7 MP) can hold it.
+    const ground = { chunks: [], base: null, baseScale: 0.5, tiles: new Map() };
     async function load(progress) {
       for (const e of world.entities) {
         e.sprite = e.sprite0 = S().forEntity(e);
@@ -178,14 +181,15 @@
       }
       const sprites = [...new Set(world.entities.flatMap((e) => (e.sprite1 ? [e.sprite0, e.sprite1] : [e.sprite0])))];
       let done = 0;
-      const gsvg = window.WS_ASSETS.svg[world.ground];
-      ground.img = new Image();
-      ground.img.src = URL.createObjectURL(new Blob([gsvg], { type: 'image/svg+xml' }));
-      const jobs = [ground.img.decode()].concat(sprites.map((s) => S().decode(s).then(() => { S().buildMask(s); progress && progress(++done / sprites.length); })));
+      const defs = world.grounds || [{ asset: world.ground, x: 0, y: 0, w: world.w, h: world.h }];
+      ground.chunks = defs.map((d) => { const img = new Image(); img.src = URL.createObjectURL(new Blob([window.WS_ASSETS.svg[d.asset]], { type: 'image/svg+xml' })); return Object.assign({ img }, d); });
+      const jobs = ground.chunks.map((c) => c.img.decode()).concat(sprites.map((s) => S().decode(s).then(() => { S().buildMask(s); progress && progress(++done / sprites.length); })));
       await Promise.all(jobs);
+      ground.baseScale = Math.min(0.5, Math.sqrt(12e6 / (world.w * world.h)));
       ground.base = document.createElement('canvas');
-      ground.base.width = world.w * 0.5; ground.base.height = world.h * 0.5;
-      ground.base.getContext('2d').drawImage(ground.img, 0, 0, ground.base.width, ground.base.height);
+      ground.base.width = Math.round(world.w * ground.baseScale); ground.base.height = Math.round(world.h * ground.baseScale);
+      const bctx = ground.base.getContext('2d');
+      for (const c of ground.chunks) bctx.drawImage(c.img, c.x * ground.baseScale, c.y * ground.baseScale, c.w * ground.baseScale, c.h * ground.baseScale);
       for (const e of world.entities) { e.rect = rectOf(e); e.pickable = e.layer === 'world' || e.layer === 'ground'; }
       assignMotion();
       for (const e of world.entities) if (e.leash) e.leashTo = world.entities.find((p) => p.id === e.leash);
@@ -272,14 +276,20 @@
       const c = document.createElement('canvas');
       const T = GROUND_TILE, px = Math.ceil(T * tier);
       c.width = px; c.height = px;
-      c.getContext('2d').drawImage(ground.img, tx * T, ty * T, T, T, 0, 0, px, px);
+      const cx = c.getContext('2d'), k = px / T;
+      // copy the part of every chunk that overlaps this tile (tiles may straddle a chunk seam)
+      for (const g of ground.chunks) {
+        const x0 = Math.max(tx * T, g.x), y0 = Math.max(ty * T, g.y), x1 = Math.min((tx + 1) * T, g.x + g.w), y1 = Math.min((ty + 1) * T, g.y + g.h);
+        if (x1 <= x0 || y1 <= y0) continue;
+        cx.drawImage(g.img, x0 - g.x, y0 - g.y, x1 - x0, y1 - y0, (x0 - tx * T) * k, (y0 - ty * T) * k, (x1 - x0) * k, (y1 - y0) * k);
+      }
       ground.tiles.set(tx + ',' + ty + '@' + tier, c);
       if (ground.tiles.size > 260) { const first = ground.tiles.keys().next().value; ground.tiles.delete(first); }
     }
     function drawGround(view) {
       const need = scale() * dpr;
       ctx.drawImage(ground.base, 0, 0, world.w, world.h);
-      if (need <= 0.55) return;
+      if (need <= ground.baseScale * 1.1) return;
       const tier = GROUND_TIERS.find((t) => t >= need) || GROUND_TIERS[GROUND_TIERS.length - 1];
       const T = GROUND_TILE;
       for (let ty = Math.max(0, Math.floor(view[1] / T)); ty * T < Math.min(world.h, view[3]); ty++)
@@ -412,6 +422,8 @@
       const visibleShare = all ? allVis / all : 0, headShare = head ? headVis / head : 0;
       return { ok: headShare >= 0.6 && visibleShare >= 0.5, visibleShare, headShare, samples: all };
     }
+    // The target paces around wherever he is finally placed, not where the first candidate put him.
+    function settle(t) { t.hx = t.x; t.hy = t.y; if (t.travel) { t.travel.tx = t.x; t.travel.ty = t.y; } }
     // Walk the seeded candidates until one passes; difficulty decides how much may be hidden.
     function placeTarget() {
       const t = world.target, diff = world.identity.difficulty;
@@ -438,13 +450,13 @@
         const co = company(c);
         if (!fallback) fallback = { c, v };
         const inBand = v.visibleShare >= want[0] && v.visibleShare < want[1];
-        if (inBand && co.crowd >= need.crowd && co.decoys >= need.decoys) return Object.assign({ tries, spot: c.spot }, co, v);
+        if (inBand && co.crowd >= need.crowd && co.decoys >= need.decoys) { settle(t); return Object.assign({ tries, spot: c.spot }, co, v); }
         const score = (inBand ? 2 : 0) + Math.min(1, co.crowd / Math.max(1, need.crowd)) + Math.min(1, co.decoys / Math.max(1, need.decoys));
         if (!best || score > best.score) best = { c, v, score };
       }
       if (!fallback) throw new Error('no valid hiding spot for this seed');
       const { c } = best || fallback;
-      t.x = c.x; t.y = c.y; t.flip = c.flip; t.spot = c.spot; t.rect = rectOf(t); sortList();
+      t.x = c.x; t.y = c.y; t.flip = c.flip; t.spot = c.spot; t.rect = rectOf(t); sortList(); settle(t);
       return Object.assign({ tries, spot: c.spot, relaxed: true }, company(c), validateTarget(t));
     }
 

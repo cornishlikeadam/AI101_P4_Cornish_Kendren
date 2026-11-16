@@ -21,7 +21,7 @@
     const decoyRate = DECOY_RATE[identity.difficulty] || DECOY_RATE.normal;
     const total = identity.crowd ? Math.max(20, Math.min(10000, identity.crowd)) : BUDGET[identity.density] || BUDGET.standard;
     // Stress crowds reuse a fixed set of looks so thousands of people do not mean thousands of sprite decodes.
-    const templates = total > 2000 ? new Map() : null;
+    const templates = total > 3200 ? new Map() : null;
     const person = (asset, x, y, flip, extra = {}) => {
       let c;
       if (templates) {
@@ -52,7 +52,9 @@
       return false;
     };
     const fill = Math.max(0, total - people.length);
-    const spacing = total > 3000 ? 8 : total > 1600 ? 18 : 30;
+    // spacing depends on crowd density: the count as if spread over the original 3200 x 6700 city
+    const dense = total * Math.min(1, (3200 * 6700) / (scene.w * scene.h));
+    const spacing = dense > 3000 ? 8 : dense > 1600 ? 18 : 30;
     const POOL_PATH = [[B + 'walk', 12], [B + 'dress', 11], [B + 'tote', 6], [B + 'umbrella', 7], [B + 'books', 7], [B + 'phone', 7], [B + 'cane', 5], [B + 'child', 6], [C + 'jogger', 7], [C + 'tourist-photographer', 5], [C + 'scad-student-portfolio', 4], [C + 'dog-walker', 3], [C + 'parent-stroller', 3], [C + 'cyclist', 2]];
     const POOL_STAND = [[B + 'coffee', 12], [B + 'phone', 10], [B + 'wave', 9], [B + 'books', 6], [B + 'walk', 6], [B + 'dress', 9], [B + 'tote', 4], [B + 'umbrella', 3], [B + 'child', 7], [B + 'cane', 4], [C + 'tourist-photographer', 5], [C + 'scad-student-portfolio', 3]];
     const zonePairs = districts.flatMap((d) => d.zones.map((z) => [z, z.w]));
@@ -85,7 +87,7 @@
     const target = push({ id: 'target', asset: C + 'target-walker', x: candidates[0].x, y: candidates[0].y, flip: candidates[0].flip, kind: 'person', isTarget: true, colours: null, traits: ['stripes', 'bobble', 'glasses', 'blue', 'stick'], spot: candidates[0].spot });
 
     const area = (x, y) => { for (const d of districts) { const a = d.area(x, y); if (a) return a; } return 'somewhere in Savannah'; };
-    return { blocked, id: scene.id, name: scene.name, w: scene.w, h: scene.h, home: scene.home || null, ground: scene.ground, background: '#F6E7C8', fountains: districts.flatMap((d) => d.fountains || (d.fountain ? [d.fountain] : [])), districts: districts.map((d) => ({ id: d.id, name: d.name, y0: d.y0, h: d.h })), area, entities, target, candidates, identity, people: people.length + 1, stories: new Set(allStories.map((s) => s.story)).size };
+    return { blocked, id: scene.id, name: scene.name, w: scene.w, h: scene.h, home: scene.home || null, grounds: scene.grounds || null, ground: scene.ground, background: '#F6E7C8', fountains: districts.flatMap((d) => d.fountains || (d.fountain ? [d.fountain] : [])), districts: districts.map((d) => ({ id: d.id, name: d.name, y0: d.y0, h: d.h })), area, entities, target, candidates, identity, people: people.length + 1, stories: new Set(allStories.map((s) => s.story)).size };
   }
 
   WS.buildScene = buildScene;

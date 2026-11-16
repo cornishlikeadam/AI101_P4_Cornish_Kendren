@@ -317,6 +317,27 @@ await test('city: Bull Street joins every district, with a street sign at each c
   await page.close();
 });
 
+await test('city: the west and east wings carry their landmarks, streets and seamless ground', async () => {
+  const { page } = await open('?seed=WIDE-1&scene=savannah');
+  const r = await page.evaluate(() => {
+    const W = WS.game.world, has = (a) => W.entities.filter((e) => e.asset === a).map((e) => Math.round(e.x));
+    const g = W.grounds; let x = 0; const seams = g.map((c) => { const ok = c.x === x; x = c.x + c.w; return ok; });
+    const people = W.entities.filter((e) => e.kind === 'person');
+    return { seams, end: x, w: W.w, west: people.filter((p) => p.x < 2960).length, east: people.filter((p) => p.x > 6160).length,
+      bridge: has('props/river/talmadge-bridge'), pink: has('environments/wings/olde-pink-house'), church: has('environments/wings/first-african-baptist'),
+      cemetery: has('environments/wings/cemetery-gate'), gazebo: has('environments/wings/gazebo'), victorian: W.entities.filter((e) => e.asset.startsWith('environments/victorian/')).length,
+      signs: W.entities.filter((e) => /sign-(montgomery|jefferson|habersham|price|whitaker|drayton)-/.test(e.asset)).length,
+      areas: [W.area(400, 560), W.area(7700, 2300), W.area(7700, 3650), W.area(1500, 6600)] };
+  });
+  assert.ok(r.seams.every(Boolean) && r.end === r.w, 'ground chunks tile the width: ' + JSON.stringify(r.seams));
+  assert.ok(r.bridge[0] < 2960 && r.church[0] < 2960, 'west landmarks');
+  assert.ok(r.pink[0] > 6160 && r.cemetery[0] > 6160 && r.gazebo[0] > 6160, 'east landmarks');
+  assert.ok(r.victorian >= 8 && r.signs >= 20, JSON.stringify(r));
+  assert.ok(r.west > 200 && r.east > 200, 'people live in both wings: ' + r.west + ' / ' + r.east);
+  assert.deepEqual(r.areas.map((a) => !!a && !/somewhere/.test(a)), [true, true, true, true], JSON.stringify(r.areas));
+  await page.close();
+});
+
 await test('touch: a finger tap near a small person counts, a two-finger pinch never guesses', async () => {
   const { page } = await open('?seed=TOUCH-1&difficulty=easy', { width: 390, height: 844 });
   await page.click('#startBtn');
@@ -456,10 +477,10 @@ await test('city: five districts in one world, target can land in any of them', 
       const t = b.target, d = b.districts.find((x) => t.y >= x.y0 && t.y < x.y0 + x.h);
       spotsBy[d.id] = (spotsBy[d.id] || 0) + 1;
     }
-    return { people: w.people, stories: w.stories, districts: w.districts.map((d) => d.id), h: w.h, spotsBy, ok: WS.game.placement.ok };
+    return { people: w.people, stories: w.stories, districts: w.districts.map((d) => d.id), h: w.h, w: w.w, spotsBy, ok: WS.game.placement.ok };
   });
   assert.deepEqual(r.districts, ['riverfront', 'market', 'squares', 'monterey', 'forsyth']);
-  assert.equal(r.people, 901); assert.ok(r.stories >= 40); assert.equal(r.h, 7600); assert.ok(r.ok);
+  assert.equal(r.people, 1801); assert.ok(r.stories >= 60); assert.equal(r.h, 7600); assert.equal(r.w, 9120); assert.ok(r.ok);
   assert.equal(Object.keys(r.spotsBy).length, 5, 'first candidates spread over every district: ' + JSON.stringify(r.spotsBy));
   await page.close();
 });

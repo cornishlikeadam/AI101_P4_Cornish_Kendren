@@ -197,6 +197,16 @@
 
 ---
 
+## Session 13: A 2.85× wider city
+
+**Date**: 2026-11-16
+**Agents/Tools Used**: Claude Code (Claude Opus 5.5), `playwright-core` driving the installed Chrome, Vercel CLI.
+**Task**: the project lead asked to keep gameplay and height the same but make the world 2.85 times wider, filled with more Savannah streets, buildings and landmarks.
+**Work done**: world 3200 → 9120 wide; the original city kept unchanged in the middle; `src/scenes/wings.js` adds west and east wings to all five bands with real landmarks in their real order (see `docs/savannah-blueprint.md`). Ground split into three seamless chunks (engine support for `world.grounds`, base raster capped near 12 MP for phones). 78 new SVG files (ground chunks, building rows, landmarks, street signs). Crowd budget doubled. Fixed a latent bug: the target now paces around his final hiding spot, not the first candidate. Tests: 29 of 29 (one new for the wings). Performance in `performance.md`.
+**Human Review & Modification Applied**: pending.
+
+---
+
 ## AI Tools & Skills Used Summary
 
 | Tool/Skill | Purpose | Sessions | Human Oversight |

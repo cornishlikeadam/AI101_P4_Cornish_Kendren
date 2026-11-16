@@ -1,6 +1,6 @@
 # Savannah city blueprint (checkpoint 4, revised 2026-11-16)
 
-One continuous world, 3200 × 7600 units, north at the top, joined by **Bull Street** (x 1515–1685), which runs from Bay Street past City Hall to the Forsyth Park north gate, as it does in the real city. Distances are compressed and some blocks are left out (Broughton Street; Wright, Chippewa and Madison Squares), but the order is the real order. Geography is fixed; the replay identity varies looks, the crowd and the hiding spot.
+One continuous world, 9120 × 7600 units, north at the top. The original 3200-wide city sits in the middle (world x 2960–6160); `src/scenes/wings.js` adds a west and an east wing to every band. Joined by **Bull Street** (world x 4475–4645), which runs from Bay Street past City Hall to the Forsyth Park north gate, as it does in the real city. Distances are compressed and some blocks are left out (Broughton Street; Wright, Chippewa and Madison Squares), but the order is the real order. Geography is fixed; the replay identity varies looks, the crowd and the hiding spot.
 
 | y | District | Contents | Source |
 |---|---|---|---|
@@ -10,7 +10,19 @@ One continuous world, 3200 × 7600 units, north at the top, joined by **Bull Str
 | 4300–5200 | Jones Street and Monterey Square | Jones Street houses with SCAD Poetter Hall at Bull; Monterey Square with the Pulaski Monument, Mercer House to the west and Temple Mickve Israel to the east | `src/scenes/monterey.js` |
 | 5200–7600 | Forsyth Park | Unchanged park, moved south; Bull Street reaches its gate between the Gaston Street houses | `src/scenes/forsyth.js` |
 
-Ground: `assets/environments/savannah/ground.svg` from `tools/author/savannah-ground.mjs`. Street furniture shared by all districts (traffic, parked cars, Bull Street oaks and lamps, signs, hydrants): `src/scenes/streets.js`. Crowd budgets: low 450, standard 900, dense 1,500.
+Wings (each 2960 wide), in the real order east and west of Bull, distances compressed:
+
+| Band | West wing | East wing |
+|---|---|---|
+| River | Talmadge Bridge, Plant Riverside and its smokestacks, container ship | Cotton Exchange, Emmet Park, Old Harbor Light |
+| Market | Franklin Square with First African Baptist Church; City Market continues to Jefferson St | Reynolds Square with the Olde Pink House and John Wesley's statue; Warren Square |
+| Squares | Chatham Square, garden lots | Colonial Park Cemetery, Troup Square's armillary sphere |
+| Jones | front gardens, pocket playground, lemonade stand | Calhoun Square and Wesley Monumental Church, Whitefield Square's gazebo |
+| Forsyth | Victorian District, Whitaker St | Victorian District, Drayton St |
+
+North-south streets: Montgomery and Jefferson (west), Habersham and Price (east); Hall, Park Avenue and Duffy cross the Victorian District.
+
+Ground: three chunks, `assets/environments/savannah/ground-west.svg`, `ground.svg` (core, from `tools/author/savannah-ground.mjs`) and `ground-east.svg` (both wings from `tools/author/savannah-wings.mjs`). Street furniture shared by all districts (traffic, parked cars, Bull Street oaks and lamps, signs, hydrants): `src/scenes/streets.js`. Crowd budgets: low 900, standard 1,800, dense 3,000.
 
 ## New stories (22, on top of Forsyth's 25)
 

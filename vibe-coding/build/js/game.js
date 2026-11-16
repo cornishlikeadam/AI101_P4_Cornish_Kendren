@@ -229,7 +229,7 @@
     const decoyRate = DECOY_RATE[identity.difficulty] || DECOY_RATE.normal;
     const total = identity.crowd ? Math.max(20, Math.min(10000, identity.crowd)) : BUDGET[identity.density] || BUDGET.standard;
     // Stress crowds reuse a fixed set of looks so thousands of people do not mean thousands of sprite decodes.
-    const templates = total > 2000 ? new Map() : null;
+    const templates = total > 3200 ? new Map() : null;
     const person = (asset, x, y, flip, extra = {}) => {
       let c;
       if (templates) {
@@ -260,7 +260,9 @@
       return false;
     };
     const fill = Math.max(0, total - people.length);
-    const spacing = total > 3000 ? 8 : total > 1600 ? 18 : 30;
+    // spacing depends on crowd density: the count as if spread over the original 3200 x 6700 city
+    const dense = total * Math.min(1, (3200 * 6700) / (scene.w * scene.h));
+    const spacing = dense > 3000 ? 8 : dense > 1600 ? 18 : 30;
     const POOL_PATH = [[B + 'walk', 12], [B + 'dress', 11], [B + 'tote', 6], [B + 'umbrella', 7], [B + 'books', 7], [B + 'phone', 7], [B + 'cane', 5], [B + 'child', 6], [C + 'jogger', 7], [C + 'tourist-photographer', 5], [C + 'scad-student-portfolio', 4], [C + 'dog-walker', 3], [C + 'parent-stroller', 3], [C + 'cyclist', 2]];
     const POOL_STAND = [[B + 'coffee', 12], [B + 'phone', 10], [B + 'wave', 9], [B + 'books', 6], [B + 'walk', 6], [B + 'dress', 9], [B + 'tote', 4], [B + 'umbrella', 3], [B + 'child', 7], [B + 'cane', 4], [C + 'tourist-photographer', 5], [C + 'scad-student-portfolio', 3]];
     const zonePairs = districts.flatMap((d) => d.zones.map((z) => [z, z.w]));
@@ -293,7 +295,7 @@
     const target = push({ id: 'target', asset: C + 'target-walker', x: candidates[0].x, y: candidates[0].y, flip: candidates[0].flip, kind: 'person', isTarget: true, colours: null, traits: ['stripes', 'bobble', 'glasses', 'blue', 'stick'], spot: candidates[0].spot });
 
     const area = (x, y) => { for (const d of districts) { const a = d.area(x, y); if (a) return a; } return 'somewhere in Savannah'; };
-    return { blocked, id: scene.id, name: scene.name, w: scene.w, h: scene.h, home: scene.home || null, ground: scene.ground, background: '#F6E7C8', fountains: districts.flatMap((d) => d.fountains || (d.fountain ? [d.fountain] : [])), districts: districts.map((d) => ({ id: d.id, name: d.name, y0: d.y0, h: d.h })), area, entities, target, candidates, identity, people: people.length + 1, stories: new Set(allStories.map((s) => s.story)).size };
+    return { blocked, id: scene.id, name: scene.name, w: scene.w, h: scene.h, home: scene.home || null, grounds: scene.grounds || null, ground: scene.ground, background: '#F6E7C8', fountains: districts.flatMap((d) => d.fountains || (d.fountain ? [d.fountain] : [])), districts: districts.map((d) => ({ id: d.id, name: d.name, y0: d.y0, h: d.h })), area, entities, target, candidates, identity, people: people.length + 1, stories: new Set(allStories.map((s) => s.story)).size };
   }
 
   WS.buildScene = buildScene;
@@ -861,23 +863,471 @@
   WS.districts = Object.assign(WS.districts || {}, { monterey: () => ({ id: 'monterey', name: 'Jones Street & Monterey Square', y0: Y0, h: H, geography, stories, zones: ZONES, blocked, spots: SPOTS, area }) });
 })();
 
-/* ---- src/scenes/savannah.js ---- */
-/* The whole city in one world (Agent 2), joined by Bull Street from Bay Street to the Forsyth Park gate:
-   River Street, City Market and Johnson Square, Pulaski and Lafayette Squares, Jones Street and Monterey
-   Square, then Forsyth Park, north to south. The target can be in any district. */
+/* ---- src/scenes/wings.js ---- */
+/* The west and east wings of the city (Agent 2): two 2960-wide strips either side of the original 3200,
+   which now sits at world x 2960-6160 (Bull Street at x 4560). Each band continues across the full width at
+   the same y, with real places in their real order (distances compressed):
+     river:   Talmadge Bridge, Plant Riverside (west); Cotton Exchange, Emmet Park and the Old Harbor Light (east)
+     market:  Franklin Square and First African Baptist Church (west); Reynolds Square, the Olde Pink House,
+              John Wesley's statue and Warren Square (east)
+     squares: Chatham Square (west); Colonial Park Cemetery and Troup Square (east)
+     Jones:   front gardens and a pocket playground (west); Calhoun Square with Wesley Monumental Church and
+              Whitefield Square's gazebo (east)
+     Forsyth: the Victorian District on both sides of the park, with Whitaker and Drayton Streets on its edges
+   All coordinates here are world coordinates. Mirrors tools/author/savannah-wings.mjs. */
 (function () {
   const WS = (window.WS = window.WS || {});
-  function build(identity) {
-    const D = WS.districts;
-    return WS.buildScene(identity, {
-      id: 'savannah', name: 'Savannah', w: 3200, h: 7600, ground: 'environments/savannah/ground',
-      districts: [D.riverfront(), D.market(), D.squares(), D.monterey(), D.forsyth(5200)],
-      budget: { low: 450, standard: 900, dense: 1500 },
-      // The camera opens on the Forsyth fountain plaza: the busiest, most finished view in the city.
-      home: { x: 1600, y: 5200 + 830, zoom: 1.3 },
+  const C = 'characters/archetypes/', B = 'characters/bodies/';
+  const E = 6160;                                   // east wing origin
+  const NS = { west: [700, 2100], east: [E + 840, E + 2240] };
+  const EDGE = { west: 2905, east: E + 75 };        // Whitaker / Drayton, Forsyth band only
+  const NS_NAMES = { 700: 'montgomery', 2100: 'jefferson', [E + 840]: 'habersham', [E + 2240]: 'price', 2905: 'whitaker', [E + 75]: 'drayton' };
+  const ROADS = [[1400, 80, 'bay'], [2700, 80, 'congress'], [3220, 70, 'harris'], [4040, 70, 'charlton'], [4560, 80, 'jones'], [5470, 72, 'gaston'], [6200, 70, 'hall'], [6900, 70, 'parkave'], [7520, 70, null]];
+  const CAR_COLOURS = ['#2F7FA8', '#C73E3A', '#F5F0E6', '#3E8E7E', '#F2D55C', '#2B2B2B', '#E07A3F', '#7D5BA6', '#8DBA5A', '#3D4F6E'];
+  const OAK = ['props/vegetation/live-oak', 'props/vegetation/live-oak-tall', 'props/vegetation/live-oak-lean'];
+  const inRect = (x, y, r) => x >= r[0] && x <= r[2] && y >= r[1] && y <= r[3];
+  const nsOf = (side, y) => (y >= 5200 ? [...NS[side], EDGE[side]] : NS[side]);
+  const x0 = (side) => (side === 'west' ? 0 : E), x1 = (side) => (side === 'west' ? 2960 : 9120);
+  let ci = 0;
+
+  // ---------- shared street furniture ----------
+  function streetLife(add, side, y, h, name) {
+    const xs = nsOf(side, y), a = x0(side), b = x1(side);
+    for (let x = a + 120; x < b - 80; x += 330) {
+      if (xs.some((c) => Math.abs(x - c) < 190)) continue;
+      add(ci % 3 === 2 ? 'props/vehicles/car-small' : 'props/vehicles/car', x, y + h - 3, 0.72, (x / 330) % 2 > 1 ? 1 : 0, { tint: { car: CAR_COLOURS[ci++ % 10], car2: '#F5F0E6' }, parked: true });
+    }
+    add('props/vehicles/car', a + 600 + (y % 700), y + h * 0.5 - 2, 0.72, 1, { tint: { car: CAR_COLOURS[ci++ % 10], car2: '#F5F0E6' }, drive: 44 + (y % 17) });
+    add('props/vehicles/car-small', a + 1900 - (y % 500), y + h * 0.78, 0.72, 0, { tint: { car: CAR_COLOURS[ci++ % 10], car2: '#F5F0E6' }, drive: 50 + (y % 13) });
+    if (name) for (const c of xs) add('props/street/sign-' + NS_NAMES[c] + '-' + name, c + 110, y + h + 22, 0.9);
+    for (const c of xs) { add('props/street/hydrant', c - 100, y + h + 18, 0.9); add('props/street/bin', c + 150, y + h + 20, 0.9); }
+  }
+  // oaks in the tree pits and lamps along a north-south street, between two cross streets
+  function avenue(add, c, y0, y1, k = 0.42) {
+    let i = 0;
+    for (let y = y0 + 90; y < y1 - 60; y += 170, i++) {
+      add(OAK[i % 3], i % 2 ? c + 70 : c - 70, y + 4, k, i % 2);
+      add('props/furniture/lamp-post', i % 2 ? c - 72 : c + 72, y + 70, 0.8);
+    }
+  }
+  function squareDress(add, cx, cy, hw, hh, opts = {}) {
+    [[-hw + 90, -hh + 70], [hw - 90, -hh + 70], [-hw + 90, hh - 40], [hw - 90, hh - 40]].forEach(([dx, dy], i) => add(OAK[i % 3], cx + dx, cy + dy, opts.oak || 0.6, i % 2));
+    for (const [dx, dy] of [[-hw * 0.45, -60], [hw * 0.45, -60], [-hw * 0.45, 70], [hw * 0.45, 70]]) add('props/furniture/park-bench', cx + dx, cy + dy, 0.85);
+    for (const dx of [-hw * 0.32, hw * 0.32]) add('props/furniture/lamp-post', cx + dx, cy - 40, 0.9);
+    if (!opts.noAzaleas) for (const dx of [-hw + 40, hw - 40]) add('props/vegetation/azalea-bush', cx + dx, cy + 10, 0.85, dx > 0 ? 1 : 0);
+  }
+  // A garden lot behind a low fence: two loose rows of oaks, azalea beds and a bench, so no lot is bare lawn.
+  function garden(add, a, b, y0, y1) {
+    let i = 0;
+    for (let x = a + 70; x < b - 50; x += 210, i++) {
+      add(OAK[(i + y0) % 3], x, y0 + (y1 - y0) * 0.45 + (i % 2) * 18, 0.46, i % 2);
+      add('props/vegetation/azalea-bush', x + 100, y1 - 12, 0.8, i % 2);
+      if (i % 3 === 1) add('props/furniture/park-bench', x + 60, y0 + (y1 - y0) * 0.8, 0.8);
+    }
+    for (let x = a + 160; x < b - 60; x += 340) add('props/vegetation/azalea-bush', x, y0 + 30, 0.75, 1);
+  }
+  const gardenZone = (a, b, y0, y1) => ({ id: 'garden', w: Math.max(2, Math.round((b - a) / 300)), path: false, pt: (r) => [a + 30 + r() * (b - a - 60), y0 + 40 + r() * (y1 - y0 - 70)] });
+  const inGardenFence = (x, y, a, b, y1) => x > a && x < b && y > y1 - 14 && y < y1 + 2;
+  const sqWalk = (id, cx, cy, hw, hh, w = 12) => ({ id, w, path: true, pt: (r) => (r() < 0.5 ? [cx - hw + 30 + r() * (hw * 2 - 60), cy - 16 + r() * 32] : [cx - 16 + r() * 32, cy - hh + 30 + r() * (hh * 2 - 60)]) });
+  const sqLawn = (id, cx, cy, hw, hh, w = 6) => ({ id, w, path: false, pt: (r) => [cx - hw + 30 + r() * (hw * 2 - 60), cy - hh + 30 + r() * (hh * 2 - 60)] });
+  const walkH = (side, y0, y1, w = 8) => ({ id: 'wing-walk', w, path: true, pt: (r) => [x0(side) + 40 + r() * 2880, y0 + r() * (y1 - y0)] });
+  const walkNS = (side, y0, y1, w = 4) => ({ id: 'wing-ns', w, path: true, pt: (r) => { const xs = nsOf(side, y0), c = xs[Math.floor(r() * xs.length)]; return [c + (r() < 0.5 ? -78 : 62) + r() * 16, y0 + 40 + r() * (y1 - y0 - 80)]; } });
+  const onRoad = (side, x, y) => ROADS.some(([ry, h]) => y > ry - 4 && y < ry + h + 4) || (y > 1476 && nsOf(side, y).some((c) => Math.abs(x - c) < 60));
+  const part = (side, o) => Object.assign({ side, geography: () => [], stories: () => [], zones: [], spots: [], blocked: () => false, area: () => null }, o);
+
+  // ---------- river band ----------
+  const river = {
+    west: () => part('west', {
+      geography() {
+        const g = [], add = (asset, x, y, k = 1, flip = 0, extra = {}) => g.push(Object.assign({ asset, x, y, k, flip }, extra));
+        add('environments/riverfront/warehouse-row-west', 0, 1350, 1, 0, { layer: 'far' });
+        add('props/landmarks/plant-riverside-stacks', 460, 1350, 1);
+        add('props/river/talmadge-bridge', 1350, 250, 1, 0, { layer: 'far' });
+        add('props/river/container-ship', 600, 360, 1, 0, { drive: 11 });
+        for (let x = 120; x < 2960; x += 260) add('props/furniture/lamp-post', x, 452, 0.95);
+        for (const x of [1180, 1700, 2300]) add('props/furniture/park-bench', x, 470, 0.9);
+        for (let x = 80; x < 2960; x += 380) add('props/furniture/lamp-post', x, 1046, 0.9);
+        for (const [x, y] of [[180, 520], [930, 520], [180, 588], [930, 588]]) add('props/vegetation/palmetto', x, y, 0.7, x > 500 ? 1 : 0);
+        for (const [x, y] of [[420, 540], [600, 552], [760, 540]]) add('props/furniture/cafe-table', x, y, 0.9, 0, { tint: { umb: ['#2F5D50', '#C73E3A', '#E8C872'][x % 3], umb2: '#F5F0E6' } });
+        streetLife(add, 'west', 1400, 80, 'bay');
+        return g;
+      },
+      stories() {
+        const st = [], s = (story, asset, x, y, flip = 0, extra = {}) => st.push(Object.assign({ story, asset, x, y, flip }, extra));
+        // a saxophonist on the Plant Riverside terrace with listeners
+        s('plant-busker', C + 'saxophonist', 300, 560, 1); s('plant-busker', 'props/furniture/tip-hat', 250, 568, 0, { k: 0.9 });
+        for (const [x, f] of [[200, 0], [360, 1], [380, 1], [170, 0]]) s('plant-busker', [B + 'coffee', B + 'wave', B + 'dress', B + 'umbrella'][x % 4], x, 590 + (x % 3) * 6, f);
+        // children at the rail waving at the container ship
+        for (const [x, a] of [[1240, B + 'child'], [1280, B + 'wave'], [1320, B + 'child'], [1360, C + 'parent-stroller']]) s('ship-wave', a, x, 462, 0);
+        // a tourist photographing the bridge
+        s('bridge-photo', C + 'tourist-photographer', 1600, 470, 0); s('bridge-photo', B + 'phone', 1660, 476, 1);
+        return st;
+      },
+      zones: [
+        { id: 'riverwalk', w: 16, path: true, pt: (r) => [40 + r() * 2880, 470 + r() * 420] },
+        { id: 'river-street', w: 8, path: true, pt: (r) => [40 + r() * 2880, 906 + r() * 128] },
+        { id: 'factors-walk', w: 4, path: true, pt: (r) => [40 + r() * 2880, 1356 + r() * 40] },
+      ],
+      blocked: (x, y) => y < 456 || (y > 1040 && y < 1350) || (y > 1400 && y < 1480),
+      spots: [
+        { id: 'plant-terrace', x: 500, y: 540, r: 300, d: ['easy', 'normal'] },
+        { id: 'plant-busker', x: 280, y: 580, r: 70, d: ['hard'] },
+        { id: 'river-street-west', x: 1500, y: 970, r: 1300, d: ['easy', 'normal'] },
+        { id: 'ship-watchers', x: 1300, y: 470, r: 80, d: ['normal', 'hard'] },
+      ],
+      area: (x, y) => (y >= 1350 ? 'on Bay Street, at the west end' : y >= 900 ? 'on River Street, near Plant Riverside' : x < 1000 ? 'on the Plant Riverside terrace' : 'on the riverwalk, looking at the Talmadge Bridge'),
+    }),
+    east: () => part('east', {
+      geography() {
+        const g = [], add = (asset, x, y, k = 1, flip = 0, extra = {}) => g.push(Object.assign({ asset, x, y, k, flip }, extra));
+        add('environments/riverfront/warehouse-row-east', E, 1350, 1, 0, { layer: 'far' });
+        add('props/landmarks/old-harbor-light', E + 1750, 500, 0.95);
+        for (let x = E + 120; x < 9120; x += 260) if (x < E + 1480 || x > E + 2720) add('props/furniture/lamp-post', x, 452, 0.95);
+        for (let x = E + 80; x < 9120; x += 380) add('props/furniture/lamp-post', x, 1046, 0.9);
+        for (const x of [E + 1560, E + 2040, E + 2500]) add(OAK[x % 3], x, 470, 0.5, x % 2);
+        for (const x of [E + 1650, E + 1880, E + 2300]) add('props/furniture/park-bench', x, 520, 0.85);
+        add('props/river/tugboat', E + 900, 330, 0.9, 1);
+        streetLife(add, 'east', 1400, 80, 'bay');
+        return g;
+      },
+      stories() {
+        const st = [], s = (story, asset, x, y, flip = 0, extra = {}) => st.push(Object.assign({ story, asset, x, y, flip }, extra));
+        // a picnic in Emmet Park under the Old Harbor Light
+        s('emmet-picnic', 'props/food/picnic-blanket', E + 2150, 530, 0, { k: 1 });
+        for (const [dx, a, f] of [[-50, B + 'coffee', 0], [50, B + 'child', 1], [20, B + 'books', 1]]) s('emmet-picnic', a, E + 2150 + dx, 524, f);
+        // a praline cart on River Street with a queue
+        s('east-pralines', C + 'praline-vendor', E + 1200, 980); for (const [dx, a] of [[-60, B + 'child'], [-100, B + 'dress'], [-140, B + 'umbrella']]) s('east-pralines', a, E + 1200 + dx, 984, 0);
+        // a tour guide at the Cotton Exchange
+        s('cotton-tour', C + 'tour-guide', E + 760, 1390, 1); for (const [dx, a] of [[60, B + 'walk'], [90, C + 'tourist-photographer'], [120, B + 'dress']]) s('cotton-tour', a, E + 760 + dx, 1394, 1);
+        return st;
+      },
+      zones: [
+        { id: 'riverwalk', w: 16, path: true, pt: (r) => [E + 40 + r() * 2880, 470 + r() * 420] },
+        { id: 'river-street', w: 8, path: true, pt: (r) => [E + 40 + r() * 2880, 906 + r() * 128] },
+        { id: 'factors-walk', w: 4, path: true, pt: (r) => [E + 40 + r() * 2880, 1356 + r() * 40] },
+        { id: 'emmet-park', w: 6, path: false, pt: (r) => [E + 1520 + r() * 1160, 450 + r() * 100] },
+      ],
+      blocked: (x, y) => y < 456 || (y > 1040 && y < 1350) || (y > 1400 && y < 1480) || inRect(x, y, [E + 1730, 490, E + 1770, 506]),
+      spots: [
+        { id: 'emmet-park', x: E + 2000, y: 510, r: 450, d: ['normal', 'hard'] },
+        { id: 'harbor-light', x: E + 1750, y: 520, r: 90, d: ['easy'] },
+        { id: 'river-street-east', x: E + 1500, y: 970, r: 1300, d: ['easy', 'normal'] },
+        { id: 'cotton-tour', x: E + 820, y: 1392, r: 60, d: ['hard'] },
+      ],
+      area: (x, y) => (y >= 1350 ? 'on Bay Street, by the Cotton Exchange' : y >= 900 ? 'on River Street, at the east end' : x > E + 1450 && x < E + 2750 && y < 600 ? 'in Emmet Park, by the Old Harbor Light' : 'on the riverwalk, at the east end'),
+    }),
+  };
+
+  // ---------- market band ----------
+  const FRANKLIN = [1400, 2265, 520, 360], REYNOLDS = [E + 1540, 2265, 560, 360], WARREN = [E + 2600, 2265, 300, 300];
+  const WSTALLS = [[2300, 2060], [2520, 2060], [2740, 2060], [2400, 2560], [2700, 2560]];
+  const market = {
+    west: () => part('west', {
+      geography() {
+        const g = [], add = (asset, x, y, k = 1, flip = 0, extra = {}) => g.push(Object.assign({ asset, x, y, k, flip }, extra));
+        add('environments/market/market-row-west', 0, 1830, 1, 0, { layer: 'far' });
+        add('environments/wings/first-african-baptist', FRANKLIN[0], 2035, 0.9);
+        squareDress(add, FRANKLIN[0], FRANKLIN[1] + 60, FRANKLIN[2], FRANKLIN[3] - 60);
+        const kinds = ['peaches', 'flowers', 'honey'];
+        WSTALLS.forEach(([x, y], i) => add('props/market/stall-' + kinds[i % 3], x, y, 1.05, 0, { tint: { awn: ['#2F7FA8', '#E8457A', '#3E8E7E', '#E07A3F', '#7D5BA6'][i], awn2: '#F5F0E6', cloth: '#F5F0E6' } }));
+        for (const [x, y] of [[2350, 2320], [2560, 2340], [2780, 2320]]) add('props/furniture/cafe-table', x, y, 0.9, 0, { tint: { umb: ['#7D5BA6', '#2F5D50', '#C73E3A'][x % 3], umb2: '#F5F0E6' } });
+        for (const c of NS.west) avenue(add, c, 1480, 2700);
+        for (let x = 200; x < 2960; x += 420) add('props/furniture/lamp-post', x, 1850, 0.95);
+        streetLife(add, 'west', 2700, 80, 'congress');
+        return g;
+      },
+      stories() {
+        const st = [], s = (story, asset, x, y, flip = 0, extra = {}) => st.push(Object.assign({ story, asset, x, y, flip }, extra));
+        // a history tour outside First African Baptist Church
+        s('church-tour', C + 'historian', 1250, 2130); for (const [dx, a] of [[-60, B + 'walk'], [-90, B + 'books'], [-130, C + 'tourist-photographer'], [-40, B + 'child']]) s('church-tour', a, 1250 + dx, 2150 + (dx % 3) * 4, 0);
+        // kids chasing pigeons across Franklin Square
+        for (const [x, y, f] of [[1600, 2420, 0], [1650, 2440, 1], [1700, 2410, 0]]) s('pigeon-chase', 'props/animals/pigeon', x, y, f, { k: 0.9 });
+        s('pigeon-chase', B + 'child', 1540, 2430, 0); s('pigeon-chase', B + 'wave', 1490, 2420, 0);
+        for (const [i, [x, y]] of WSTALLS.entries()) s('west-vendors', [B + 'coffee', B + 'dress', B + 'walk'][i % 3], x + 20, y - 14, i % 2);
+        return st;
+      },
+      zones: [
+        sqWalk('franklin-paths', FRANKLIN[0], FRANKLIN[1] + 60, FRANKLIN[2], FRANKLIN[3] - 60), sqLawn('franklin-lawn', FRANKLIN[0], FRANKLIN[1] + 60, FRANKLIN[2], FRANKLIN[3] - 60),
+        { id: 'west-market', w: 16, path: false, pt: (r) => [2200 + r() * 740, 1880 + r() * 780] },
+        walkH('west', 1840, 1874), walkH('west', 2790, 2940), walkNS('west', 1480, 2700),
+      ],
+      blocked: (x, y) => y < 1836 || onRoad('west', x, y) || inRect(x, y, [FRANKLIN[0] - 170, 1960, FRANKLIN[0] + 170, 2045]) || WSTALLS.some(([sx, sy]) => inRect(x, y, [sx - 62, sy - 26, sx + 62, sy + 4])),
+      spots: [
+        { id: 'franklin-square', x: FRANKLIN[0], y: 2330, r: 420, d: ['easy', 'normal'] },
+        { id: 'church-tour', x: 1170, y: 2150, r: 70, d: ['hard'] },
+        { id: 'west-market', x: 2560, y: 2300, r: 300, d: ['normal', 'hard'] },
+      ],
+      area: (x, y) => (y < 1880 ? 'along the shops west of City Market' : y > 2690 ? 'on Congress Street, west side' : x > 2150 ? 'in the west end of City Market' : x > 860 && x < 1940 ? 'in Franklin Square, by First African Baptist Church' : 'on Montgomery Street'),
+    }),
+    east: () => part('east', {
+      geography() {
+        const g = [], add = (asset, x, y, k = 1, flip = 0, extra = {}) => g.push(Object.assign({ asset, x, y, k, flip }, extra));
+        add('environments/market/market-row-east', E, 1830, 1, 0, { layer: 'far' });
+        add('environments/wings/olde-pink-house', REYNOLDS[0], 2035, 0.95);
+        add('props/landmarks/wesley-statue', REYNOLDS[0], 2330, 0.95);
+        squareDress(add, REYNOLDS[0], REYNOLDS[1] + 60, REYNOLDS[2], REYNOLDS[3] - 60);
+        squareDress(add, WARREN[0], WARREN[1], WARREN[2], WARREN[3], { oak: 0.5, noAzaleas: true });
+        for (const c of NS.east) avenue(add, c, 1480, 2700);
+        for (let x = E + 200; x < 9120; x += 420) add('props/furniture/lamp-post', x, 1850, 0.95);
+        streetLife(add, 'east', 2700, 80, 'congress');
+        add('props/vehicles/carriage', E + 600, 2730, 0.95, 1, { drive: 22 });
+        return g;
+      },
+      stories() {
+        const st = [], s = (story, asset, x, y, flip = 0, extra = {}) => st.push(Object.assign({ story, asset, x, y, flip }, extra));
+        // a wedding photo on the Pink House steps
+        s('pink-wedding', C + 'bride', REYNOLDS[0] - 30, 2080); s('pink-wedding', C + 'groom', REYNOLDS[0] + 20, 2082, 1); s('pink-wedding', C + 'tourist-photographer', REYNOLDS[0] + 140, 2150, 1);
+        // a painter painting John Wesley, and a juggler in Warren Square with an audience
+        s('wesley-painter', C + 'painter', REYNOLDS[0] - 220, 2380); s('wesley-painter', 'props/furniture/easel-fountain-painting', REYNOLDS[0] - 168, 2382, 0, { k: 0.85 });
+        s('warren-juggler', C + 'juggler', WARREN[0], 2300); for (const [dx, a, f] of [[-60, B + 'child', 0], [60, B + 'child', 1], [-30, B + 'wave', 0], [90, B + 'coffee', 1]]) s('warren-juggler', a, WARREN[0] + dx, 2340 + (dx % 4), f);
+        return st;
+      },
+      zones: [
+        sqWalk('reynolds-paths', REYNOLDS[0], REYNOLDS[1] + 60, REYNOLDS[2], REYNOLDS[3] - 60), sqLawn('reynolds-lawn', REYNOLDS[0], REYNOLDS[1] + 60, REYNOLDS[2], REYNOLDS[3] - 60),
+        sqWalk('warren-paths', ...WARREN), walkH('east', 1840, 1874), walkH('east', 2790, 2940), walkNS('east', 1480, 2700),
+        { id: 'east-sidewalks', w: 6, path: false, pt: (r) => [E + 40 + r() * 600, 1900 + r() * 760] },
+      ],
+      blocked: (x, y) => y < 1836 || onRoad('east', x, y) || inRect(x, y, [REYNOLDS[0] - 200, 1960, REYNOLDS[0] + 200, 2045]) || ((x - REYNOLDS[0]) / 30) ** 2 + ((y - 2330) / 14) ** 2 < 1,
+      spots: [
+        { id: 'reynolds-square', x: REYNOLDS[0], y: 2330, r: 420, d: ['easy', 'normal'] },
+        { id: 'pink-wedding', x: REYNOLDS[0], y: 2100, r: 90, d: ['normal', 'hard'] },
+        { id: 'warren-juggler', x: WARREN[0], y: 2320, r: 80, d: ['hard'] },
+      ],
+      area: (x, y) => (y < 1880 ? 'along the shops on Bay Lane, east side' : y > 2690 ? 'on Congress Street, east side' : Math.abs(x - REYNOLDS[0]) < REYNOLDS[2] ? 'in Reynolds Square, by the Olde Pink House' : Math.abs(x - WARREN[0]) < WARREN[2] ? 'in Warren Square' : 'on Habersham Street'),
+    }),
+  };
+
+  // ---------- squares band ----------
+  const CHATHAM = [1400, 3655, 520, 325], CEM = [E + 960, 3330, E + 2120, 4000], TROUP = [E + 2620, 3655, 280, 280];
+  const TOMBS = [];
+  for (let i = 0; i < 26; i++) { const x = CEM[0] + 70 + ((i * 397) % 1020), y = CEM[1] + 60 + ((i * 211) % 560); if (Math.abs(x - (E + 1540)) > 40 && Math.abs(y - 3660) > 30) TOMBS.push([x, y, i % 3 === 0 ? 'props/landmarks/tomb-box' : 'props/landmarks/tomb-stones']); }
+  const squares = {
+    west: () => part('west', {
+      geography() {
+        const g = [], add = (asset, x, y, k = 1, flip = 0, extra = {}) => g.push(Object.assign({ asset, x, y, k, flip }, extra));
+        add('environments/squares/row-houses-west', 0, 3220, 1, 0, { layer: 'far' });
+        squareDress(add, ...CHATHAM);
+        for (const [dx, dy] of [[-80, -30], [80, -30], [-80, 40], [80, 40]]) add('props/vegetation/azalea-bush', CHATHAM[0] + dx, CHATHAM[1] + dy, 0.8, dx > 0 ? 1 : 0);
+        garden(add, 60, 560, 3340, 3980); garden(add, 2240, 2900, 3340, 3980);
+        for (const c of NS.west) { avenue(add, c, 2780, 3220); avenue(add, c, 3290, 4040); avenue(add, c, 4110, 4560); }
+        streetLife(add, 'west', 3220, 70, 'harris'); streetLife(add, 'west', 4040, 70, 'charlton');
+        return g;
+      },
+      stories() {
+        const st = [], s = (story, asset, x, y, flip = 0, extra = {}) => st.push(Object.assign({ story, asset, x, y, flip }, extra));
+        s('chatham-chess', C + 'chess-players', CHATHAM[0] + 200, 3760); s('chatham-chess', B + 'cane', CHATHAM[0] + 260, 3732, 1); s('chatham-chess', B + 'books', CHATHAM[0] + 140, 3740, 0);
+        s('chatham-dog', C + 'dog-walker', CHATHAM[0] - 260, 3600, 0, { id: 'chwalker' }); s('chatham-dog', 'props/animals/dog-dachshund', CHATHAM[0] - 176, 3606, 0, { k: 0.9, leash: 'chwalker' });
+        s('garden-work', C + 'gardener', 300, 3700); s('garden-work', C + 'maintenance-worker', 2600, 3760, 1);
+        return st;
+      },
+      zones: [sqWalk('chatham-paths', ...CHATHAM), sqLawn('chatham-lawn', ...CHATHAM), walkH('west', 3300, 3330, 6), walkH('west', 4120, 4290, 8), walkNS('west', 2780, 4560), gardenZone(60, 560, 3340, 3980), gardenZone(2240, 2900, 3340, 3980)],
+      blocked: (x, y) => y < 3296 || onRoad('west', x, y) || ((x - CHATHAM[0]) / 110) ** 2 + ((y - CHATHAM[1]) / 50) ** 2 < 1 || inGardenFence(x, y, 60, 560, 3980) || inGardenFence(x, y, 2240, 2900, 3980),
+      spots: [
+        { id: 'chatham-square', x: CHATHAM[0], y: CHATHAM[1], r: 420, d: ['easy', 'normal'] },
+        { id: 'chatham-chess', x: CHATHAM[0] + 200, y: 3750, r: 60, d: ['hard'] },
+        { id: 'charlton-west', x: 1500, y: 4200, r: 1300, d: ['easy'] },
+      ],
+      area: (x, y) => (y < 3300 ? 'on Harris Street, west side' : y > 4030 ? 'on Charlton Street, west side' : Math.abs(x - CHATHAM[0]) < CHATHAM[2] ? 'in Chatham Square' : 'by the gardens on Harris Street'),
+    }),
+    east: () => part('east', {
+      geography() {
+        const g = [], add = (asset, x, y, k = 1, flip = 0, extra = {}) => g.push(Object.assign({ asset, x, y, k, flip }, extra));
+        add('environments/squares/row-houses-east', E, 3220, 1, 0, { layer: 'far' });
+        add('environments/wings/cemetery-gate', E + 1540, 4002, 0.9);
+        for (const [x, y, a] of TOMBS) add(a, x, y, 0.8, x % 2);
+        for (const [x, y] of [[CEM[0] + 120, 3420], [CEM[2] - 120, 3430], [CEM[0] + 200, 3900], [CEM[2] - 200, 3880], [E + 1300, 3520], [E + 1800, 3820]]) add('props/vegetation/live-oak-tall', x, y, 0.62, x % 2);
+        squareDress(add, ...TROUP, { oak: 0.5, noAzaleas: true });
+        garden(add, E + 60, E + 690, 3340, 3980);
+        add('props/landmarks/armillary-sphere', TROUP[0], TROUP[1] + 20, 0.9);
+        for (const c of NS.east) { avenue(add, c, 2780, 3220); avenue(add, c, 3290, 4040); avenue(add, c, 4110, 4560); }
+        streetLife(add, 'east', 3220, 70, 'harris'); streetLife(add, 'east', 4040, 70, 'charlton');
+        return g;
+      },
+      stories() {
+        const st = [], s = (story, asset, x, y, flip = 0, extra = {}) => st.push(Object.assign({ story, asset, x, y, flip }, extra));
+        // a ghost tour gathering at the cemetery gate
+        s('ghost-tour', C + 'historian', E + 1460, 4060); for (const [dx, a] of [[-50, B + 'umbrella'], [-90, B + 'books'], [-130, B + 'child'], [-170, C + 'tourist-photographer']]) s('ghost-tour', a, E + 1460 + dx, 4070 + (dx % 3) * 4, 0);
+        // a student sketching a tomb, and dogs at Troup Square
+        s('tomb-sketch', C + 'scad-student-portfolio', E + 1200, 3600, 1);
+        s('troup-dogs', C + 'dog-walker', TROUP[0] - 120, TROUP[1] + 90, 0, { id: 'trwalker' }); s('troup-dogs', 'props/animals/dog-dachshund', TROUP[0] - 36, TROUP[1] + 96, 0, { k: 0.9, leash: 'trwalker' });
+        s('troup-dogs', 'props/animals/dog-sandwich-thief', TROUP[0] + 90, TROUP[1] + 110, 1, { k: 0.9 });
+        return st;
+      },
+      zones: [
+        { id: 'cemetery-paths', w: 10, path: true, pt: (r) => (r() < 0.5 ? [E + 1520 + r() * 40, 3340 + r() * 650] : [CEM[0] + 20 + r() * 1120, 3646 + r() * 28]) },
+        sqWalk('troup-paths', ...TROUP), walkH('east', 3300, 3330, 6), walkH('east', 4120, 4290, 8), walkNS('east', 2780, 4560), gardenZone(E + 60, E + 690, 3340, 3980),
+      ],
+      blocked: (x, y) => y < 3296 || onRoad('east', x, y) || inGardenFence(x, y, E + 60, E + 690, 3980) || inRect(x, y, [E + 1380, 3960, E + 1700, 4004]) || TOMBS.some(([tx, ty]) => inRect(x, y, [tx - 50, ty - 16, tx + 50, ty + 4])) || ((x - TROUP[0]) / 40) ** 2 + ((y - TROUP[1] - 20) / 18) ** 2 < 1,
+      spots: [
+        { id: 'colonial-park', x: E + 1540, y: 3660, r: 520, d: ['normal', 'hard'] },
+        { id: 'ghost-tour', x: E + 1380, y: 4070, r: 80, d: ['hard'] },
+        { id: 'troup-square', x: TROUP[0], y: TROUP[1], r: 220, d: ['easy', 'normal'] },
+      ],
+      area: (x, y) => (y < 3300 ? 'on Harris Street, east side' : y > 4030 ? 'on Charlton Street, by the cemetery gate' : x >= CEM[0] && x <= CEM[2] ? 'in Colonial Park Cemetery' : Math.abs(x - TROUP[0]) < TROUP[2] ? 'in Troup Square, by the armillary sphere' : 'by the gardens on Harris Street'),
+    }),
+  };
+
+  // ---------- Jones Street band ----------
+  const CALHOUN = [E + 1540, 4910, 450, 170], WHITEFIELD = [E + 2620, 4910, 300, 170];
+  const jones = {
+    west: () => part('west', {
+      geography() {
+        const g = [], add = (asset, x, y, k = 1, flip = 0, extra = {}) => g.push(Object.assign({ asset, x, y, k, flip }, extra));
+        add('environments/monterey/jones-row-west', 0, 4560, 1, 0, { layer: 'far' });
+        for (const [a, b] of [[60, 610], [790, 2010], [2190, 2900]]) garden(add, a, b, 4690, 4990);
+        for (const c of NS.west) avenue(add, c, 4640, 5200);
+        streetLife(add, 'west', 4560, 80, 'jones');
+        add('props/street/bike-rack', 1140, 5180, 0.9);
+        return g;
+      },
+      stories() {
+        const st = [], s = (story, asset, x, y, flip = 0, extra = {}) => st.push(Object.assign({ story, asset, x, y, flip }, extra));
+        // a lemonade stand by the pocket playground, with a queue
+        s('lemonade', 'props/street/lemonade-stand', 1700, 5110); s('lemonade', B + 'child', 1680, 5120, 1); s('lemonade', B + 'child', 1730, 5124, 0);
+        for (const [dx, a] of [[100, B + 'walk'], [140, B + 'coffee'], [180, C + 'jogger']]) s('lemonade', a, 1700 + dx, 5132, 1);
+        // kids playing in the playground sand
+        for (const [x, y, f] of [[1260, 5090, 0], [1330, 5120, 1], [1420, 5100, 0], [1500, 5140, 1]]) s('playground', B + 'child', x, y, f);
+        s('playground', C + 'child-bubbles', 1380, 5160);
+        return st;
+      },
+      zones: [walkH('west', 4646, 4676, 10), walkH('west', 5000, 5190, 8), walkNS('west', 4640, 5200), { id: 'pocket-playground', w: 4, path: false, pt: (r) => [1190 + r() * 400, 5050 + r() * 120] }, gardenZone(60, 610, 4690, 4990), gardenZone(790, 2010, 4690, 4990), gardenZone(2190, 2900, 4690, 4990)],
+      blocked: (x, y) => y < 4644 || onRoad('west', x, y) || [[60, 610], [790, 2010], [2190, 2900]].some(([a, b]) => inGardenFence(x, y, a, b, 4990)),
+      spots: [
+        { id: 'lemonade', x: 1760, y: 5120, r: 120, d: ['normal', 'hard'] },
+        { id: 'jones-west', x: 1500, y: 4660, r: 1300, d: ['easy', 'normal'] },
+        { id: 'playground', x: 1380, y: 5110, r: 150, d: ['easy'] },
+      ],
+      area: (x, y) => (y < 4700 ? 'on Jones Street, west side' : x > 1150 && x < 1850 && y > 5030 ? 'by the lemonade stand and the playground' : 'by the front gardens on Jones Street'),
+    }),
+    east: () => part('east', {
+      geography() {
+        const g = [], add = (asset, x, y, k = 1, flip = 0, extra = {}) => g.push(Object.assign({ asset, x, y, k, flip }, extra));
+        add('environments/monterey/jones-row-east', E, 4560, 1, 0, { layer: 'far' });
+        add('environments/wings/wesley-monumental', E + 380, 4985, 0.85);
+        squareDress(add, ...CALHOUN, { oak: 0.55 });
+        squareDress(add, ...WHITEFIELD, { oak: 0.5, noAzaleas: true });
+        add('environments/wings/gazebo', WHITEFIELD[0], WHITEFIELD[1] + 40, 0.9);
+        for (const c of NS.east) avenue(add, c, 4640, 5200);
+        streetLife(add, 'east', 4560, 80, 'jones');
+        return g;
+      },
+      stories() {
+        const st = [], s = (story, asset, x, y, flip = 0, extra = {}) => st.push(Object.assign({ story, asset, x, y, flip }, extra));
+        // a wedding in the Whitefield Square gazebo
+        s('gazebo-wedding', C + 'bride', WHITEFIELD[0] - 24, 4940); s('gazebo-wedding', C + 'groom', WHITEFIELD[0] + 24, 4942, 1);
+        for (const [dx, a, f] of [[-120, B + 'dress', 0], [-90, B + 'wave', 0], [110, B + 'coffee', 1], [140, C + 'tourist-photographer', 1]]) s('gazebo-wedding', a, WHITEFIELD[0] + dx, 4990, f);
+        // a saxophonist on Calhoun Square and a reader on a bench
+        s('calhoun-music', C + 'saxophonist', CALHOUN[0] + 80, 4930, 1); s('calhoun-music', 'props/furniture/tip-hat', CALHOUN[0] + 30, 4938, 0, { k: 0.9 });
+        s('calhoun-reader', C + 'reader-seated', CALHOUN[0] - 200, 4855);
+        return st;
+      },
+      zones: [walkH('east', 4646, 4676, 10), walkH('east', 5000, 5190, 8), walkNS('east', 4640, 5200), sqWalk('calhoun-paths', ...CALHOUN), sqWalk('whitefield-paths', ...WHITEFIELD, 6)],
+      blocked: (x, y) => y < 4644 || onRoad('east', x, y) || inRect(x, y, [E + 60, 4690, E + 700, 4990]) || inRect(x, y, [WHITEFIELD[0] - 110, 4900, WHITEFIELD[0] + 110, 4950]),
+      spots: [
+        { id: 'calhoun-square', x: CALHOUN[0], y: CALHOUN[1], r: 380, d: ['easy', 'normal'] },
+        { id: 'gazebo-wedding', x: WHITEFIELD[0], y: 4980, r: 120, d: ['normal', 'hard'] },
+        { id: 'jones-east', x: E + 1500, y: 4660, r: 1300, d: ['easy'] },
+      ],
+      area: (x, y) => (y < 4700 ? 'on Jones Street, east side' : Math.abs(x - CALHOUN[0]) < CALHOUN[2] + 40 ? 'in Calhoun Square' : Math.abs(x - WHITEFIELD[0]) < WHITEFIELD[2] + 40 ? 'in Whitefield Square, by the gazebo' : 'by Wesley Monumental Church'),
+    }),
+  };
+
+  // ---------- Forsyth band: the Victorian District ----------
+  const VSTREETS = [[5470, 72, 0], [6200, 70, 1], [6900, 70, 2], [7520, 70, 3]];
+  function victorian(side) {
+    const a = x0(side), segs = side === 'west' ? [[40, 600], [800, 2000], [2200, 2830]] : [[150, 760], [940, 2150], [2340, 2920]];
+    return part(side, {
+      geography() {
+        const g = [], add = (asset, x, y, k = 1, flip = 0, extra = {}) => g.push(Object.assign({ asset, x, y, k, flip }, extra));
+        for (const [y, h, i] of VSTREETS) {
+          const row = i < 3 ? `environments/victorian/row-${side}-${i}` : `environments/victorian/row-${side === 'west' ? 'east' : 'west'}-0`;
+          add(row, i < 3 ? a : a + 2960, y, 1, i < 3 ? 0 : 1, { layer: 'far' });
+          streetLife(add, side, y, h, ['gaston', 'hall', 'parkave', null][i]);
+        }
+        for (const y0 of [5542, 6270, 6970]) for (const [s0, s1] of segs) garden(add, a + s0, a + s1, y0 + 20, y0 + 300);
+        for (const c of nsOf(side, 5300)) { avenue(add, c, 5542, 6200); avenue(add, c, 6270, 6900); avenue(add, c, 6970, 7520); }
+        return g;
+      },
+      stories() {
+        const st = [], s = (story, asset, x, y, flip = 0, extra = {}) => st.push(Object.assign({ story, asset, x, y, flip }, extra));
+        if (side === 'west') {
+          // a painter painting a pink Victorian; kids on bikes; a gardener at the azaleas
+          s('house-painter', C + 'painter', 1100, 5900, 1); s('house-painter', 'props/furniture/easel-fountain-painting', 1040, 5902, 1, { k: 0.85 });
+          s('bike-kids', C + 'cyclist', 1500, 6250, 0); s('bike-kids', C + 'cyclist', 1600, 6240, 0); s('bike-kids', B + 'wave', 1760, 6300, 1);
+          s('azalea-garden', C + 'gardener', 2400, 6620); s('porch-wave', B + 'wave', 400, 7030, 0);
+        } else {
+          // a second lemonade stand with a dog in the queue; a jogger and a stroller; a mail-day chat
+          s('lemonade-east', 'props/street/lemonade-stand', E + 1200, 6620); s('lemonade-east', B + 'child', E + 1180, 6632, 1); s('lemonade-east', 'props/animals/dog-dachshund', E + 1300, 6640, 1, { k: 0.9 });
+          s('neighbours', B + 'coffee', E + 2500, 5950, 0); s('neighbours', B + 'books', E + 2550, 5952, 1); s('neighbours', B + 'umbrella', E + 2600, 5960, 1);
+          s('stroll', C + 'parent-stroller', E + 600, 7300, 0);
+        }
+        return st;
+      },
+      zones: [
+        walkH(side, 5548, 5580, 10), walkH(side, 6276, 6300, 8), walkH(side, 6976, 7000, 8), walkH(side, 7596, 7598, 2),
+        walkH(side, 5880, 6190, 6), walkH(side, 6610, 6890, 6), walkH(side, 7310, 7510, 6), walkNS(side, 5542, 7520),
+        ...[5542, 6270, 6970].flatMap((y0) => segs.map(([s0, s1]) => gardenZone(a + s0, a + s1, y0 + 20, y0 + 300))),
+      ],
+      blocked: (x, y) => y < 5546 || onRoad(side, x, y) || [5542, 6270, 6970].some((y0) => segs.some(([s0, s1]) => inGardenFence(x, y, a + s0, a + s1, y0 + 300))),
+      spots: side === 'west'
+        ? [{ id: 'victorian-west', x: 1500, y: 6600, r: 1300, d: ['easy', 'normal'] }, { id: 'bike-kids', x: 1600, y: 6260, r: 120, d: ['hard', 'normal'] }, { id: 'whitaker-street', x: 2905, y: 6400, r: 400, d: ['easy'] }]
+        : [{ id: 'victorian-east', x: E + 1500, y: 6600, r: 1300, d: ['easy', 'normal'] }, { id: 'lemonade-east', x: E + 1260, y: 6630, r: 100, d: ['hard', 'normal'] }, { id: 'drayton-street', x: E + 75, y: 6400, r: 400, d: ['easy'] }],
+      area: (x, y) => (y < 5546 ? 'on Gaston Street, ' + (side === 'west' ? 'west' : 'east') + ' of Forsyth Park' : (side === 'west' && x > 2780) || (side === 'east' && x < E + 200) ? 'on ' + (side === 'west' ? 'Whitaker' : 'Drayton') + ' Street, beside Forsyth Park' : 'in the Victorian District, ' + (side === 'west' ? 'west' : 'east') + ' of Forsyth Park'),
     });
   }
-  WS.scenes = Object.assign(WS.scenes || {}, { savannah: { build } });
+  const forsyth = { west: () => victorian('west'), east: () => victorian('east') };
+
+  WS.wings = { riverfront: river, market, squares, monterey: jones, forsyth, E, NS };
+})();
+
+/* ---- src/scenes/savannah.js ---- */
+/* The whole city in one world (Agent 2): 9120 x 7600. North to south it runs from the river down Bull Street
+   to Forsyth Park; west to east it spans from the Talmadge Bridge and Plant Riverside to Emmet Park and the
+   Victorian District. The original 3200-wide city (River Street, City Market and Johnson Square, Pulaski and
+   Lafayette Squares, Jones Street and Monterey Square, Forsyth Park) sits in the middle at x 2960-6160, with
+   Bull Street at x 4560; src/scenes/wings.js adds the west and east wings to every band. The target can be
+   anywhere. The ground is three seamless chunks so no single image is too large for a phone. */
+(function () {
+  const WS = (window.WS = window.WS || {});
+  const OFF = 2960, CORE = 3200, W = 9120, H = 7600;
+  // A district written in core coordinates (x 0-3200), moved east by OFF.
+  function shift(d) {
+    const sx = (o) => Object.assign({}, o, { x: o.x + OFF });
+    return Object.assign({}, d, {
+      geography: () => d.geography().map(sx), stories: () => d.stories().map(sx),
+      zones: d.zones.map((z) => Object.assign({}, z, { pt: (r) => { const [x, y] = z.pt(r); return [x + OFF, y]; } })),
+      blocked: (x, y) => d.blocked(x - OFF, y), spots: d.spots.map(sx), area: (x, y) => d.area(x - OFF, y),
+      fountain: d.fountain ? sx(d.fountain) : undefined, fountains: d.fountains ? d.fountains.map(sx) : undefined,
+    });
+  }
+  // One band across the whole width: the west wing, the shifted core and the east wing.
+  function band(core, wing) {
+    const c = shift(core), w = wing.west(), e = wing.east();
+    const pick = (x) => (x < OFF ? w : x >= OFF + CORE ? e : c);
+    return Object.assign({}, c, {
+      geography: () => [...w.geography(), ...c.geography(), ...e.geography()],
+      stories: () => [...w.stories(), ...c.stories(), ...e.stories()],
+      zones: [...c.zones, ...w.zones, ...e.zones], spots: [...c.spots, ...w.spots, ...e.spots],
+      blocked: (x, y) => x < 6 || x > W - 6 || pick(x).blocked(x, y),
+      area: (x, y) => (y < c.y0 || y >= c.y0 + c.h ? null : pick(x).area(x, y)),
+    });
+  }
+  function build(identity) {
+    const D = WS.districts, X = WS.wings;
+    return WS.buildScene(identity, {
+      id: 'savannah', name: 'Savannah', w: W, h: H, ground: 'environments/savannah/ground',
+      grounds: [
+        { asset: 'environments/savannah/ground-west', x: 0, y: 0, w: OFF, h: H },
+        { asset: 'environments/savannah/ground', x: OFF, y: 0, w: CORE, h: H },
+        { asset: 'environments/savannah/ground-east', x: OFF + CORE, y: 0, w: W - OFF - CORE, h: H },
+      ],
+      districts: [band(D.riverfront(), X.riverfront), band(D.market(), X.market), band(D.squares(), X.squares), band(D.monterey(), X.monterey), band(D.forsyth(5200), X.forsyth)],
+      budget: { low: 900, standard: 1800, dense: 3000 },
+      // The camera opens on the Forsyth fountain plaza: the busiest, most finished view in the city.
+      home: { x: OFF + 1600, y: 5200 + 830, zoom: 1.3 },
+    });
+  }
+  WS.scenes = Object.assign(WS.scenes || {}, { savannah: { build, OFF } });
 })();
 
 /* ---- src/engine/sprites.js ---- */
@@ -1066,8 +1516,8 @@
     // Crowd people travel: along walks and streets (lanes), up and down the long paths, or wandering with
     // pauses on lawns and plazas. Story characters stay at their story; the target paces a few steps
     // around his validated hiding spot. Dogs on leads follow their walkers.
-    const H_LANES = new Set(['north-walk', 'cross-walk', 'south-walk', 'riverwalk', 'river-street', 'factors-walk', 'market-front', 'congress-walk', 'square-sidewalks']);
-    const V_LANES = new Set(['promenade', 'side-walks', 'between-squares', 'bull-walk']);
+    const H_LANES = new Set(['wing-walk', 'north-walk', 'cross-walk', 'south-walk', 'riverwalk', 'river-street', 'factors-walk', 'market-front', 'congress-walk', 'square-sidewalks']);
+    const V_LANES = new Set(['wing-ns', 'promenade', 'side-walks', 'between-squares', 'bull-walk']);
     const SPEED = (a) => /cyclist/.test(a) ? 85 : /jogger/.test(a) ? 55 : /child|cane/.test(a) ? 14 : /stroller/.test(a) ? 16 : 22;
     function assignTravel(e, h) {
       e.travel = null;
@@ -1170,7 +1620,10 @@
     }
 
     // ---------- loading ----------
-    const ground = { img: null, base: null, tiles: new Map() };
+    // The ground can be one image or several seamless chunks ({ asset, x, y, w, h } in world units), so a
+    // wide city never needs one giant image. `base` is a low-resolution copy of the whole ground, kept under
+    // about 12 megapixels so phones (Safari caps a canvas near 16.7 MP) can hold it.
+    const ground = { chunks: [], base: null, baseScale: 0.5, tiles: new Map() };
     async function load(progress) {
       for (const e of world.entities) {
         e.sprite = e.sprite0 = S().forEntity(e);
@@ -1179,14 +1632,15 @@
       }
       const sprites = [...new Set(world.entities.flatMap((e) => (e.sprite1 ? [e.sprite0, e.sprite1] : [e.sprite0])))];
       let done = 0;
-      const gsvg = window.WS_ASSETS.svg[world.ground];
-      ground.img = new Image();
-      ground.img.src = URL.createObjectURL(new Blob([gsvg], { type: 'image/svg+xml' }));
-      const jobs = [ground.img.decode()].concat(sprites.map((s) => S().decode(s).then(() => { S().buildMask(s); progress && progress(++done / sprites.length); })));
+      const defs = world.grounds || [{ asset: world.ground, x: 0, y: 0, w: world.w, h: world.h }];
+      ground.chunks = defs.map((d) => { const img = new Image(); img.src = URL.createObjectURL(new Blob([window.WS_ASSETS.svg[d.asset]], { type: 'image/svg+xml' })); return Object.assign({ img }, d); });
+      const jobs = ground.chunks.map((c) => c.img.decode()).concat(sprites.map((s) => S().decode(s).then(() => { S().buildMask(s); progress && progress(++done / sprites.length); })));
       await Promise.all(jobs);
+      ground.baseScale = Math.min(0.5, Math.sqrt(12e6 / (world.w * world.h)));
       ground.base = document.createElement('canvas');
-      ground.base.width = world.w * 0.5; ground.base.height = world.h * 0.5;
-      ground.base.getContext('2d').drawImage(ground.img, 0, 0, ground.base.width, ground.base.height);
+      ground.base.width = Math.round(world.w * ground.baseScale); ground.base.height = Math.round(world.h * ground.baseScale);
+      const bctx = ground.base.getContext('2d');
+      for (const c of ground.chunks) bctx.drawImage(c.img, c.x * ground.baseScale, c.y * ground.baseScale, c.w * ground.baseScale, c.h * ground.baseScale);
       for (const e of world.entities) { e.rect = rectOf(e); e.pickable = e.layer === 'world' || e.layer === 'ground'; }
       assignMotion();
       for (const e of world.entities) if (e.leash) e.leashTo = world.entities.find((p) => p.id === e.leash);
@@ -1273,14 +1727,20 @@
       const c = document.createElement('canvas');
       const T = GROUND_TILE, px = Math.ceil(T * tier);
       c.width = px; c.height = px;
-      c.getContext('2d').drawImage(ground.img, tx * T, ty * T, T, T, 0, 0, px, px);
+      const cx = c.getContext('2d'), k = px / T;
+      // copy the part of every chunk that overlaps this tile (tiles may straddle a chunk seam)
+      for (const g of ground.chunks) {
+        const x0 = Math.max(tx * T, g.x), y0 = Math.max(ty * T, g.y), x1 = Math.min((tx + 1) * T, g.x + g.w), y1 = Math.min((ty + 1) * T, g.y + g.h);
+        if (x1 <= x0 || y1 <= y0) continue;
+        cx.drawImage(g.img, x0 - g.x, y0 - g.y, x1 - x0, y1 - y0, (x0 - tx * T) * k, (y0 - ty * T) * k, (x1 - x0) * k, (y1 - y0) * k);
+      }
       ground.tiles.set(tx + ',' + ty + '@' + tier, c);
       if (ground.tiles.size > 260) { const first = ground.tiles.keys().next().value; ground.tiles.delete(first); }
     }
     function drawGround(view) {
       const need = scale() * dpr;
       ctx.drawImage(ground.base, 0, 0, world.w, world.h);
-      if (need <= 0.55) return;
+      if (need <= ground.baseScale * 1.1) return;
       const tier = GROUND_TIERS.find((t) => t >= need) || GROUND_TIERS[GROUND_TIERS.length - 1];
       const T = GROUND_TILE;
       for (let ty = Math.max(0, Math.floor(view[1] / T)); ty * T < Math.min(world.h, view[3]); ty++)
@@ -1413,6 +1873,8 @@
       const visibleShare = all ? allVis / all : 0, headShare = head ? headVis / head : 0;
       return { ok: headShare >= 0.6 && visibleShare >= 0.5, visibleShare, headShare, samples: all };
     }
+    // The target paces around wherever he is finally placed, not where the first candidate put him.
+    function settle(t) { t.hx = t.x; t.hy = t.y; if (t.travel) { t.travel.tx = t.x; t.travel.ty = t.y; } }
     // Walk the seeded candidates until one passes; difficulty decides how much may be hidden.
     function placeTarget() {
       const t = world.target, diff = world.identity.difficulty;
@@ -1439,13 +1901,13 @@
         const co = company(c);
         if (!fallback) fallback = { c, v };
         const inBand = v.visibleShare >= want[0] && v.visibleShare < want[1];
-        if (inBand && co.crowd >= need.crowd && co.decoys >= need.decoys) return Object.assign({ tries, spot: c.spot }, co, v);
+        if (inBand && co.crowd >= need.crowd && co.decoys >= need.decoys) { settle(t); return Object.assign({ tries, spot: c.spot }, co, v); }
         const score = (inBand ? 2 : 0) + Math.min(1, co.crowd / Math.max(1, need.crowd)) + Math.min(1, co.decoys / Math.max(1, need.decoys));
         if (!best || score > best.score) best = { c, v, score };
       }
       if (!fallback) throw new Error('no valid hiding spot for this seed');
       const { c } = best || fallback;
-      t.x = c.x; t.y = c.y; t.flip = c.flip; t.spot = c.spot; t.rect = rectOf(t); sortList();
+      t.x = c.x; t.y = c.y; t.flip = c.flip; t.spot = c.spot; t.rect = rectOf(t); sortList(); settle(t);
       return Object.assign({ tries, spot: c.spot, relaxed: true }, company(c), validateTarget(t));
     }
 
@@ -1708,7 +2170,10 @@
     'props/landmarks/city-hall-dome': 'City Hall\'s gold dome', 'props/landmarks/waving-girl': 'the Waving Girl statue', 'environments/monterey/temple': 'the temple',
     'environments/monterey/mercer-house': 'Mercer House', 'props/festival/tent': 'the festival tents', 'props/market/stall-peaches': 'the market stalls',
     'props/furniture/cafe-table': 'the café tables', 'props/river/riverboat': 'the riverboat', 'props/vehicles/trolley': 'a trolley', 'props/street/bus-stop': 'the bus stop',
-    'props/furniture/park-bench': 'a park bench', 'props/vegetation/live-oak': 'a big oak tree', 'props/vegetation/live-oak-tall': 'a big oak tree',
+    'props/furniture/park-bench': 'a park bench', 'props/river/talmadge-bridge': 'the Talmadge Bridge', 'props/landmarks/plant-riverside-stacks': 'Plant Riverside\'s smokestacks',
+    'props/landmarks/old-harbor-light': 'the Old Harbor Light', 'environments/wings/first-african-baptist': 'First African Baptist Church', 'environments/wings/olde-pink-house': 'the Olde Pink House',
+    'props/landmarks/wesley-statue': 'John Wesley\'s statue', 'environments/wings/cemetery-gate': 'the cemetery gate', 'props/landmarks/armillary-sphere': 'the armillary sphere',
+    'environments/wings/gazebo': 'the gazebo', 'environments/wings/wesley-monumental': 'Wesley Monumental Church', 'props/street/lemonade-stand': 'the lemonade stand', 'props/river/container-ship': 'the container ship', 'props/vegetation/live-oak': 'a big oak tree', 'props/vegetation/live-oak-tall': 'a big oak tree',
   };
 
   async function main() {
@@ -1800,7 +2265,9 @@
       if (round.hints === 0) {
         round.hints = 1;
         toast('Hint: he is ' + world.area(t.x, t.y) + '.', 3200);
-        if (district && !(engine.camera.y >= district.y0 && engine.camera.y < district.y0 + district.h)) engine.camera.centerOn(engine.camera.x, district.y0 + district.h / 2);
+        // glide toward his part of the city: his band, and his third of the width
+        const third = Math.floor(t.x / (world.w / 3)), cx = (third + 0.5) * world.w / 3;
+        if (district) engine.camera.centerOn(cx, district.y0 + district.h / 2);
       } else if (round.hints === 1) {
         round.hints = 2;
         // the nearest named landmark that is not right on top of him

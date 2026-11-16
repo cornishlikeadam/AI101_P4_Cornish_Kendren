@@ -311,3 +311,80 @@ for a, b in ((0, 1515), (1685, 3200)):
         body += rowhouse(x, wdt); x += wdt
 w('environments/squares/row-houses', '0 -110 3200 400', '0 290', body, 'data-layer="far"')
 print('square row houses written')
+
+# ---------- 2026-11-16: the west and east wings (each 2960 wide) ----------
+# The city is 9120 wide; the original 3200 sits in the middle. Wing rows leave gaps where the north-south
+# streets cross: west wing (local x) Montgomery 700 and Jefferson 2100; east wing Habersham 840 and Price 2240.
+WING = 2960
+GAPS = {'west': [(615, 785), (2015, 2185)], 'east': [(755, 925), (2155, 2325)]}
+def segments(side):
+    out, a = [], 0
+    for g0, g1 in GAPS[side]: out.append((a, g0)); a = g1
+    out.append((a, WING)); return out
+def plant_riverside(x, wdt=520):
+    # the 1912 power station at the west end of River Street, now Plant Riverside: brick hall, tall arched windows
+    B = '#9A4532'; s = f'<rect x="{x}" y="20" width="{wdt}" height="310" fill="{B}" {O}/>'
+    s += ''.join(f'<path d="M{x+2},{yy} H{x+wdt-2}" stroke="{INK}" stroke-opacity=".12" stroke-width=".8"/>' for yy in range(30, 300, 9))
+    s += f'<rect x="{x-6}" y="10" width="{wdt+12}" height="16" fill="#D8CBB0" {O}/>'
+    for i in range(5):
+        wx = x + 30 + i * (wdt - 60) / 4 - 26
+        s += f'<path d="M{f(wx)},230 V80 A26,26 0 0,1 {f(wx+52)},80 V230 Z" fill="#3D5468" {O}/><path d="M{f(wx+26)},56 V230 M{f(wx)},140 H{f(wx+52)} M{f(wx)},190 H{f(wx+52)}" stroke="#E8E2D2" stroke-width="1.6"/>'
+    s += f'<rect x="{x+wdt*0.3}" y="244" width="{wdt*0.4}" height="22" rx="3" fill="#2B3A44" {O}/><text x="{f(x+wdt/2)}" y="260" text-anchor="middle" font-family="Georgia, serif" font-weight="700" font-size="13" letter-spacing="2" fill="#F2D55C">PLANT RIVERSIDE</text>'
+    s += f'<rect x="{x}" y="270" width="{wdt}" height="60" fill="#A9A294" {O}/>' + ''.join(f'<path d="M{f(x+40+k*90)},330 V300 A20,20 0 0,1 {f(x+80+k*90)},300 V330 Z" fill="{INK}" opacity=".85"/>' for k in range(int((wdt-60)/90)))
+    return s
+def cotton_exchange(x, wdt=300):
+    # the Savannah Cotton Exchange (1887) on Bay Street: red brick and terracotta, a corner tower
+    B, T = '#A94A36', '#D99B6C'; s = f'<rect x="{x}" y="40" width="{wdt}" height="290" fill="{B}" {O}/>'
+    s += f'<rect x="{x+wdt-70}" y="-10" width="70" height="340" fill="{B}" {O}/><path d="M{x+wdt-76},-10 L{x+wdt-35},-48 L{x+wdt+6},-10 Z" fill="#5E6B3A" {O}/>'
+    s += f'<rect x="{x-4}" y="30" width="{wdt+8}" height="14" fill="{T}" {O}/>' + ''.join(f'<circle cx="{f(x+14+k*22)}" cy="37" r="4" fill="{B}" stroke="{INK}" stroke-width=".8"/>' for k in range(int(wdt/22)))
+    for fy in (60, 130):
+        for i in range(4): s += arch_window(x + 18 + i * 52, fy, 30, 52, None)
+    s += f'<rect x="{x+16}" y="206" width="{wdt-100}" height="22" rx="3" fill="#F4EEDD" {O}/><text x="{f(x+16+(wdt-100)/2)}" y="222" text-anchor="middle" font-family="Georgia, serif" font-weight="700" font-size="12" letter-spacing="1.5" fill="{INK}">COTTON EXCHANGE</text>'
+    s += arch_window(x + wdt - 50, 20, 30, 60, None) + arch_window(x + wdt - 50, 110, 30, 60, None)
+    s += f'<rect x="{x}" y="252" width="{wdt}" height="78" fill="#A9A294" {O}/>' + ''.join(f'<path d="M{x},{yy} H{x+wdt}" stroke="{INK}" stroke-opacity=".25" stroke-width=".8"/>' for yy in range(264, 330, 13))
+    return s
+def plant_stacks():
+    # Plant Riverside's three smokestacks: a separate sprite anchored at Bay Street, like City Hall's dome
+    s = ''
+    for k, (cx, h) in enumerate(((140, 250), (260, 290), (380, 250))):
+        s += f'<path d="M{cx-22},40 L{cx-16},{40-h} H{cx+16} L{cx+22},40 Z" fill="#8A3F2E" {O}/>'
+        s += ''.join(f'<path d="M{cx-21+j*0.4},{40-j*40} H{cx+21-j*0.4}" stroke="{INK}" stroke-opacity=".2" stroke-width="1"/>' for j in range(1, int(h/40)))
+        s += f'<rect x="{cx-20}" y="{36-h}" width="40" height="10" fill="#6E3326" {O}/><path d="M{cx-14},{40-h-60} H{cx+14}" stroke="#2B1D16" stroke-width="2" opacity=".3"/>'
+    return s
+w('props/landmarks/plant-riverside-stacks', '0 -260 520 300', '260 330', plant_stacks())
+
+random.seed(4141)
+for side in ('west', 'east'):
+    body = ''
+    for a, b in [(0, WING)]:      # north-south streets stop at Bay Street, so the warehouse rows run unbroken
+        x = a
+        while x < b:
+            if side == 'west' and x < 400 < x + 260 and a == 0:
+                body += plant_riverside(x, min(520, b - x)); x += min(520, b - x); continue
+            if side == 'east' and 700 <= x < 1000:
+                body += cotton_exchange(x, 300); x += 300; continue
+            wdt = min(random.choice([170, 200, 230, 260]), b - x)
+            if b - x - wdt < 120: wdt = b - x
+            body += warehouse(x, wdt); x += wdt
+    w(f'environments/riverfront/warehouse-row-{side}', f'0 -60 {WING} 390', '0 330', f'<rect x="0" y="300" width="{WING}" height="30" fill="{INK}" opacity=".08"/>' + body, 'data-layer="far"')
+random.seed(7777)
+for side in ('west', 'east'):
+    body = ''
+    for a, b in segments(side):
+        x = a
+        while x < b:
+            wdt = min(random.choice([180, 220, 260]), b - x)
+            if b - x - wdt < 110: wdt = b - x
+            body += shop(x, wdt); x += wdt
+    w(f'environments/market/market-row-{side}', f'0 0 {WING} 300', '0 300', body, 'data-layer="far"')
+random.seed(2030)
+for side in ('west', 'east'):
+    body = ''
+    for a, b in segments(side):
+        x = a
+        while x < b:
+            wdt = min(random.choice([140, 160, 180]), b - x)
+            if b - x - wdt < 100: wdt = b - x
+            body += rowhouse(x, wdt); x += wdt
+    w(f'environments/squares/row-houses-{side}', f'0 -110 {WING} 400', '0 290', body, 'data-layer="far"')
+print('wing rows written')

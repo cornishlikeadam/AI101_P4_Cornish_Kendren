@@ -70,7 +70,10 @@
     'props/landmarks/city-hall-dome': 'City Hall\'s gold dome', 'props/landmarks/waving-girl': 'the Waving Girl statue', 'environments/monterey/temple': 'the temple',
     'environments/monterey/mercer-house': 'Mercer House', 'props/festival/tent': 'the festival tents', 'props/market/stall-peaches': 'the market stalls',
     'props/furniture/cafe-table': 'the café tables', 'props/river/riverboat': 'the riverboat', 'props/vehicles/trolley': 'a trolley', 'props/street/bus-stop': 'the bus stop',
-    'props/furniture/park-bench': 'a park bench', 'props/vegetation/live-oak': 'a big oak tree', 'props/vegetation/live-oak-tall': 'a big oak tree',
+    'props/furniture/park-bench': 'a park bench', 'props/river/talmadge-bridge': 'the Talmadge Bridge', 'props/landmarks/plant-riverside-stacks': 'Plant Riverside\'s smokestacks',
+    'props/landmarks/old-harbor-light': 'the Old Harbor Light', 'environments/wings/first-african-baptist': 'First African Baptist Church', 'environments/wings/olde-pink-house': 'the Olde Pink House',
+    'props/landmarks/wesley-statue': 'John Wesley\'s statue', 'environments/wings/cemetery-gate': 'the cemetery gate', 'props/landmarks/armillary-sphere': 'the armillary sphere',
+    'environments/wings/gazebo': 'the gazebo', 'environments/wings/wesley-monumental': 'Wesley Monumental Church', 'props/street/lemonade-stand': 'the lemonade stand', 'props/river/container-ship': 'the container ship', 'props/vegetation/live-oak': 'a big oak tree', 'props/vegetation/live-oak-tall': 'a big oak tree',
   };
 
   async function main() {
@@ -162,7 +165,9 @@
       if (round.hints === 0) {
         round.hints = 1;
         toast('Hint: he is ' + world.area(t.x, t.y) + '.', 3200);
-        if (district && !(engine.camera.y >= district.y0 && engine.camera.y < district.y0 + district.h)) engine.camera.centerOn(engine.camera.x, district.y0 + district.h / 2);
+        // glide toward his part of the city: his band, and his third of the width
+        const third = Math.floor(t.x / (world.w / 3)), cx = (third + 0.5) * world.w / 3;
+        if (district) engine.camera.centerOn(cx, district.y0 + district.h / 2);
       } else if (round.hints === 1) {
         round.hints = 2;
         // the nearest named landmark that is not right on top of him
