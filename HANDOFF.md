@@ -98,7 +98,7 @@ Sources in `vibe-coding/src/` are classic scripts that attach to `window.WS`. `n
 | Param | Meaning |
 |---|---|
 | `seed` | Replay seed; random `SAV-XXXX` if absent |
-| `scene` | `savannah` (default: one 3200 × 7600 city joined by Bull Street: River Street and City Hall, City Market and Johnson Square, Pulaski and Lafayette Squares, Jones Street and Monterey Square, Forsyth Park) or `forsyth` (Forsyth alone, used by older tests) |
+| `scene` | `savannah` (default: one 9120 × 7600 city: the original 3200-wide core (River Street and City Hall, City Market and Johnson Square, Pulaski and Lafayette Squares, Jones Street and Monterey Square, Forsyth Park, joined by Bull Street) at x 2960–6160, with west and east wings; the ground is three chunks in `world.grounds`) or `forsyth` (Forsyth alone, used by older tests) |
 | `difficulty` | `easy`, `normal` (default), `hard` |
 | `density` | `low`, `standard` (default), `dense` |
 | `crowd` | Stress override, 20 to 10,000; marks the round as a stress test |

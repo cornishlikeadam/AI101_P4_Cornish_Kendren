@@ -219,3 +219,127 @@ stop += f'<rect x="160" y="10" width="4" height="96" fill="#3B4048" {o1}/><rect 
 stop += f'<rect x="40" y="34" width="40" height="30" rx="2" fill="#F7F1E3" {o1}/><path d="M46,42 h28 M46,48 h22 M46,54 h26" stroke="{INK}" stroke-width="1.4" opacity=".6"/>'
 w('props/street/bus-stop', '0 0 186 112', '80 106', stop)
 print('Bull Street assets written')
+
+# ---------- 2026-11-16: the west and east wings ----------
+WING = 2960
+GAPS = {'west': [(615, 785), (2015, 2185)], 'east': [(755, 925), (2155, 2325)]}
+def segments(side, extra=()):
+    gaps = sorted(GAPS[side] + list(extra)); out, a = [], 0
+    for g0, g1 in gaps: out.append((a, g0)); a = g1
+    out.append((a, WING)); return [(a, b) for a, b in out if b - a > 60]
+def house_row(path, side, seed, extra=(), kinds=None):
+    random.seed(seed); body = ''
+    kinds = kinds or [italianate, italianate, victorian, second_empire]
+    for a, b in segments(side, extra):
+        x = a
+        while x < b:
+            kind = random.choice(kinds)
+            wdt = {italianate: random.choice([130, 150, 170]), victorian: 190, second_empire: 160}[kind]
+            wdt = min(wdt, b - x)
+            if b - x - wdt < 140: wdt = b - x
+            if wdt < 120 and kind is victorian: kind = italianate
+            body += kind(x, wdt); x += wdt
+    w(path, f'0 -50 {WING} 310', '0 260', body, 'data-layer="far"')
+# Jones Street continues both ways
+house_row('environments/monterey/jones-row-west', 'west', 2101)
+house_row('environments/monterey/jones-row-east', 'east', 2102)
+# the Victorian District round Forsyth Park: porches, gables and mansards; Whitaker (west, local 2850-2960) and
+# Drayton (east, local 20-130) run along the park edge
+VWEST, VEAST = [(2850, 2960)], [(0, 130)]
+for i, seed in enumerate((3101, 3102, 3103)):
+    house_row(f'environments/victorian/row-west-{i}', 'west', seed, VWEST, [victorian, victorian, second_empire, italianate])
+    house_row(f'environments/victorian/row-east-{i}', 'east', seed + 50, VEAST, [victorian, victorian, second_empire, italianate])
+
+def sprite(path, W, H, body):
+    w(path, f'0 0 {W} {H+8}', f'{W/2} {H}', f'<ellipse cx="{W/2}" cy="{H}" rx="{W/2.2}" ry="7" fill="{INK}" opacity=".15"/>' + body)
+
+# Talmadge Memorial Bridge: the cable-stayed bridge over the river, seen across the water from the west end
+s = ''
+for tx in (520, 1380):
+    s += f'<path d="M{tx-34},250 L{tx-14},0 H{tx-2} L{tx-8},250 Z M{tx+8},250 L{tx+2},0 H{tx+14} L{tx+34},250 Z" fill="#C9CED3" {O}/>'
+    s += f'<rect x="{tx-30}" y="70" width="60" height="10" fill="#B9BEC4" {o1}/><rect x="{tx-24}" y="0" width="48" height="10" fill="#B9BEC4" {o1}/>'
+    s += ''.join(f'<path d="M{tx},{12+k*8} L{tx + d * (60 + k*58)},150" stroke="#7E8890" stroke-width="1.4"/>' for k in range(7) for d in (-1, 1))
+s += f'<path d="M0,150 H1900 L1900,166 H0 Z" fill="#B9BEC4" {O}/><path d="M0,150 H1900" stroke="#F4F0E4" stroke-width="2"/>'
+s += ''.join(f'<rect x="{x}" y="166" width="22" height="84" fill="#A9AFB5" {o1}/>' for x in (120, 500, 1360, 1760))
+s += ''.join(f'<rect x="{x}" y="141" width="{14 + (x % 3) * 6}" height="8" rx="2" fill="{c}" stroke="{INK}" stroke-width=".6"/>' for x, c in ((260, '#C73E3A'), (690, '#2F7FA8'), (1010, '#F2D55C'), (1600, '#F5F0E6')))
+w('props/river/talmadge-bridge', '0 -10 1900 270', '950 250', s, 'data-layer="far"')
+
+# a container ship sliding up the river to the port
+s = f'<path d="M20,120 L60,170 H680 L740,110 Z" fill="#2F5D50" {O}/><path d="M28,130 H732" stroke="#C73E3A" stroke-width="6"/>'
+cols = ['#C73E3A', '#2F7FA8', '#F2D55C', '#3E8E7E', '#E07A3F', '#7D5BA6', '#8A8F96']
+for row in range(3):
+    for k in range(10):
+        if row == 2 and k in (0, 9): continue
+        s += f'<rect x="{120 + k*50}" y="{86 - row*24}" width="48" height="24" fill="{cols[(k*3+row) % 7]}" {o1}/><path d="M{128+k*50},{90-row*24} v16 M{140+k*50},{90-row*24} v16" stroke="{INK}" stroke-opacity=".3"/>'
+s += f'<rect x="640" y="20" width="60" height="90" fill="#F5F0E6" {O}/>' + ''.join(f'<rect x="{648+k*16}" y="30" width="10" height="8" fill="#3D5468"/>' for k in range(3)) + f'<rect x="660" y="0" width="16" height="22" fill="#C73E3A" {o1}/>'
+w('props/river/container-ship', '0 -6 760 180', '380 170', s)
+
+# the Old Harbor Light (1858) in Emmet Park: a cast-iron post carrying a lantern above the bluff
+sprite('props/landmarks/old-harbor-light', 80, 330, f'<rect x="20" y="300" width="40" height="30" fill="#7E7A72" {O}/><path d="M34,300 L36,60 H44 L46,300 Z" fill="#3B4048" {O}/>' + ''.join(f'<path d="M35,{80+k*44} L45,{100+k*44} M45,{80+k*44} L35,{100+k*44}" stroke="#5E6670" stroke-width="1.2"/>' for k in range(5)) + f'<rect x="22" y="40" width="36" height="24" fill="#F7E08A" {O}/><path d="M18,40 L40,14 L62,40 Z" fill="#3B4048" {O}/><path d="M40,14 v-10" stroke="{INK}" stroke-width="2"/><path d="M10,52 l-8,-4 M70,52 l8,-4 M10,58 h-10 M70,58 h10" stroke="#F2D55C" stroke-width="2" stroke-linecap="round"/>')
+
+# First African Baptist Church (1859) on Franklin Square: brick, with a white wooden steeple
+s = f'<rect x="40" y="150" width="280" height="230" fill="#B4573E" {O}/><path d="M34,154 L180,90 L326,154 Z" fill="#E8E2D2" {O}/>'
+s += ''.join(f'<path d="M42,{yy} H318" stroke="{INK}" stroke-opacity=".1"/>' for yy in range(160, 370, 8))
+s += f'<rect x="140" y="40" width="80" height="120" fill="#F7F3EA" {O}/><path d="M136,44 L180,-60 L224,44 Z" fill="#F7F3EA" {O}/><path d="M180,-60 v-20 M172,-72 h16" stroke="{INK}" stroke-width="2.4"/>'
+s += f'<path d="M160,120 V82 A20,20 0 0,1 200,82 V120 Z" fill="#3D5468" {O}/><circle cx="180" cy="60" r="10" fill="#3D5468" {O}/>'
+for wx in (66, 112, 230, 276): s += f'<path d="M{wx},330 V210 A16,16 0 0,1 {wx+32},210 V330 Z" fill="#3D5468" {O}/><path d="M{wx+16},194 V330" stroke="#E8E2D2" stroke-width="1.4"/>'
+s += f'<path d="M158,380 V330 A22,22 0 0,1 202,330 V380 Z" fill="#F7F3EA" {O}/><path d="M166,380 V336 A14,14 0 0,1 194,336 V380 Z" fill="#5A3A28" {o1}/>'
+s += f'<rect x="80" y="370" width="200" height="10" fill="#C9C2B2" {O}/>'
+w('environments/wings/first-african-baptist', '0 -90 360 478', '180 380', f'<ellipse cx="180" cy="380" rx="170" ry="7" fill="{INK}" opacity=".15"/>' + s)
+
+# The Olde Pink House (1789) on Reynolds Square: pink stucco Georgian with a columned portico
+s = f'<rect x="20" y="60" width="380" height="200" fill="#EBA4A0" {O}/><path d="M10,62 L40,20 H380 L410,62 Z" fill="#6B4A5E" {O}/>' + ''.join(f'<rect x="{x}" y="0" width="22" height="30" fill="#B4573E" {o1}/>' for x in (90, 310))
+for fy in (76, 160):
+    for i in range(5):
+        if fy == 160 and i == 2: continue
+        s += window(44 + i * 72, fy, 32, 54, '#FFFFFF', '#2F5D50')
+s += f'<path d="M150,150 L210,120 L270,150 Z" fill="#F7F1E3" {O}/>' + ''.join(f'<rect x="{x}" y="150" width="10" height="100" fill="#F7F1E3" {o1}/>' for x in (160, 186, 224, 250))
+s += f'<path d="M196,260 V200 A14,14 0 0,1 224,200 V260 Z" fill="#2F5D50" {O}/><rect x="140" y="250" width="140" height="10" fill="#C9C2B2" {O}/>'
+s += f'<rect x="300" y="226" width="80" height="18" rx="3" fill="#F7F1E3" {o1}/><text x="340" y="239" text-anchor="middle" font-family="Georgia, serif" font-weight="700" font-size="9" fill="#6B4A5E">PINK HOUSE</text>'
+sprite('environments/wings/olde-pink-house', 420, 260, s)
+
+# John Wesley's statue on Reynolds Square: a preacher in robes on a granite pedestal, arms open
+sprite('props/landmarks/wesley-statue', 90, 190, f'<rect x="20" y="120" width="50" height="70" fill="#B9B3A5" {O}/><rect x="14" y="180" width="62" height="10" fill="#A9A294" {O}/><path d="M34,120 L32,66 C32,56 58,56 58,66 L56,120 Z" fill="#4E6B5E" {O}/><circle cx="45" cy="48" r="9" fill="#4E6B5E" {O}/><path d="M34,70 L12,58 M56,70 L78,58" stroke="#2B1D16" stroke-width="5" stroke-linecap="round"/><path d="M34,70 L12,58 M56,70 L78,58" stroke="#4E6B5E" stroke-width="3" stroke-linecap="round"/><path d="M36,40 q9,-8 18,0" fill="none" stroke="#3B5A4E" stroke-width="3"/>')
+
+# Colonial Park Cemetery: the arched brick gate, and old box tombs and headstones
+s = f'<rect x="20" y="40" width="50" height="180" fill="#A85A3E" {O}/><rect x="250" y="40" width="50" height="180" fill="#A85A3E" {O}/>'
+s += f'<path d="M70,90 A90,60 0 0,1 250,90 L250,110 A90,60 0 0,0 70,110 Z" fill="#A85A3E" {O}/><rect x="96" y="56" width="128" height="22" rx="3" fill="#F4EEDD" {o1}/><text x="160" y="71" text-anchor="middle" font-family="Georgia, serif" font-weight="700" font-size="9.5" fill="{INK}">COLONIAL PARK</text>'
+s += f'<path d="M80,220 V120 M100,220 V108 M120,220 V100 M140,220 V96 M160,220 V95 M180,220 V96 M200,220 V100 M220,220 V108 M240,220 V120" stroke="{INK}" stroke-width="2.2"/><path d="M76,140 H244" stroke="{INK}" stroke-width="2"/>'
+s += ''.join(f'<rect x="{x}" y="30" width="58" height="12" fill="#C9C2B2" {o1}/>' for x in (16, 246))
+sprite('environments/wings/cemetery-gate', 320, 220, s)
+sprite('props/landmarks/tomb-box', 120, 70, f'<rect x="10" y="20" width="100" height="50" fill="#D8D2C4" {O}/><path d="M4,20 H116 L110,8 H10 Z" fill="#C9C2B2" {O}/><path d="M20,34 h80 M20,46 h60" stroke="{INK}" stroke-opacity=".3" stroke-width="1.4"/><path d="M90,58 q6,-8 12,0" fill="none" stroke="#5E8F3E" stroke-width="2"/>')
+sprite('props/landmarks/tomb-stones', 130, 70, ''.join(f'<path d="M{x},70 V{70-h+10} A12,10 0 0,1 {x+24},{70-h+10} V70 Z" fill="#CFC8B9" {O}/><path d="M{x+6},{78-h} h12" stroke="{INK}" stroke-opacity=".3" stroke-width="1.2"/>' for x, h in ((8, 52), (46, 64), (88, 46))))
+
+# Troup Square's armillary sphere (bronze rings on a turtle-legged pedestal)
+sprite('props/landmarks/armillary-sphere', 100, 170, f'<rect x="34" y="110" width="32" height="56" fill="#B9B3A5" {O}/><rect x="26" y="160" width="48" height="10" fill="#A9A294" {O}/><circle cx="50" cy="60" r="38" fill="none" stroke="{INK}" stroke-width="5"/><circle cx="50" cy="60" r="38" fill="none" stroke="#B38B3E" stroke-width="3"/><ellipse cx="50" cy="60" rx="38" ry="12" fill="none" stroke="{INK}" stroke-width="4"/><ellipse cx="50" cy="60" rx="38" ry="12" fill="none" stroke="#C99A4E" stroke-width="2.4"/><ellipse cx="50" cy="60" rx="12" ry="38" fill="none" stroke="#B38B3E" stroke-width="2.4" transform="rotate(25 50 60)"/><path d="M20,96 L80,24" stroke="{INK}" stroke-width="2.4"/><circle cx="50" cy="60" r="4" fill="#C99A4E" {o1}/>')
+
+# Whitefield Square's white Victorian gazebo
+s = f'<rect x="30" y="170" width="200" height="16" fill="#E8E2D2" {O}/>' + ''.join(f'<rect x="{x}" y="96" width="8" height="74" fill="#FFFDF6" {o1}/>' for x in (40, 84, 128, 172, 212))
+s += f'<path d="M20,98 L130,30 L240,98 Z" fill="#6B8F5E" {O}/><path d="M130,30 v-20" stroke="{INK}" stroke-width="2.4"/><circle cx="130" cy="8" r="5" fill="#F2D55C" {o1}/>'
+s += ''.join(f'<path d="M{44+k*20},98 q10,12 20,0" fill="none" stroke="#FFFDF6" stroke-width="2.4"/>' for k in range(9)) + f'<path d="M36,150 H226" stroke="#FFFDF6" stroke-width="3"/>' + ''.join(f'<path d="M{48+k*12},150 v20" stroke="#FFFDF6" stroke-width="1.6"/>' for k in range(16))
+sprite('environments/wings/gazebo', 260, 186, s)
+
+# Wesley Monumental United Methodist Church (1890) on Calhoun Square: Gothic Revival, two unequal spires
+S, S2 = '#D9C7A8', '#C4B08E'
+s = f'<rect x="60" y="170" width="260" height="210" fill="{S}" {O}/><path d="M54,174 L190,110 L326,174 Z" fill="{S2}" {O}/>'
+for tx, top, wd in ((30, -40, 70), (290, 20, 60)):
+    s += f'<rect x="{tx}" y="{top+120}" width="{wd}" height="{380-top-120}" fill="{S}" {O}/><path d="M{tx-4},{top+124} L{tx+wd/2},{top} L{tx+wd+4},{top+124} Z" fill="#7A8C8A" {O}/>'
+    s += f'<path d="M{tx+wd/2-10},{top+200} V{top+160} L{tx+wd/2},{top+146} L{tx+wd/2+10},{top+160} V{top+200} Z" fill="#3D5468" {o1}/>'
+s += f'<circle cx="190" cy="220" r="28" fill="#9D6FB8" {O}/>' + ''.join(f'<path d="M190,220 l{f(28*math.cos(a*0.785))},{f(28*math.sin(a*0.785))}" stroke="{INK}" stroke-width="1"/>' for a in range(8))
+for wx in (90, 250): s += f'<path d="M{wx},340 V270 L{wx+16},248 L{wx+32},270 V340 Z" fill="#3D5468" {O}/>'
+s += f'<path d="M168,380 V320 L190,296 L212,320 V380 Z" fill="#5A3A28" {O}/>'
+w('environments/wings/wesley-monumental', '0 -50 380 438', '190 380', f'<ellipse cx="190" cy="380" rx="180" ry="7" fill="{INK}" opacity=".15"/>' + s)
+
+# a children's lemonade stand (a Victorian District story)
+sprite('props/street/lemonade-stand', 110, 90, f'<rect x="10" y="40" width="90" height="50" fill="#F2D55C" {O}/><path d="M6,40 H104 L96,26 H14 Z" fill="#E8457A" {O}/><rect x="22" y="52" width="66" height="16" rx="2" fill="#FFFDF6" {o1}/><text x="55" y="64" text-anchor="middle" font-family="Arial, sans-serif" font-weight="700" font-size="10" fill="#E8457A">LEMONADE</text><path d="M20,26 V6 M90,26 V6" stroke="{INK}" stroke-width="2"/><path d="M14,6 H96" stroke="{INK}" stroke-width="2"/><rect x="30" y="30" width="10" height="12" fill="#F7E08A" {o1}/><rect x="70" y="30" width="10" height="12" fill="#F7E08A" {o1}/>')
+
+# street signs for the wing streets (north-south name on top, cross street below)
+def sign2(ns, ew):
+    s = f'<ellipse cx="20" cy="124" rx="10" ry="3" fill="{INK}" opacity=".18"/><rect x="18" y="20" width="5" height="104" fill="#3B4048" {o1}/>'
+    s += f'<rect x="-6" y="8" width="76" height="14" rx="2" fill="#2F6B4F" {o1}/><text x="32" y="19" text-anchor="middle" font-family="Arial, sans-serif" font-weight="700" font-size="8.5" fill="#FFFFFF">{ns} ST</text>'
+    s += f'<rect x="-28" y="24" width="70" height="14" rx="2" fill="#2F6B4F" {o1}/><text x="7" y="35" text-anchor="middle" font-family="Arial, sans-serif" font-weight="700" font-size="8.5" fill="#FFFFFF">{ew} ST</text>'
+    return s
+for ns in ('MONTGOMERY', 'JEFFERSON', 'HABERSHAM', 'PRICE', 'WHITAKER', 'DRAYTON'):
+    for ew in ('BAY', 'CONGRESS', 'HARRIS', 'CHARLTON', 'JONES', 'GASTON', 'HALL', 'PARK AVE'):
+        w(f'props/street/sign-{ns.lower()}-{ew.lower().replace(" ", "")}', '-30 0 104 128', '20 124', sign2(ns, ew.replace(' ST', '')).replace('PARK AVE ST', 'PARK AVE'))
+print('wing assets written')
