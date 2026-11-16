@@ -177,6 +177,26 @@
 
 ---
 
+## Session 11: Art Direction & Build Lab (companion workspace)
+
+**Date**: 2026-11-16
+**Agents/Tools Used**: Claude Code (Claude Opus 5.5); Vite, React, TypeScript, Tailwind; `playwright-core` driving the installed Chrome.
+**Task**: the project lead's "Art Direction & Build Lab" brief: a persistent workspace for the redesign cycle (inspect → reference → diagnose → redesign → prototype → compare → test → approve → export → implement).
+**Work done**: new top-level `lab/` folder (see `lab/README.md`). It reads this repository at build time (`lab/scripts/ingest.mjs`) and runs the game's own asset bundle, composer, factory and scene builder for its previews, so nothing in `vibe-coding/` was changed. Seeded with ADR-V001 to V008, VIS-001 to VIS-010, Sprint 01 and 12 character families, each citing the repository file it came from. No approvals, scores, player results or benchmarks were seeded. Verification: unit tests 9 of 9; the brief's five journeys (A–E) pass in `lab/scripts/journeys.mjs` on the production build; no page errors across all 15 views; no horizontal scroll at 390 px. Lab checks run during development (a fresh test profile, not saved anywhere) flagged 7 crowd-body silhouette pairs that overlap 80% or more at 36 px (`tote` vs `walk` 96%), which supports VIS-003. The brief's baseline described version 1; the lab records that the current build is the illustrated edition.
+**Human Review & Modification Applied**: pending. Nothing in the lab is approved yet.
+
+---
+
+## Session 12: Gameplay and visual overhaul
+
+**Date**: 2026-11-16
+**Agents/Tools Used**: Claude Code (Claude Opus 5.5), `playwright-core` driving the installed Chrome.
+**Task**: the project lead's overhaul brief (full-screen bounded camera, better zoom, better art, Forsyth first, a child-friendly interface), plus a later requirement for one continuous, geographically believable Savannah.
+**Work done**: the camera now has a viewport-cover minimum zoom and keeps the view inside the world at every size, rotation and zoom. Wheel zoom is smooth and anchored, trackpads are normalised, pinch is anchored on the finger midpoint, and taps get a finger-sized tolerance. The city is joined by Bull Street (City Hall to the Forsyth gate) with Johnson, Pulaski, Lafayette and Monterey Squares, and has street signs, traffic and parked cars. 24 new original SVG assets (registered in `sources/asset-register.md`), including three crowd bodies that break the `tote`/`walk` silhouette match (96% overlap at 36 px in the lab check). New interface: picture-and-Play intro, compact HUD, menu, minimap, three-step hints, playful misses, celebration. Tests: 28 of 28 (five new). Before/after screenshots in `visual-qa/overhaul/`. Performance in `performance.md`. Both version 1 READMEs archived in `docs/history/`; a short README replaces them.
+**Human Review & Modification Applied**: pending.
+
+---
+
 ## AI Tools & Skills Used Summary
 
 | Tool/Skill | Purpose | Sessions | Human Oversight |

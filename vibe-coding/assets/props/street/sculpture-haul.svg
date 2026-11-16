@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 180" width="120" height="180" data-anchor="58 172" data-asset="props/street/sculpture-haul" data-author="original, hand-authored SVG, Waldo's Savannah 2026-11-16">
+<ellipse cx="60" cy="172" rx="48" ry="5" fill="#2B1D16" opacity=".18"/>
+<g transform="rotate(-9 60 160)">
+<path d="M34,158 L32,40 M84,158 L86,40" stroke="#2B1D16" stroke-width="4" stroke-linecap="round"/><path d="M34,158 L32,40 M84,158 L86,40" stroke="#8A8F96" stroke-width="2.2" stroke-linecap="round"/>
+<path d="M28,158 H92 L90,166 H30 Z" fill="#8A8F96" stroke="#2B1D16" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/>
+<path d="M42,152 C30,130 34,110 52,98 C40,84 42,62 60,50 C54,36 64,22 80,20 C74,34 82,46 76,58 C92,70 88,92 72,100 C86,114 82,138 66,152 Z" fill="#3FC1C9" stroke="#2B1D16" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/>
+<path d="M60,50 C70,58 74,66 76,58 M52,98 C62,104 70,104 72,100" fill="none" stroke="#2B1D16" stroke-width="1.2"/>
+<circle cx="56" cy="124" r="13" fill="#F2D55C" stroke="#2B1D16" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/><circle cx="56" cy="124" r="5" fill="#FF6F61" stroke="#2B1D16" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/>
+<path d="M66,70 L92,58 L88,78 Z" fill="#FF6F61" stroke="#2B1D16" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/>
+<path d="M62,44 C58,38 64,30 72,30" fill="none" stroke="#FFFFFF" stroke-width="2.4" stroke-linecap="round" opacity=".6"/>
+<path d="M34,96 C24,90 18,96 22,104" fill="none" stroke="#2B1D16" stroke-width="2"/><path d="M84,60 L104,48" stroke="#2B1D16" stroke-width="2"/>
+</g>
+<circle cx="38" cy="166" r="7" fill="#2B2B2B" stroke="#2B1D16" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/><circle cx="82" cy="166" r="7" fill="#2B2B2B" stroke="#2B1D16" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/>
+</svg>

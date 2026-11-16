@@ -1,0 +1,35 @@
+{
+  "name": "waldos-savannah-lab",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Art Direction & Build Lab: a companion workspace for redesigning Waldo's Savannah. Does not modify the game.",
+  "scripts": {
+    "ingest": "node scripts/ingest.mjs",
+    "dev": "node scripts/ingest.mjs && vite",
+    "build": "node scripts/ingest.mjs && tsc -b && vite build",
+    "preview": "vite preview",
+    "typecheck": "tsc -b",
+    "test": "node scripts/ingest.mjs && vitest run"
+  },
+  "dependencies": {
+    "immer": "^10.1.1",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "zustand": "^4.5.5"
+  },
+  "devDependencies": {
+    "@types/react": "^18.3.12",
+    "@types/react-dom": "^18.3.1",
+    "@vitejs/plugin-react": "^4.3.4",
+    "autoprefixer": "^10.4.20",
+    "fake-indexeddb": "^6.0.0",
+    "jsdom": "^25.0.1",
+    "playwright-core": "^1.49.1",
+    "postcss": "^8.4.49",
+    "tailwindcss": "^3.4.15",
+    "typescript": "^5.6.3",
+    "vite": "^5.4.11",
+    "vitest": "^2.1.8"
+  }
+}

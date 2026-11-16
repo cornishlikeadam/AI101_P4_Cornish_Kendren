@@ -1,0 +1,3 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 34" width="24" height="34" data-anchor="12 32" data-asset="props/street/hydrant"  data-author="original, hand-authored SVG, Waldo's Savannah 2026-11-16">
+<ellipse cx="12" cy="32" rx="9" ry="2.4" fill="#2B1D16" opacity=".2"/><path d="M6,30 V12 C6,6 18,6 18,12 V30 Z" fill="#D8413A" stroke="#2B1D16" stroke-width="1.6" stroke-linejoin="round"/><rect x="3" y="15" width="18" height="5" rx="2" fill="#B5332D" stroke="#2B1D16" stroke-width="1.2" stroke-linejoin="round"/><rect x="4" y="28" width="16" height="4" fill="#B5332D" stroke="#2B1D16" stroke-width="1.2" stroke-linejoin="round"/><circle cx="12" cy="6" r="2.4" fill="#B5332D" stroke="#2B1D16" stroke-width="1.2" stroke-linejoin="round"/>
+</svg>
